@@ -282,7 +282,14 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
   - **Atendimento precário:** rende metade da reputação e tira 5 da chance por bloco que falta.
 - **Equipe pública:** estagiário 3 blocos, servidor 5, assessor 8, chefe de gabinete 2.
 
-### 5.5 Exoneração
+### 5.4A Regras comuns às carreiras públicas
+- **Estágio probatório:** nas primeiras 20 semanas do cargo, a reputação zerada não encerra a carreira. A posse garante pelo menos 30 de reputação.
+- **Atrasos:** cada processo ou inquérito atrasado custa 0,3 de reputação por semana, no máximo 4 por semana.
+- **Prescrição:** custa metade da perda base do caso.
+- **Erro judiciário:** custa a perda base do caso (antes era o dobro).
+- **Recursos:** a penalidade de investigação ou atendimento mínimo só vale na 1ª instância.
+
+
 - Qualquer cargo público permite **pedir exoneração** e voltar à advocacia.
 - Há uma **quarentena** de 12 semanas na antiga comarca, e o prestígio é recalculado.
 

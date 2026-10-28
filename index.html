@@ -1202,6 +1202,7 @@ const taxaReforma=()=>{const t=S.j.mantidas+S.j.reformas; return t?S.j.reformas/
 const novosPorSemana=k=>2+CIDADES[k].pop+3*(S&&S.j?S.j.cargo:0);
 // estágio probatório: nas primeiras 20 semanas do cargo a reputação zerada não encerra a carreira; a aprovação no concurso dá ao menos 30 de reputação
 const PROBATORIO=20;
+const penAtrasoPub=n=>Math.min(4,.3*n*fatorAtraso()); // atraso pesa, mas com teto semanal para não virar espiral sem volta
 function posse(){ S.posseEm=S.semana; S.prest=Math.max(S.prest,30); addLog(`Estágio probatório de ${PROBATORIO} semanas: até a semana ${S.semana+PROBATORIO}, reputação zerada não tira você do cargo.`); }
 const probatorio=()=>S.semana-(S.posseEm||-99)<PROBATORIO;
 const MIN_SENT={comum:2,incomum:3,raro:4,epico:6,lendario:9}; // blocos de estudo acumulados para poder sentenciar
@@ -1349,7 +1350,7 @@ function renderGabinete(){
     <div class="col">
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Acervo da vara</h2><span class="num">${J.acervo.length} processos · <span class="${atrasados?'lo':''}">${atrasados} atrasados</span></span></div>
-        <p class="label" style="margin:0">Chegam ${novosPorSemana(J.comarca)} processos por semana. Cada processo atrasado custa 0,3 de reputação por semana.</p>
+        <p class="label" style="margin:0">Chegam ${novosPorSemana(J.comarca)} processos por semana. Cada processo atrasado custa 0,3 de reputação por semana (no máximo 4 por semana).</p>
         <div class="cases">${ordem.length?ordem.map(procCard).join(''):'<p class="empty">Acervo zerado. Novos processos chegam na próxima semana.</p>'}</div>
       </section>
       ${J.recursos.length?`<section class="panel"><div class="panel-head"><h2>Suas sentenças em recurso</h2><span class="num">${J.recursos.length}</span></div>
@@ -1415,7 +1416,7 @@ async function fimSemanaJuiz(){
     J.recursos=J.recursos.filter(r=>r.semanas>0);
     // acervo envelhece e chegam processos novos
     let atras=0; for(const p of J.acervo){ p.idade++; p.semana=0; if(p.idade>p.meta) atras++; }
-    if(atras){ S.prest=clamp(S.prest-.3*atras*fatorAtraso(),0,100); S.estresse=clamp(S.estresse+.5*atras,0,100); }
+    if(atras){ S.prest=clamp(S.prest-penAtrasoPub(atras),0,100); S.estresse=clamp(S.estresse+Math.min(10,.5*atras),0,100); }
     const novos=novosPorSemana(J.comarca); for(let i=0;i<novos;i++) J.acervo.push(novoProcesso());
     const est=semanaEstruturaPub(novos);
     // resumo
@@ -1424,7 +1425,7 @@ async function fimSemanaJuiz(){
       ${sent.length?`<ul class="break">${sent.map(([p,ch,t])=>`<li><span>${esc(p.titulo)}${ch!==null?` · ${pct(ch)} de acerto`:''}</span><span class="num">${t}</span></li>`).join('')}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Nenhuma sentença nesta semana.</p>'}
       ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
-      <dl class="meta"><dt>Processos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-.3*atras)} reputação`:''}</dd>
+      <dl class="meta"><dt>Processos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
         <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_JUIZ)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
     // corregedoria
     if(J.propina && Math.random()<.2*J.propina){ S.fim='cassado'; }
@@ -1661,7 +1662,7 @@ function renderPromotoria(){
       </section>
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Inquéritos</h2><span class="num">${inqs.length} · <span class="${atras?'lo':''}">${atras} atrasados</span></span></div>
-        <p class="label" style="margin:0">Chegam ${novosInq(P.comarca)} por semana. Atrasado custa 0,3 de reputação por semana e prescreve 6 semanas depois da meta.</p>
+        <p class="label" style="margin:0">Chegam ${novosInq(P.comarca)} por semana. Atrasado custa 0,3 de reputação por semana (no máximo 4) e prescreve 6 semanas depois da meta.</p>
         <div class="cases">${inqs.length?inqs.map(mpCard).join(''):'<p class="empty">Nenhum inquérito na mesa.</p>'}</div>
       </section>
       ${P.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${P.recursos.length}</span></div>
@@ -1781,13 +1782,13 @@ async function fimSemanaMP(){
       const d=-RAR[c.rar].perda/2; S.prest=clamp(S.prest+d,0,100);
       notas.push(`O crime prescreveu em “${esc(c.titulo)}”: ${sgn(d)} reputação.`); addLog(`Prescrição em “${c.titulo}”. ${sgn(d)} reputação.`,'r'); }
     P.casos=P.casos.filter(c=>!(c.fase==='inq'&&c.idade>c.meta+6));
-    if(atras){ S.prest=clamp(S.prest-.3*atras*fatorAtraso(),0,100); S.estresse=clamp(S.estresse+.5*atras,0,100); }
+    if(atras){ S.prest=clamp(S.prest-penAtrasoPub(atras),0,100); S.estresse=clamp(S.estresse+Math.min(10,.5*atras),0,100); }
     const novos=novosInq(P.comarca); for(let i=0;i<novos;i++) P.casos.push(novoInquerito());
     const est=semanaEstruturaPub(novos);
     await modal(`<span class="label">Semana ${S.semana} · ${fem(C.nome)} · ${CIDADES[P.comarca].nome}</span><h2>Balanço da promotoria</h2>
       ${notas.length?`<ul class="break">${notas.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Semana sem novidades nos processos.</p>'}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
-      <dl class="meta"><dt>Inquéritos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-.3*atras)} reputação`:''}</dd>
+      <dl class="meta"><dt>Inquéritos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
         <dt>Inquéritos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_JUIZ)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
     await semanaAcademia(); if(await semanaVida()) return;
     S.semana++; S.agenda.estudo=0; S.agenda.lazer=0; S.disp=BLOCOS-blocosPerdidos();
