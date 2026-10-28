@@ -1200,6 +1200,10 @@ const META={comum:6,incomum:8,raro:10,epico:12,lendario:14};
 const gabinete=()=>!S||!S.u?0:staffBlocos()+(S.carreira!=='adv'&&tem('escrita',2)?1:0);
 const taxaReforma=()=>{const t=S.j.mantidas+S.j.reformas; return t?S.j.reformas/t:0;};
 const novosPorSemana=k=>2+CIDADES[k].pop+3*(S&&S.j?S.j.cargo:0);
+// estágio probatório: nas primeiras 20 semanas do cargo a reputação zerada não encerra a carreira; a aprovação no concurso dá ao menos 30 de reputação
+const PROBATORIO=20;
+function posse(){ S.posseEm=S.semana; S.prest=Math.max(S.prest,30); addLog(`Estágio probatório de ${PROBATORIO} semanas: até a semana ${S.semana+PROBATORIO}, reputação zerada não tira você do cargo.`); }
+const probatorio=()=>S.semana-(S.posseEm||-99)<PROBATORIO;
 const MIN_SENT={comum:2,incomum:3,raro:4,epico:6,lendario:9}; // blocos de estudo acumulados para poder sentenciar
 const minSent=p=>MIN_SENT[p.rar];
 function novoProcesso(){
@@ -1208,7 +1212,7 @@ function novoProcesso(){
   return {...c,idade:0,meta:META[c.rar],semana:0,mod:0};
 }
 function iniciarMagistratura(cid,vr=S.espec){
-  S.carreira='juiz'; estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
+  S.carreira='juiz'; posse(); estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
   S.j={cargo:0,vara:vr,comarca:cid,acervo:[],recursos:[],sentencas:0,mantidas:0,reformas:0,transitadas:0,propina:0};
   for(let i=0;i<8;i++){ const p=novoProcesso(); p.idade=rint(0,p.meta); S.j.acervo.push(p); }
 }
@@ -1428,7 +1432,7 @@ async function fimSemanaJuiz(){
     S.semana++; S.agenda.estudo=0; S.agenda.lazer=0; S.disp=BLOCOS-blocosPerdidos();
     if(S.estresse>=100){ S.disp=10; S.estresse=70; addLog('Burnout: você só terá 10 blocos na próxima semana.','r'); }
     else if(S.energia<=0){ S.disp=14; addLog('Exaustão: você só terá 14 blocos na próxima semana.','r'); }
-    if(!S.fim && S.prest<=0) S.fim='cnj';
+    if(!S.fim && S.prest<=0 && !probatorio()) S.fim='cnj';
     if(!S.fim && promoOk() && !J.avisoPromo){ J.avisoPromo=true; addLog(`Você já pode pedir promoção a ${nomeCargo(J.cargo+1)}.`,'g'); }
     salvar(); render();
     if(S.fim){
@@ -1530,7 +1534,7 @@ function novoInquerito(){
     fase:'inq',inocente:Math.random()<(rar==='comum'?.2:.12),revelado:false,prazo:0,inst:1,lado:null,acordoFalhou:false};
 }
 function iniciarMP(cid){
-  S.carreira='promotor'; estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
+  S.carreira='promotor'; posse(); estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
   S.p={cargo:0,comarca:cid,casos:[],recursos:[],erros:[],denuncias:0,condenacoes:0,absolvicoes:0,acordos:0,arquivados:0};
   for(let i=0;i<8;i++){ const c=novoInquerito(); c.idade=rint(0,c.meta); S.p.casos.push(c); }
 }
@@ -1538,7 +1542,7 @@ function calcCondenacao(c){
   const items=[]; const add=(l,v)=>{ if(v) items.push([l,v]); };
   const skill=.5*S.skills[c.area]+.3*S.skills.analise+.2*S.skills.oratoria;
   const n=c.prep+(c.semana||0); add(`Diligências e preparo (${n} de ~${prepIdeal(c)} blocos ideais)`,Math.round(prepCaso(c,n)*10)/10);
-  if(n<MIN_ATD[c.rar]) add(`Investigação insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
+  if((c.inst||1)===1&&n<MIN_ATD[c.rar]) add(`Investigação insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(c.revelado) add('Indícios de inocência',-25);
   if(S.p.cargo>=2) add('Experiência no tribunal',3);
   if(S.energia<30) add('Cansaço',-10);
@@ -1765,7 +1769,7 @@ async function fimSemanaMP(){
     P.recursos=P.recursos.filter(r=>r.semanas>0);
     // erro judiciário vem à tona
     for(const e of [...P.erros]) if(Math.random()<.12){
-      P.erros=P.erros.filter(x=>x!==e); const d=-2*RAR[e.rar].perda;
+      P.erros=P.erros.filter(x=>x!==e); const d=-RAR[e.rar].perda;
       S.prest=clamp(S.prest+d,0,100); S.integ=clamp(S.integ-15,0,100);
       notas.push(`<b class="lo">Erro judiciário:</b> provas novas mostram que o condenado em “${esc(e.titulo)}” era inocente. ${sgn(d)} reputação e −15 de integridade.`);
       addLog(`Erro judiciário em “${e.titulo}”. ${sgn(d)} reputação.`,'r');
@@ -1774,7 +1778,7 @@ async function fimSemanaMP(){
     let atras=0;
     for(const c of P.casos) if(c.fase==='inq'){ c.idade++; if(c.idade>c.meta) atras++; }
     for(const c of P.casos.filter(c=>c.fase==='inq'&&c.idade>c.meta+6)){
-      const d=-RAR[c.rar].perda; S.prest=clamp(S.prest+d,0,100);
+      const d=-RAR[c.rar].perda/2; S.prest=clamp(S.prest+d,0,100);
       notas.push(`O crime prescreveu em “${esc(c.titulo)}”: ${sgn(d)} reputação.`); addLog(`Prescrição em “${c.titulo}”. ${sgn(d)} reputação.`,'r'); }
     P.casos=P.casos.filter(c=>!(c.fase==='inq'&&c.idade>c.meta+6));
     if(atras){ S.prest=clamp(S.prest-.3*atras*fatorAtraso(),0,100); S.estresse=clamp(S.estresse+.5*atras,0,100); }
@@ -1789,7 +1793,7 @@ async function fimSemanaMP(){
     S.semana++; S.agenda.estudo=0; S.agenda.lazer=0; S.disp=BLOCOS-blocosPerdidos();
     if(S.estresse>=100){ S.disp=10; S.estresse=70; addLog('Burnout: você só terá 10 blocos na próxima semana.','r'); }
     else if(S.energia<=0){ S.disp=14; addLog('Exaustão: você só terá 14 blocos na próxima semana.','r'); }
-    if(S.prest<=0) S.fim='cnmp';
+    if(S.prest<=0 && !probatorio()) S.fim='cnmp';
     if(!S.fim && promoOkMP() && !P.avisoPromo){ P.avisoPromo=true; addLog(`Você já pode pedir promoção a ${fem(CARGOS_MP[P.cargo+1].nome)}.`,'g'); }
     salvar(); render();
     if(S.fim){
@@ -1894,7 +1898,7 @@ function novoAssistido(){
     prazo:rint(1,4),prep:0,semana:0,mod:0,inst:1,acordoFalhou:false,hcFalhou:false};
 }
 function iniciarDP(cid){
-  S.carreira='defensor'; estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
+  S.carreira='defensor'; posse(); estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
   S.d={cargo:0,comarca:cid,casos:[],recursos:[],atendimentos:0,vitorias:0,derrotas:0,acordos:0,solturas:0,cartas:0};
   for(let i=0;i<10;i++) S.d.casos.push(novoAssistido());
 }
@@ -1902,7 +1906,7 @@ function calcDefesa(c){
   const items=[]; const add=(l,v)=>{ if(v) items.push([l,v]); };
   const skill=skillCaso(c), n=c.prep+(c.semana||0);
   if(n) add(`Atendimento e preparo (${n} de ~${prepIdeal(c)} blocos ideais)`,Math.round(prepCaso(c,n)*10)/10); else add('Sem atendimento prévio',-8);
-  if(n&&n<MIN_ATD[c.rar]) add(`Atendimento insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
+  if((c.inst||1)===1&&n&&n<MIN_ATD[c.rar]) add(`Atendimento insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(S.d.cargo>=1) add('Experiência na Defensoria',2*S.d.cargo);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
@@ -1953,7 +1957,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
       <dt>Assistido</dt><dd>${esc(c.assistido)}</dd>
       <dt>Parte contrária</dt><dd>${c.area==='penal'?'Ministério Público':c.adv==='estado'?'Poder público':ADV[c.adv].nome}</dd>
       <dt>Audiência</dt><dd>${c.prazo<=1?'<b class="mid">nesta semana</b>':`em ${c.prazo} semanas`}</dd>
-      <dt>Ganhar · perder</dt><dd><span class="hi">${sgn(R.ganho)}</span> · <span class="lo">${sgn(-R.perda/2)}</span> reputação</dd>
+      <dt>Ganhar · perder</dt><dd><span class="hi">${sgn(R.ganho/2)}</span> · <span class="lo">${sgn(-R.perda/2)}</span> reputação</dd>
     </dl>
     <div class="vs">
       <span>Dificuldade</span><div class="bar"><i style="width:${c.d}%;background:var(--loss)"></i></div><span class="num">${c.d}</span>
@@ -2020,7 +2024,7 @@ function resultadoDP(c,ok){
   const D=S.d, R=RAR[c.rar]; let d;
   // só conta para a promoção o atendimento adequado (com o mínimo de blocos para a complexidade); o precário rende metade da reputação
   const adequado=(c.prep||0)>=MIN_ATD[c.rar]; if(adequado) D.atendimentos++; else D.precarios=(D.precarios||0)+1;
-  if(ok){ d=(R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0))*(adequado?1:.5); D.vitorias++; if(c.preso) D.cartas++; }
+  if(ok){ d=(R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0))*(adequado?.5:.25); D.vitorias++; if(c.preso) D.cartas++; }
   else { d=-R.perda/2-(c.preso&&!c.prep?.5:0); D.derrotas++; }
   S.prest=clamp(S.prest+d,0,100); ganharXp(c,(ok?1:1.5)*.5);
   return d;
@@ -2114,7 +2118,7 @@ async function fimSemanaDP(){
     S.semana++; S.agenda.estudo=0; S.agenda.lazer=0; S.disp=BLOCOS-blocosPerdidos();
     if(S.estresse>=100){ S.disp=10; S.estresse=70; addLog('Burnout: você só terá 10 blocos na próxima semana.','r'); }
     else if(S.energia<=0){ S.disp=14; addLog('Exaustão: você só terá 14 blocos na próxima semana.','r'); }
-    if(S.prest<=0) S.fim='dp';
+    if(S.prest<=0 && !probatorio()) S.fim='dp';
     if(!S.fim && promoOkDP() && !D.avisoPromo){ D.avisoPromo=true; addLog(`Você já pode pedir promoção a ${fem(CARGOS_DP[D.cargo+1].nome)}.`,'g'); }
     salvar(); render();
     if(S.fim){
@@ -2258,7 +2262,7 @@ function removeFunc(id){ const U=S.u; U.equipe=U.equipe.filter(f=>f.id!==id); if
 function semanaEquipe(){ const U=S.u, linhas=[], carga=pendentes()/(trabalhadores().length+1), semGestor=U.equipe.length>4&&!gestorAtual();
   if(temSala('copa')) S.estresse=clamp(S.estresse-3,0,100);
   for(const f of U.equipe){ f.semanas++;
-    let dm=(60-f.moral)*.1+(temSala('copa')?3:0)-Math.max(0,carga-6)*.8-(semGestor?2:0);
+    let dm=(60-f.moral)*.1+(temSala('copa')?3:0)-Math.max(0,carga-8)*.5-(semGestor?2:0);
     if(f.salBase) dm+=(f.sal/f.salBase-1)*20;
     f.moral=clamp(f.moral+dm+rnd(-2,2),0,100); f.q=clamp(f.q+.15,0,95); }
   for(const f of [...U.equipe]) if(f.moral<25&&f.funcao!=='socio'&&Math.random()<.35){
