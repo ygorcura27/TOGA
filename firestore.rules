@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // save de cada jogador: só o dono lê e escreve (contas Google, não anônimas)
+    match /saves/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && request.resource.data.keys().hasOnly(['data', 'nome', 'semana', 'salvoEm', 'atualizado'])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 900000;
+    }
+
+    // Hall da Fama global: qualquer um lê; cada jogador logado (inclusive anônimo) só cria registros próprios
+    match /hall/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'nome', 'geracao', 'carreira', 'resumo', 'idade', 'prest', 'patrimonio', 'conq', 'pontos', 'motivo', 'data', 'criado'])
+        && request.resource.data.nome is string && request.resource.data.nome.size() <= 40
+        && request.resource.data.carreira is string && request.resource.data.carreira.size() <= 60
+        && request.resource.data.resumo is string && request.resource.data.resumo.size() <= 120
+        && request.resource.data.pontos is int && request.resource.data.pontos >= 0 && request.resource.data.pontos <= 5000
+        && request.resource.data.geracao is int && request.resource.data.idade is int
+        && request.resource.data.criado == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

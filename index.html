@@ -216,6 +216,9 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .hall li{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:5px}
 .hall li.top{border-color:var(--r-lendario);background:color-mix(in srgb,var(--r-lendario) 8%,transparent)}
 .hall li small{display:block;color:var(--muted);font-size:11.5px} .hall .pos{color:var(--muted)} .hall .pts{font-size:16px;color:var(--brass)}
+.conta-box:empty{display:none}
+.conta-box{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;font-size:12.5px;padding:9px 10px;border:1px dashed var(--line);border-radius:5px}
+.hall-online:empty,.hall-inicio:empty{display:none} .hall-online{display:flex;flex-direction:column;gap:6px}
 </style>
 
 <div id="app"></div>
@@ -422,7 +425,7 @@ function novoJogo(nome,espec,traits,sede='sp'){
   gerarOfertas(); addLog('Você abriu a sua sala. Escolha os primeiros casos e monte a agenda da semana.');
 }
 function addLog(t,k=''){S.log.unshift({w:S.semana,t,k}); S.log=S.log.slice(0,60);}
-function salvar(){try{localStorage.setItem('toga-proto',JSON.stringify(S));}catch(e){}}
+function salvar(){ if(S) S.salvoEm=Date.now(); try{localStorage.setItem('toga-proto',JSON.stringify(S));}catch(e){} if(window.TOGA_ONLINE) window.TOGA_ONLINE.salvar(S); }
 function carregar(){try{const r=localStorage.getItem('toga-proto'); return r?JSON.parse(r):null;}catch(e){return null;}}
 
 // ===================== CASOS =====================
@@ -891,6 +894,7 @@ function renderInicio(){
   app.innerHTML=`<header class="top"><div class="brand"><h1>Toga</h1><span>Protótipo · sistema de casos</span></div></header>
   <section class="panel" style="max-width:560px;margin:0 auto">
     <h2>Uma vida no Direito</h2>
+    ${contaHtml()}
     <p style="margin:0;color:var(--muted)">Comece na faculdade de Direito ou já formado. Advogue, faça concurso para juiz, promotor ou defensor, pesquise e dê aulas, construa um escritório, uma família e uma dinastia. Em cada caso, a sua skill enfrenta a dificuldade e a chance aparece antes do veredito.</p>
     <div class="field"><label class="label" for="genero">Gênero</label><select id="genero"><option value="f">Feminino</option><option value="m" ${escolha.genero==='m'?'selected':''}>Masculino</option></select></div>
     <div class="field"><label class="label" for="nome">Nome</label><input id="nome" value="${esc(escolha.nome)}" maxlength="30"></div>
@@ -905,7 +909,7 @@ function renderInicio(){
       <div class="start-traits">${Object.entries(TRAITS).map(([k,t])=>`<button class="chip ${escolha.traits.includes(k)?'on':''}" data-act="trait" data-v="${k}"><b>${t.nome}</b><br><span style="font-size:11px">${t.desc}</span></button>`).join('')}</div></div>
     <button class="btn brass" data-act="comecar" ${escolha.traits.length!==2?'disabled':''}>Começar</button>
   </section>
-  ${hallLer().vidas.length?`<div style="max-width:560px;margin:14px auto 0">${painelHall(5)}</div>`:''}`;
+  <div class="hall-inicio" style="max-width:560px;margin:14px auto 0">${hallLer().vidas.length||ON()?painelHall(5):''}</div>`;
 }
 
 // ===================== MODAL =====================
@@ -1136,7 +1140,7 @@ async function fimSemana(){
     salvar(); render();
     if(S.fim){
       await modal(`<h2 class="lo">${S.fim==='falencia'?'Falência':'Carreira encerrada'}</h2><p>${S.fim==='falencia'?'O caixa passou de −R$ 25 mil e o escritório fechou.':'Seu prestígio chegou a zero e nenhum cliente quer mais contratar você.'} Você durou ${S.semana-1} semanas, com ${S.vitorias} vitórias e ${S.derrotas} derrotas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
-      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; try{localStorage.removeItem('toga-proto');}catch(e){} render();
+      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; apagarSave(); render();
     } else if(!S.metaAtingida && S.prest>=META_PREST){
       S.metaAtingida=true; salvar();
       await modal(`<h2 class="hi">Meta atingida</h2><p>Em ${S.semana-1} semanas você chegou a ${Math.round(S.prest)} de prestígio, com ${brl(S.caixa)} em caixa. No jogo completo, aqui você abriria o escritório de verdade e contrataria a primeira equipe.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
@@ -1411,7 +1415,7 @@ async function fimSemanaJuiz(){
     if(S.fim){
       const txt=S.fim==='cassado'?'A corregedoria descobriu a propina. Você perdeu o cargo e responde a processo criminal.':'Sua reputação chegou a zero e o Conselho Nacional de Justiça afastou você do cargo.';
       await modal(`<h2 class="lo">Carreira encerrada</h2><p>${txt} Foram ${J.sentencas} sentenças em ${S.semana-1} semanas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
-      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; try{localStorage.removeItem('toga-proto');}catch(e){}
+      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; apagarSave();
     }
   } finally { ocupado=false; render(); }
 }
@@ -1769,7 +1773,7 @@ async function fimSemanaMP(){
     salvar(); render();
     if(S.fim){
       await modal(`<h2 class="lo">Carreira encerrada</h2><p>Sua reputação chegou a zero e o Conselho Nacional do Ministério Público afastou você. Foram ${P.condenacoes} condenações em ${S.semana-1} semanas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
-      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; try{localStorage.removeItem('toga-proto');}catch(e){}
+      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; apagarSave();
     }
   } finally { ocupado=false; render(); }
 }
@@ -2090,7 +2094,7 @@ async function fimSemanaDP(){
     salvar(); render();
     if(S.fim){
       await modal(`<h2 class="lo">Carreira encerrada</h2><p>Sua reputação chegou a zero e a corregedoria da Defensoria afastou você. Foram ${D.atendimentos} atendimentos em ${S.semana-1} semanas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
-      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; try{localStorage.removeItem('toga-proto');}catch(e){}
+      hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; apagarSave();
     }
   } finally { ocupado=false; render(); }
 }
@@ -2556,7 +2560,7 @@ async function fimVida(motivo){
     ${herd.length?`<p>Quem continua a história da família? O herdeiro recebe metade do patrimônio, o sobrenome famoso e parte das skills.</p>
       <div class="opts">${herd.map(f=>`<button class="opt" data-mv="${f.id}"><span>${esc(f.nome)}</span><b class="num">${idadeFilho(f)} anos</b><small>Relação ${Math.round(f.rel)}${f.direito?' · estudou Direito: começa com skills melhores':''}</small></button>`).join('')}</div>`
       :'<p style="color:var(--muted)">Nenhum filho adulto com boa relação para continuar a dinastia.</p>'}`,[{t:'Encerrar a dinastia',v:'fim',cls:'ghost'}]);
-  if(!herd.length||v==='fim'||!v){ S=null; try{localStorage.removeItem('toga-proto');}catch(e){} return; }
+  if(!herd.length||v==='fim'||!v){ S=null; apagarSave(); return; }
   const f=herd.find(x=>String(x.id)===v);
   const car=await modal(`<h2>Que carreira ${esc(f.nome.split(' ')[0])} vai seguir?</h2>`,
     [{t:'Advocacia',v:'adv'},{t:'Juiz',v:'juiz'},{t:'Promotor',v:'promotor'},{t:'Defensor',v:'defensor'}]);
@@ -3273,7 +3277,7 @@ function hallRegistrar(motivo){ if(!S||S.hallOk===S.semana) return; S.hallOk=S.s
   const pat=patrimonio(), ger=S.vida.geracao, H=hallLer();
   H.vidas.push({nome:S.nome,genero:S.genero,geracao:ger,carreira:descCarreira(),resumo:resumoCarreira(),idade:idade(),prest:Math.round(S.prest),patrimonio:pat,
     conq:CONQUISTAS.filter(c=>S.cq.ids[c.id]&&S.cq.ids[c.id].ger===ger).length,pontos:legadoPontos(pat),motivo,data:new Date().toISOString().slice(0,10)});
-  H.vidas.sort((a,b)=>b.pontos-a.pontos); H.vidas=H.vidas.slice(0,50); hallGravar(H); }
+  const nova=H.vidas[H.vidas.length-1]; H.vidas.sort((a,b)=>b.pontos-a.pontos); H.vidas=H.vidas.slice(0,50); hallGravar(H); if(window.TOGA_ONLINE) window.TOGA_ONLINE.enviarHall(nova); }
 const MOTIVO_HALL={morte:'faleceu',compulsoria:'compulsória',aposentadoria:'aposentou-se',falencia:'falência',encerrada:'carreira encerrada'};
 function painelHall(lim=10){ const H=hallLer();
   return `<section class="panel"><div class="panel-head"><h2>Hall da Fama</h2><span class="label">${H.vidas.length} vida${H.vidas.length===1?'':'s'} registrada${H.vidas.length===1?'':'s'}</span></div>
@@ -3281,7 +3285,8 @@ function painelHall(lim=10){ const H=hallLer();
       <div><b>${esc(v.nome)}</b> <span class="label">${v.geracao}ª geração · ${v.idade} anos · ${MOTIVO_HALL[v.motivo]||v.motivo}</span><small>${v.carreira} · ${v.resumo} · prestígio ${v.prest} · ${brl(v.patrimonio)} · ${v.conq} conquista${v.conq===1?'':'s'}</small></div>
       <b class="num pts">${v.pontos}</b></li>`).join('')}</ol>
       <p style="margin:0;font-size:12px;color:var(--muted)">Pontos de legado: prestígio final + pontos das conquistas obtidas na vida + 1 ponto por R$ 100 mil de patrimônio (até 200).</p>`
-    :'<p style="margin:0;color:var(--muted)">Nenhuma vida encerrada ainda. Quando uma carreira terminar, por morte, aposentadoria ou falência, ela entra aqui, mesmo depois de apagar o save.</p>'}</section>`; }
+    :'<p style="margin:0;color:var(--muted)">Nenhuma vida encerrada ainda. Quando uma carreira terminar, por morte, aposentadoria ou falência, ela entra aqui, mesmo depois de apagar o save.</p>'}
+    <div class="hall-online" data-lim="${lim}"></div></section>`; }
 
 function renderConquistas(){ cqCheck(); const Q=S.cq, H=hallLer(), feitas=CONQUISTAS.filter(c=>Q.ids[c.id]).length, ger=S.vida.geracao;
   const card=c=>{ const u=Q.ids[c.id], ant=!u&&H.ids[c.id], p=!u&&c.prog?(()=>{ try{ return c.prog(); }catch(e){ return null; } })():null;
@@ -3297,6 +3302,7 @@ function renderConquistas(){ cqCheck(); const Q=S.cq, H=hallLer(), feitas=CONQUI
         <dl class="meta"><dt>Pontos de legado</dt><dd class="num">${legadoPontos(patrimonio())}</dd><dt>Conquistas desta vida</dt><dd class="num">${CONQUISTAS.filter(c=>Q.ids[c.id]&&Q.ids[c.id].ger===ger).length}</dd>
           <dt>Carreiras na família</dt><dd>${Q.car.length?Q.car.map(k=>({adv:'advocacia',juiz:'magistratura',promotor:'Ministério Público',defensor:'Defensoria',academico:'academia'})[k]).join(', '):'nenhuma ainda'}</dd>
           <dt>Gerações no STF</dt><dd class="num">${Q.stf.length}</dd></dl>
+        ${contaHtml()}
         ${S.vida.legado.length?`<span class="label">Gerações anteriores</span><ul class="log">${S.vida.legado.map(r=>`<li><span class="w">${r.geracao}ª</span><span>${esc(r.nome)} · ${r.carreira} · ${brl(r.patrimonio)}</span></li>`).join("")}</ul>`:''}
       </section>
       ${painelHall()}
@@ -3388,7 +3394,9 @@ app.addEventListener('click',e=>{
   if(a==='mpAcordo'){ mpAcordo(id); return; }
   if(a==='mpArquivar'){ mpArquivar(id); return; }
   if(a==='antecipar'){ antecipar(id); return; }
-  if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; try{localStorage.removeItem('toga-proto');}catch(e){} render(); } }); return; }
+  if(a==='login'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.login().catch(err=>modal(`<h2>Não foi possível entrar</h2><p>${esc(err.message||err)}</p>`,[{t:'Ok',v:1}])); return; }
+  if(a==='logout'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.logout(); return; }
+  if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }
   salvar(); render();
 });
 app.addEventListener('keydown',e=>{
@@ -3396,6 +3404,34 @@ app.addEventListener('keydown',e=>{
 app.addEventListener('change',e=>{ if(e.target.id==='genero'&&!S){ const n=document.getElementById('nome'); if(n&&['Ana Ribeiro','André Ribeiro'].includes(n.value)) n.value=e.target.value==='m'?'André Ribeiro':'Ana Ribeiro'; return; }
   if(e.target.dataset.act==='autoDist'&&S){ S.u.auto=e.target.checked; salvar(); return; }
   if(e.target.dataset.act==='estudoSkill'&&S){ S.agenda.estudoSkill=e.target.value; salvar(); } });
+
+// ===================== ONLINE (Firebase, só na versão do Netlify) =====================
+// window.TOGA_ONLINE é criado por web/online.js; sem ele, tudo abaixo vira no-op e o jogo segue offline
+const ON=()=>window.TOGA_ONLINE&&window.TOGA_ONLINE.ativo?window.TOGA_ONLINE:null;
+function apagarSave(){ try{localStorage.removeItem('toga-proto');}catch(e){} const o=ON(); if(o) o.apagar(); }
+function contaInner(){ const o=ON(); if(!o) return '';
+  return o.logado?`<span>Conectado como <b>${esc(o.nome)}</b> · o progresso é salvo na nuvem.</span><button class="btn ghost" data-act="logout">Sair</button>`
+    :`<span>Entre com Google para salvar o progresso na nuvem e continuar em outro aparelho.</span><button class="btn" data-act="login">Entrar com Google</button>`; }
+const contaHtml=()=>`<div class="conta-box">${contaInner()}</div>`;
+async function preencherHallOnline(){ const els=document.querySelectorAll('.hall-online'), o=ON(); if(!els.length) return;
+  if(!o){ els.forEach(el=>el.innerHTML=''); return; }
+  let L; try{ L=await o.topHall(20); }catch(e){ els.forEach(el=>el.innerHTML='<p class="label" style="margin:0">Ranking online indisponível agora.</p>'); return; }
+  els.forEach(el=>{ const lim=+el.dataset.lim||10;
+    el.innerHTML=`<span class="label">Ranking online · todos os jogadores</span>${L.length?`<ol class="hall">${L.slice(0,lim).map((v,i)=>`<li class="${i===0?'top':''}"><span class="num pos">${i+1}</span>
+      <div><b>${esc(v.nome)}</b>${v.meu?' <span class="label hi">você</span>':''} <span class="label">${v.geracao}ª geração · ${v.idade} anos · ${MOTIVO_HALL[v.motivo]||esc(v.motivo)}</span><small>${esc(v.carreira)} · ${esc(v.resumo)} · prestígio ${v.prest} · ${brl(v.patrimonio)} · ${v.conq} conquista${v.conq===1?'':'s'}</small></div>
+      <b class="num pts">${v.pontos}</b></li>`).join('')}</ol>`:'<p style="margin:0;color:var(--muted)">Ninguém entrou no ranking online ainda. Seja a primeira vida registrada.</p>'}`; }); }
+function atualizarOnline(){ const hi=document.querySelector('.hall-inicio'); if(hi&&!hi.innerHTML.trim()&&ON()) hi.innerHTML=painelHall(5);
+  document.querySelectorAll('.conta-box').forEach(el=>el.innerHTML=contaInner()); preencherHallOnline(); }
+window.addEventListener('toga-online',atualizarOnline);
+{ const r0=render; render=function(){ r0(); atualizarOnline(); }; }
+window.TOGA_JOGO={
+  estado:()=>S,
+  carregarEstado(d){ start({S:d}); if(S) salvar(); },
+  async escolherSave(n,l){ const q=x=>`${esc(x.nome)} · semana ${x.semana}${x.salvoEm?' · '+new Date(x.salvoEm).toLocaleString('pt-BR'):''}`;
+    return await modal(`<h2>Qual save usar?</h2><p>Há um jogo salvo na nuvem diferente do jogo deste navegador. O que você não escolher será substituído.</p>
+      <div class="opts"><button class="opt" data-mv="nuvem"><span>Save da nuvem</span><small>${q(n)}</small></button>
+      <button class="opt" data-mv="local"><span>Save deste navegador</span><small>${q(l)}</small></button></div>`,[])||'local'; },
+};
 
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
