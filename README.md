@@ -10,10 +10,14 @@ Protótipo jogável de simulação de carreira jurídica. Tudo roda num único a
 - **Estrutura e equipe:** planta em blueprint, cômodos, contratação, gestor, organização, finanças do escritório e orçamento público por efetividade.
 - **Vida pessoal:** idade, saúde, felicidade, parceiro com personalidade, casamento, filhos, moradia, aposentadoria e dinastia.
 - **Academia:** especialização, mestrado, doutorado, artigos, livros, docência e palestras.
+- **Finanças pessoais:** casa e carro com financiamento, investimentos e imóveis para alugar.
+- **Amigos e rivais da faculdade** que seguem carreira e cruzam o seu caminho.
+- **Conquistas da dinastia e Hall da Fama.**
 
 ## Documentos
-- `docs/GDD.md`: documento de design. Atenção: está desatualizado em relação ao protótipo (não descreve estrutura e equipe, varas, promotor, defensor, exoneração, vida pessoal, faculdade nem academia).
+- `docs/GDD.md`: documento de design, atualizado com os sistemas e números do protótipo; a seção 14 reúne a visão de produto ainda não implementada.
 - `docs/ideia-inicial-lexsystem.md`: primeira ideia, inspirada no MetroSystem.
 
-## Versão publicada
-https://claude.ai/artifact/5mYeCmyvi3t7fpJi4qQm1R (privada; compartilhe pelo menu Share).
+## Como jogar
+- Versão publicada: https://claude.ai/artifact/5mYeCmyvi3t7fpJi4qQm1R (privada; compartilhe pelo menu Share).
+- Ou baixe o `index.html` e abra no navegador. O progresso fica salvo no próprio navegador.

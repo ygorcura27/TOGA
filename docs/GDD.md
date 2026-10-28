@@ -1,756 +1,498 @@
-# TOGA — Uma Vida no Direito
+# TOGA: Uma vida no Direito
 
-> **Game Design Document (GDD) + especificação técnica**
-> Título internacional: **TOGA: A Life in Law** (a palavra "toga" é reconhecida em PT, EN, IT, FR e ES).
-> Inspiração de partida: **MetroSystem**. Dele vêm o mapa como tabuleiro e a rede que cresce visualmente. O resto é original: simulação de vida, carreira jurídica, gestão de escritório e batalhas de argumentos.
+> **Documento de design (GDD)**, atualizado para refletir o protótipo jogável (`index.html`).
+> As seções 1 a 13 descrevem o que **já está implementado**, com os números usados no código. A seção 14 reúne o que ainda é **visão de produto**: ideias do design original que o protótipo não cobre.
+> Título internacional pensado: **TOGA: A Life in Law**. Inspiração de partida: **MetroSystem** (o mapa como tabuleiro e a rede que cresce).
 
 ---
 
-## 0. Pitch
+## 0. Pitch e pilares
 
-> **"Da primeira aula de Direito até a Suprema Corte, ou até um escritório com bandeira em cinco continentes."**
+> **"Da primeira aula de Direito até o Supremo, ou até um escritório com bandeira em outro continente. E depois, o seu filho."**
 
-Você escolhe **onde estudar** (EUA, Brasil, Inglaterra, Itália, França ou Portugal). Cada país segue o próprio sistema jurídico, com provas, cargos e carreiras próprios. Você se forma, encara o exame da ordem ou um concurso e segue um de quatro caminhos: **Advogado, Promotor, Juiz ou Defensor Público**. No caminho você vence casos com skill, preparação e boas apostas de risco, cuida da vida pessoal (saúde, amor, família, dinheiro) e, se for advogado, transforma uma sala alugada em uma firma global.
+Você entra na faculdade de Direito aos 18 anos (ou começa já formado), passa na OAB ou num concurso e segue uma carreira: **advocacia, magistratura, Ministério Público, Defensoria ou academia**. Cada caso é uma aposta com a chance na tela: **skill × dificuldade × chance de vitória**. Fora do tribunal, você cuida da saúde, do namoro, dos filhos, da casa, dos investimentos e dos colegas da faculdade. Quando a vida acaba, um filho pode continuar a dinastia.
 
-### 0.1 Pilares de design
-1. **Fácil de começar, difícil de largar.** Cada sistema é raso sozinho, mas todos se conectam. No máximo 5 medidores visíveis por tela.
-2. **Visual primeiro.** Tudo o que muda no jogo muda também na tela: o escritório cresce, o mapa acende, a roupa do personagem melhora, a cidade troca.
-3. **Tempo é a moeda real.** A agenda semanal força escolhas entre carreira e vida, e é dessa tensão que o jogo vive.
-4. **Microgestão no começo, estratégia no topo.** No início você faz tudo com as próprias mãos; quanto mais você cresce, mais delega, e delegar tem risco.
-5. **Global, não regional.** Um núcleo universal (os 4 arquétipos) com uma "pele" local por país (nomes, provas, regras).
-6. **Sessões curtas, metas longas.** Um caso dura de 30 segundos a 3 minutos, uma semana de jogo de 3 a 5 minutos, uma carreira inteira de 15 a 30 horas.
-
-### 0.2 Referências de sensação
-| Jogo | O que pegar |
-|------|-------------|
-| MetroSystem | Mapa como tabuleiro; rede de filiais ligada por linhas que acendem |
-| BitLife / The Sims | Vida pessoal, eventos, relacionamentos, ciclo de vida |
-| Two Point Hospital | Construir salas, contratar, satisfação da equipe, humor visual |
-| Game Dev Tycoon | Crescer da garagem até a sede, decisões de negócio simples |
-| Ace Attorney | Drama no tribunal e retratos expressivos (só na apresentação) |
-| XCOM | Percentual de sucesso na tela antes de agir; a tensão da rolagem |
-| Football Manager (versão leve) | Gestão de pessoas, atributos, delegação |
+**Pilares**
+1. **Fácil de começar, difícil de largar.** Cada sistema é raso sozinho, mas todos se conectam.
+2. **A chance sempre visível e explicada.** Nenhum resultado é surpresa matemática: o jogador vê cada bônus e cada penalidade antes de agir.
+3. **Tempo é a moeda real.** A agenda de 21 blocos por semana força a escolha entre carreira e vida.
+4. **Microgestão no começo, delegação no topo.** No início você faz tudo; depois contrata, escolhe gestor e organiza a equipe.
+5. **Metas longas.** Promoções, filiais, títulos acadêmicos, família, conquistas e o Hall da Fama dão motivo para "só mais uma semana" e "só mais uma geração".
 
 ---
 
 ## 1. Os três loops
 
 ```
-LOOP CURTO (0,5–3 min) ─ um CASO
-  Receber caso → Ver a CHANCE (skill × dificuldade) → Preparar (tempo, equipe, apoios, estratégia) → VEREDITO → Recompensas
+LOOP CURTO · um CASO
+  Oferta → ver a CHANCE → preparar (blocos, apoios, estratégia) → audiência
+  (reviravolta, momento decisivo) → VEREDITO → honorários/reputação → recurso?
 
-LOOP MÉDIO (1 semana de jogo ≈ 3–5 min)
-  Planejar AGENDA (21 blocos) → Executar casos, estudo e vida → Eventos e dilemas → Fechamento semanal (dinheiro, XP, humor)
+LOOP MÉDIO · uma SEMANA
+  Planejar a agenda (21 blocos) → aceitar casos → fim de semana: audiências,
+  acordos, finanças, equipe, academia, vida pessoal, amigos → eventos e escolhas
 
-LOOP LONGO (anos de jogo ≈ horas)
-  Faculdade → Exame/Concurso → Escada da carreira → Escritório e expansão / promoções e remoções
-  → Topo da carreira → Aposentadoria → LEGADO (jogar com herdeiro, com bônus)
+LOOP LONGO · uma VIDA (10 semanas = 1 ano de idade)
+  Faculdade → OAB/concurso → carreira e promoções → escritório e filiais
+  → família, patrimônio, títulos → aposentadoria/morte → HERDEIRO
 ```
-
-Cada loop alimenta o seguinte. Casos dão XP, dinheiro e reputação. A agenda define quantos casos você pega e como fica a sua vida. A carreira libera casos maiores, prédios maiores e o mapa-múndi.
 
 ---
 
-## 2. Criação de personagem e faculdade
+## 2. Início de jogo
 
-### 2.1 Criação
-- **Aparência:** editor simples com estilo visual próprio (seção 13).
-- **Origem social:** Modesta, Classe média ou Abastada. Muda o dinheiro inicial, a rede de contatos e as dívidas estudantis. Personagem rico começa com vantagem, mas recebe menos bônus de "superação".
-- **Traços** (escolha 2 de 12): Orador nato, Rato de biblioteca, Carismático, Workaholic, Ansioso, Ético inflexível, Pragmático, Poliglota, Competitivo, Empático, Preguiçoso (dá bônus de felicidade), Sortudo.
-- **País de estudo:** define o sistema jurídico de **toda a primeira carreira**. Revalidar depois é possível (seção 9.4).
+### 2.1 Tela inicial
+- **Gênero** (primeiro campo), **nome**, **ponto de partida** (faculdade aos 18 anos, recomendado, ou já formado), **faculdade**, **carreira** (se já formado), **área de especialização** (+15 na skill; para juízes, define a vara) e **cidade da sede ou comarca**.
+- **Traços (escolha 2):**
 
-### 2.2 Faculdade (o tutorial disfarçado, 1 a 2 horas)
-A faculdade roda em **semestres**. Cada semestre é uma agenda simplificada:
+| Traço | Efeito |
+|---|---|
+| Orador nato | +5 em casos com júri; +8 de Oratória nos momentos decisivos |
+| Rato de biblioteca | Estudo rende 50% mais |
+| Ansioso | −5 em casos épicos e lendários; estresse sobe 25% mais rápido |
+| Carismático | +10 na chance de acordo |
+| Workaholic | Trabalho gasta 30% menos energia |
+| Sortudo | +3 de chance em todo caso |
 
-| Atividade | Efeito |
-|-----------|--------|
-| Aulas / estudo | Nota (GPA/CR) e skills de Pesquisa e Escrita |
-| Clínica jurídica / Núcleo de prática | Primeiros mini casos reais, que ensinam o sistema de chances |
-| Competição de júri simulado (*moot court*) | Oratória; troféu que vale reputação inicial |
-| Estágio | Dinheiro, contatos e chance de efetivação |
-| Vida social / festas | Felicidade, relacionamentos e possível par romântico |
-| Trabalho de meio período | Dinheiro, ao custo de estudo |
-| Intercâmbio (evento) | +Idioma, +contato internacional; desbloqueia um segundo país mais cedo |
+- Abaixo do formulário aparece o **Hall da Fama** (seção 12), quando já houver vidas registradas.
 
-**Tier da faculdade:** a nota do vestibular (ou do LSAT/A-levels/bac) define o tier (1 a 3). Tier alto traz mais contatos de elite e estágios melhores, mas a mensalidade e a pressão também são maiores.
+### 2.2 Faculdade (modo estudante)
+| Faculdade | Mensalidade/semana | Observação |
+|---|---|---|
+| Universidade pública | grátis | exige vestibular (45% de base), +8 de prestígio, mais difícil |
+| Particular de ponta | R$ 700 | +6 de prestígio |
+| Particular | R$ 300 | mais fácil, sem prestígio extra |
 
-### 2.3 Exame da ordem e concursos
-São dois minigames, com sabor diferente por país:
-- **Exame da ordem / Bar / SQE / CRFPA / Esame di Stato:** 4 a 12 semanas de **plano de estudos** (blocos da agenda nas "matérias") e depois uma **prova** resolvida pelo sistema de chances (seção 5.8).
-- **Concurso** (Juiz, Promotor, Defensor nos países onde existe): mais longo (3 a 18 meses), em fases: objetiva, discursiva, oral e títulos. Cada reprovação custa tempo e moral, mas dá **+bônus de experiência** para a próxima tentativa, o que suaviza a frustração.
-- **Risco de burnout:** estudar demais sem descanso faz o estresse subir e pode levar a passar mal no dia da prova.
-
----
-
-## 3. Sistema Jurídico Global
-
-### 3.1 Núcleo universal: 4 arquétipos
-| Arquétipo | Fantasia | Minigame próprio | Ritmo |
-|-----------|----------|------------------|-------|
-| ⚖️ **Advogado** | Ganhar clientes e dinheiro e construir um império | Escolher e preparar casos + gestão de escritório | Empreendedor |
-| 🔎 **Promotor** | Investigar, acusar e fazer justiça | Diligências que reduzem a dificuldade + decidir denunciar, arquivar ou acordo | Detetive |
-| 🛡️ **Defensor Público** | Defender quem não pode pagar, com volume gigante | Triagem de Pauta (distribuir pouco tempo entre muitos casos) | Herói sobrecarregado |
-| 🏛️ **Juiz** | Decidir com justiça e sem ser reformado | Chance de Acerto por decisão + gestão de acervo | Estratégico e calmo |
-
-Trocar de carreira é permitido e é uma das melhores histórias do jogo. Exemplos: advogado que vira juiz pelo concurso (civil law), por nomeação depois de anos de prática (common law) ou pelo "quinto constitucional" no Brasil; promotor que sai e abre um escritório criminal.
-
-### 3.2 Famílias jurídicas (regras que mudam a jogabilidade)
-| Família | Países | Efeito no jogo |
-|---------|--------|----------------|
-| **Common law** | EUA, Inglaterra | **Oratória** e **precedentes** pesam mais na chance; **Júri** frequente (resultado menos previsível); acordo penal (*plea bargain*) muito comum nos EUA |
-| **Civil law** | Brasil, Itália, França, Portugal | **Escrita** e **Código** pesam mais na chance; resultado mais previsível; juiz conduz mais a instrução; júri só para crimes específicos |
-
-### 3.3 Os 6 países do lançamento (versão simplificada para o jogo)
-
-> ⚠️ É uma simplificação lúdica. Antes do lançamento, cada país deve ser validado por um consultor jurídico local. Os nomes dos cargos ficam em `data/countries/*.json` para ajuste fácil.
-
-| | 🇺🇸 EUA | 🇧🇷 Brasil | 🇬🇧 Inglaterra & País de Gales | 🇮🇹 Itália | 🇫🇷 França | 🇵🇹 Portugal |
-|---|---|---|---|---|---|---|
-| Família | Common law | Civil law | Common law | Civil law | Civil law | Civil law |
-| Formação | Graduação (4a) + LSAT + **J.D.** (3a) | **Direito** (5a) | **LLB** (3a) ou conversão | **Laurea magistrale in Giurisprudenza** (5a) | **Licence + Master** (5a) | **Licenciatura** (4a) + mestrado opcional |
-| Habilitação | **Bar Exam** do estado | **Exame da OAB** | Solicitor: **SQE1+SQE2** + 2 anos de experiência · Barrister: Bar course + **pupillage** | **Praticantato** (18 meses) + **Esame di Stato** | **CRFPA** + escola de advogados (CAPA) | **Estágio na Ordem dos Advogados** + exame |
-| Advogado | Attorney (Associate → Partner) | Advogado (Associado → Sócio) | **Solicitor** ou **Barrister** (→ King's Counsel) | Avvocato | Avocat | Advogado |
-| Promotor | Assistant DA → **District Attorney** (geralmente eleito) / US Attorney | **Promotor de Justiça** (concurso MP) → Procurador de Justiça | **Crown Prosecutor** (CPS) | **Pubblico Ministero** (magistrado, concorso) | **Procureur** (magistrat du parquet, ENM) | **Procurador do MP** (CEJ) |
-| Juiz | Eleito ou nomeado (estadual); federal nomeado pelo Presidente e confirmado pelo Senado | **Concurso** da magistratura | **Nomeação** (Judicial Appointments Commission) após anos de prática | **Concorso** em magistratura | **Concurso ENM** (juge du siège) | **CEJ** (magistratura judicial) |
-| Defesa pública | **Public Defender** | **Defensor Público** (concurso) | Assistência jurídica (*legal aid*) / duty solicitor | Difensore d'ufficio / patrocínio estatal | Avocat commis d'office / *aide juridictionnelle* | Defensor oficioso / apoio judiciário |
-| Topo | Suprema Corte (SCOTUS) / Attorney General | STF / Procurador-Geral da República | UK Supreme Court / Director of Public Prosecutions | Corte di Cassazione / Corte Costituzionale | Cour de cassation / Conseil constitutionnel | Supremo Tribunal de Justiça / Tribunal Constitucional |
-| Mecânica exclusiva | **Eleições** para DA e juiz (campanha e marketing) | **Concursos** em fases e "quinto constitucional" | **Escolha Solicitor × Barrister** e "*Chambers*" | Magistrado pode alternar entre juiz e PM (sujeito à reforma de separação de carreiras) | Juiz e promotor no mesmo corpo da magistratura | Carreiras judicial e MP separadas, ambas formadas no CEJ |
-
-**Defesa pública nos países sem cargo próprio:** a carreira "Defensor" vira **Advogado de Assistência Jurídica**. A mecânica é a mesma (volume alto, Triagem de Pauta), mas o pagamento vem do Estado por caso e você mantém a prática privada em paralelo.
-
-### 3.4 Como um país é implementado (orientado a dados)
-Cada país é um arquivo JSON que preenche o núcleo universal:
-```json
-{
-  "id": "BR",
-  "nome": "Brasil",
-  "familia": "civil_law",
-  "moeda": "BRL",
-  "idiomas": ["pt"],
-  "formacao": { "curso": "Direito", "anos": 5, "notaEntrada": "vestibular" },
-  "habilitacao": { "advogado": { "tipo": "exame", "nome": "Exame da OAB", "fases": ["objetiva", "pratica"] } },
-  "carreiras": {
-    "advogado": { "escada": ["Estagiário", "Advogado Júnior", "Pleno", "Sênior", "Sócio", "Sócio-Gestor"] },
-    "promotor": { "entrada": "concurso", "requisitoAnos": 3,
-                  "escada": ["Promotor Substituto", "Promotor de Entrância Inicial", "Promotor de Entrância Final", "Procurador de Justiça", "Procurador-Geral"] },
-    "juiz":     { "entrada": "concurso", "requisitoAnos": 3,
-                  "escada": ["Juiz Substituto", "Juiz Titular", "Desembargador", "Ministro do STJ", "Ministro do STF"] },
-    "defensor": { "entrada": "concurso", "escada": ["Defensor Substituto", "Defensor Titular", "Defensor de 2ª instância", "Defensor Público-Geral"] }
-  },
-  "modificadores": { "peso_codigo": 1.3, "peso_precedente": 0.9, "chance_juri": 0.05, "fase_escrita": 1.4 },
-  "eventosExclusivos": ["quinto_constitucional", "greve_judiciario", "recesso_forense"],
-  "mapa": "maps/br.json"
-}
-```
-Um país novo vira DLC (Alemanha, Espanha, Japão, Canadá, Argentina...) sem mexer no código.
+- **10 semestres** com notas, **CR**, controle de frequência e uma **mesada** de R$ 500 por semana.
+- **Estágio** com bolsa por bloco: escritório (R$ 90), gabinete de juiz (R$ 60), Ministério Público (R$ 60) ou Defensoria (R$ 50). O estágio gera **contatos** na carreira correspondente.
+- **Iniciação científica**: a cada 25 pontos de progresso sai um artigo B2.
+- **Núcleo de prática** e o **Exame da OAB** no fim do curso. Depois da formatura, o jogador escolhe a carreira, inclusive a **carreira acadêmica**.
+- Na faculdade nascem os **colegas** (seção 10): dois amigos e dois rivais.
 
 ---
 
-## 4. Carreiras em detalhe
+## 3. Casos: skill × dificuldade × chance
 
-### 4.1 ⚖️ Advogado
-- **Escada:** Estagiário → Júnior → Pleno → Sênior → Sócio → Sócio-Gestor → Managing Partner Global.
-- **Dois caminhos:**
-  - **Empregado** em uma firma de NPCs: salário fixo e casos atribuídos, com metas de horas faturáveis (*billable hours*). Seguro, mas o chefe pode ser tóxico.
-  - **Abrir o próprio escritório** (a qualquer momento depois da habilitação): risco alto, teto infinito, e libera o sistema de Escritório (seção 8).
-- **Especializações:** Penal, Cível, Família, Trabalho, Empresarial/M&A, Tributário, Propriedade Intelectual, Internacional, Direitos Humanos, Digital/Tech. Cada uma tem seu tipo de cliente, valor médio de causa e perks exclusivos.
+### 3.1 Raridade
+| Raridade | Dificuldade | Reputação (vitória / derrota) | Chance de a outra parte recorrer | Prazo (semanas) | XP |
+|---|---|---|---|---|---|
+| Comum | 10–30 | +1 / −2 | 15% | 2–3 | ×1 |
+| Incomum | 25–45 | +2 / −3 | 30% | 3–4 | ×1,3 |
+| Raro | 40–65 | +3 / −5 | 45% | 4–6 | ×1,6 |
+| Épico | 60–85 | +4 / −7 | 60% | 6–8 | ×2 |
+| Lendário | 80–100 | +6 / −10 | 80% | 8–10 | ×2,5 |
 
-### 4.2 🔎 Promotor
-- **Investigação:** um mural com fotos e documentos ligados por barbante vermelho (visual). Cada **diligência** (perícia, oitiva, quebra de sigilo) custa blocos ou orçamento e **reduz a dificuldade** do caso, com o efeito mostrado antes.
-- **Decisão por caso:** Denunciar, Arquivar ou propor Acordo (acordo penal, *plea bargain*, *composition pénale*...). Os indicadores são taxa de condenação, imagem pública e Justiça (punir inocente dá um golpe pesado na Integridade).
-- **Promoção = remoção:** subir na carreira obriga a mudar de comarca ou cidade no mapa, o que afeta família e relacionamentos. É dilema garantido.
-- **EUA:** o District Attorney é eleito, e a eleição vira um minigame de campanha a cada 4 anos.
+- A raridade sorteada depende do prestígio e do número de filiais. Casos lendários só aparecem com prestígio a partir de 65.
+- **Valor da causa** = 5.000 × 1,1^dificuldade × (0,8 a 1,2) × fator da cidade. Ele cresce exponencialmente com a dificuldade.
+- **Honorários: sempre 20% do valor da causa, pagos só na vitória.** Na derrota, só se perde reputação.
+- Os casos vêm de cerca de 50 modelos em 6 áreas (penal, cível, trabalho, família, empresarial e tributário), com a demanda ponderada pela cidade.
 
-### 4.3 🛡️ Defensor Público
-- **Minigame Triagem de Pauta:** chegam 30 casos por semana para 12 blocos de tempo. Você encaixa os casos como peças (estilo Tetris na agenda), priorizando réus presos, prazos e chances reais.
-- **Fantasia:** ser o herói sobrecarregado. Recompensa emocional, com cartas de agradecimento colecionáveis e histórias de clientes que voltam anos depois.
-- **Skill exclusiva, "Fazer muito com pouco":** casos simples resolvidos automaticamente com qualidade mínima.
-
-### 4.4 🏛️ Juiz
-- **Chance de Acerto:** cada processo mostra a dificuldade e a chance de a sua decisão ser mantida em recurso. Mais tempo no processo (ou um bom assessor) aumenta a chance, mas a fila cresce.
-- **Gestão de acervo:** uma fila de processos que cresce sem parar, e esta é a herança do MetroSystem: fluxo e vazão. Contratar e gerir **assessores** (gestão de pessoas também para juízes!) aumenta a vazão.
-- **Indicadores:** Taxa de Reforma (decisões derrubadas em recurso), Tempo Médio, Reputação e Integridade.
-- **Common law:** você cria precedentes. Uma boa decisão vira um **Precedente com o seu nome**, uma tese que outros advogados do mundo do jogo passam a usar (e você vê isso acontecer).
-
----
-
-## 5. Casos: Skill × Dificuldade × Chance (o coração do jogo)
-
-> Sem minigame de batalha. Cada caso é uma **aposta calculada**: você vê a chance de vitória antes de agir, decide quanto investir para melhorá-la e assiste ao veredito. A graça está em **escolher bem os casos, preparar bem e aceitar o risco**, como em XCOM ou Football Manager.
-
-### 5.1 Raridade dos casos
-| Raridade | Cor | Dificuldade | Valor da causa (BR) | Reputação se ganhar | Reputação se perder | Exemplo |
-|----------|-----|-------------|---------------------|---------------------|---------------------|---------|
-| Comum | ⚪ | 10–30 | R$ 13 mil – 87 mil | +1 | −2 | Cobrança, multa, divórcio consensual |
-| Incomum | 🟢 | 25–45 | R$ 54 mil – 365 mil | +2 | −3 | Demissão por justa causa, inventário litigioso |
-| Raro | 🔵 | 40–65 | R$ 226 mil – 2,4 mi | +3 (+ tese colecionável) | −5 | Fraude empresarial, homicídio culposo |
-| Épico | 🟣 | 60–85 | R$ 1,5 mi – 17 mi | +4 (+ mídia) | −7 | Recuperação judicial de multinacional |
-| Lendário | 🟠 | 80–100 | R$ 10 mi – 69 mi | +6 (+ troféu e cutscene) | −10 | **"O Caso do Século"** (evento roteirizado, 1 a 2 por carreira) |
-
-**Regras do dinheiro e da reputação** (Advogado):
-- **O valor da causa cresce com a dificuldade:** `valorCausa = 5.000 × 1,1^dificuldade` (±20% de variação), em moeda local ajustada pelo `fatorEconomico` do país.
-- **Honorários = sempre 20% do valor da causa, e só na vitória.** Perdeu, não recebe nada.
-- **Ganhou:** recebe os honorários e **um pouco** de reputação (coluna "se ganhar").
-- **Perdeu:** **perde** reputação (coluna "se perder"). Perder custa mais do que ganhar rende, então aceitar casos com chance baixa é uma aposta de verdade.
-- "Reputação" aqui é o **Prestígio** (seção 10), que traz casos maiores e melhores.
-
-Os casos vêm de **modelos procedurais** (partes, valor, área, dificuldade, reviravoltas) e de **Casos Roteirizados** escritos à mão, todos fictícios e inspirados em temas clássicos.
-
-### 5.2 Ficha do caso
-Cada caso aparece como um **cartão de processo** (visual de pasta, com carimbo de raridade):
-
+### 3.2 A chance
 ```
-┌───────────────────────────────────────────────┐
-│ 🔵 RARO · Penal · Fraude na Construtora Atlas │
-│ Cliente: Marcos Duarte (empresário)           │
-│ Valor da causa: R$ 1.260.000                  │
-│ Se ganhar: R$ 252.000 (20%) · +3 reputação    │
-│ Se perder: −5 reputação                       │
-│ Se ganhar, chance de recurso do outro: 60%    │
-│ Prazo: 6 semanas · Juiz: Dra. Helena (Rigorosa)│
-│                                               │
-│ Dificuldade ████████░░  58                    │
-│ Skills exigidas: Penal 50% · Análise 30% ·    │
-│                  Oratória 20%                 │
-│ Sua skill no caso ███████░░░  54              │
-│                                               │
-│ CHANCE DE VITÓRIA         ▶ 44% ◀             │
-│ [ Ver detalhes ]  [ Aceitar ]  [ Recusar ]    │
-└───────────────────────────────────────────────┘
+chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limitada a 5%–95%
 ```
+- **Skill do caso** é a média ponderada das skills que a área exige.
+- **Bônus visíveis na ficha:**
 
-- **Dificuldade (1–100):** combina complexidade, força do adversário, qualidade das provas e o perfil do juiz.
-- **Skills exigidas:** de 2 a 3 skills com pesos que somam 100%. A **skill no caso** é a média ponderada das suas (ou da equipe designada).
-- **Chance de vitória:** sempre visível e **sempre explicada**. "Ver detalhes" mostra cada bônus e penalidade, para que o jogador nunca sinta que o resultado foi arbitrário.
-
-### 5.3 Fluxo de um caso
-```
-1. OFERTA         O caso chega com a chance inicial → Aceitar ou Recusar (alerta de conflito de interesses)
-2. PREPARAÇÃO     Investir tempo, equipe, apoios e escolher a ESTRATÉGIA → a chance sobe (ou cai)
-3. REVIRAVOLTA    (opcional, 30% dos casos) Um evento muda a chance e pede uma decisão
-4. MOMENTO DECISIVO  Uma escolha na audiência, com o risco de cada opção visível
-5. VEREDITO       Animação da balança → Vitória (20% da causa + reputação) ou Derrota (− reputação)
-6. RECURSO?       Quem perdeu PODE recorrer, nunca é automático. A chance aparece antes (seção 5.7)
-```
-
-### 5.4 Como aumentar a chance (as alavancas do jogador)
-
-**a) Preparação: tempo na agenda**
-Cada bloco da agenda dedicado ao caso dá bônus, com retorno decrescente: +5, +4, +3, +2, +1... (até +15). Tempo gasto aqui é tempo tirado da vida pessoal ou de outros casos.
-
-**b) Equipe designada** (quando houver escritório)
-O caso pode ser conduzido por você, por um funcionário ou por uma dupla (o líder conta 70% e o apoio 30%). **Delegar usa as skills do funcionário**, e você vê a chance dele antes de delegar.
-
-**c) Apoios (custam dinheiro ou blocos)**
-| Apoio | Bônus | Custo |
-|---------|-------|-------|
-| Pesquisa de jurisprudência | +5 | 2 blocos |
-| Preparar testemunha | +5 | 1 bloco |
-| Perito / assistente técnico | +8 | $$ |
-| Parecer de jurista renomado | +10 | $$$ |
-| Correspondente local (caso em outra cidade) | evita −10 de "distância" | $ |
-| Tese colecionável equipada (seção 5.9) | +3 a +12 | — |
-| ⚠️ Atalho antiético (ex.: "esquecer" uma prova) | +20 | Risco de Integridade (seção 10) |
-
-**d) Estratégia** (escolha 1 por caso, como a postura do time no Football Manager)
-Os honorários são sempre 20%. A estratégia muda **a chance e a reputação**, nunca o percentual.
-
-| Estratégia | Chance | Reputação | Observação |
-|------------|--------|-----------|------------|
-| 🛡️ Conservadora | +15 | Vitória rende ×0,5 | Vitória "sem brilho"; para não perder cliente importante |
-| ⚖️ Equilibrada | 0 | ×1 | Padrão |
-| 🔥 Agressiva | −15 | Vitória ×2 · Derrota ×1,5 | Vitória vira notícia; a derrota também |
-| 🤝 Buscar acordo | fixa: 55% + Negociação/2 (máx. 95%) | +0 | O acordo fecha entre 50% e 80% do valor da causa (conforme Negociação) e os honorários são 20% do valor acordado. Resolve em 1 semana e não cabe recurso. Se o acordo falhar, o caso volta para o julgamento normal |
-
-**e) Modificadores automáticos** (aparecem nos detalhes)
 | Fonte | Efeito |
-|-------|--------|
-| Especialização na área (nível da árvore) | +0 a +10 |
-| Reputação (Prestígio) | (Prestígio − 50) / 10 |
-| Perfil do juiz | Rigoroso −5 em teses frágeis; Garantista +5 para a defesa; Formalista +5 se Escrita ≥ 60... |
-| Família jurídica | Common law: Oratória e precedentes pesam mais. Civil law: Escrita e Código pesam mais |
-| Júri (quando houver) | A chance é "comprimida" para o centro: `50 + (chance − 50) × 0,8`. O júri é menos previsível |
-| Estado pessoal | Energia < 30: −10 · Estresse > 70: −8 · Felicidade > 80: +3 |
-| Traços | Ex.: Orador nato +5 em casos com júri; Ansioso −5 em casos épicos e lendários |
+|---|---|
+| Preparação | Σ max(0, 6 − i) por bloco, com retorno decrescente; juiz impaciente reduz para 60% |
+| Apoios | pesquisa de jurisprudência +5 (2 blocos), preparar testemunha +5 (1 bloco), perito +8 (custo de 0,5% da causa), parecer de jurista +10 (1%), correspondente local +10 (só fora da sede), **atalho antiético +20** (risco de ser descoberto) |
+| Estratégia | conservadora +15 (reputação ×0,5 na vitória), equilibrada, agressiva −15 (reputação ×2 na vitória e ×1,5 na derrota), buscar acordo (20% de honorários sobre 50%–80% da causa) |
+| Prestígio | (prestígio − 50) / 10 |
+| Juiz | rigoroso −5, garantista +5 para a defesa no penal, formalista ±5 conforme a Escrita, pragmático +10 no acordo |
+| Estado pessoal | energia abaixo de 30: −10; estresse acima de 70: −8; felicidade acima de 80: +3; parceiro da área jurídica: +2 |
+| Distância | −10 se não houver escritório na cidade do caso |
+| Teses | 3 teses por área (+5 a +10), ganhas ao vencer casos raros ou melhores; valem as 3 melhores da área (4 com Pesquisa nível 2) |
+| Estrutura e equipe | organização, qualidade da equipe e biblioteca (+2) |
+| Colegas | um juiz amigo ou rival no caso, ou um advogado rival do outro lado |
+| Instância | −10 por instância acima da 1ª e ±10 conforme a decisão anterior |
 
-### 5.5 Reviravoltas e Momento Decisivo (decisões com risco visível)
-**Reviravolta** (aleatória, em cerca de 30% dos casos). Exemplos:
-- "A testemunha-chave mudou a versão." → −10. Opções: *Investigar o motivo* (2 blocos, 60% de anular a penalidade) ou *Seguir em frente*.
-- "Chegou um documento novo do adversário." → Opções: *Pedir prazo* (+0, adia 2 semanas) ou *Contestar na hora* (teste de Análise: +8 ou −8).
+- O **júri** comprime a chance em direção a 50%.
 
-**Momento Decisivo** (uma vez por caso, durante a audiência). Uma cena curta com 2 ou 3 opções, cada uma com a **própria chance mostrada**:
-```
-A testemunha da acusação hesita ao responder sobre o horário.
- ▸ Pressionar a contradição    (Oratória 58 vs 60 → 47%)  sucesso +12 · falha −8
- ▸ Pedir a juntada do registro (Pesquisa 70 vs 55 → 74%)  sucesso +6  · falha −2
- ▸ Não arriscar                                          ±0
-```
-Isso dá tensão e escolha sem virar um minigame. É o momento "uau" do caso.
+### 3.3 Fluxo do caso
+1. **Oferta:** 3 casos novos por semana, +1 por filial, +1 com recepção, além de indicações de amigos. Limite de 5 casos ativos, +1 por filial.
+2. **Preparação** ao longo das semanas, com os blocos da agenda e da equipe.
+3. **Antecipar audiência:** encerrar antes do prazo com a preparação acumulada até ali.
+4. **Audiência:**
+   - 30% de chance de uma **reviravolta**;
+   - um **momento decisivo**, em que o jogador escolhe entre opções com chance própria (Oratória, Análise, Negociação…);
+   - a **rolagem** com a animação da balança.
+5. **Resultado:**
+   - vitória **histórica**: 15% da faixa de vitória, com reputação em dobro;
+   - vitória;
+   - derrota;
+   - derrota **feia**: 5% piores rolagens, quando a chance era menor que 50%, com perda de reputação ×1,5.
+6. **Recurso:** quem perde **pode** recorrer, nunca automaticamente, e a chance de sucesso aparece antes da decisão. O recurso sobe pela 1ª instância, Tribunal, Tribunal Superior e **STF**.
 
-### 5.6 Veredito (a rolagem)
-- **Visual:** o tribunal escurece, a câmera aproxima e aparece uma **balança dourada** com a faixa verde do tamanho da sua chance. O ponteiro oscila e para, com a música crescendo e o martelo batendo. Botão "Pular" para os impacientes e "Resolver todos" para casos comuns em lote.
-- **Faixas de resultado** (sorteio `r` de 0 a 1):
-
-| Resultado | Condição | Efeito |
-|-----------|----------|--------|
-| 🏆 Vitória Histórica | r ≤ chance × 0,15 | Honorários de 20% + reputação ×2 + troféu; o adversário tem −25% de chance de recorrer |
-| ✅ Vitória | r ≤ chance | Honorários de 20% + reputação da tabela 5.1 |
-| ❌ Derrota | r > chance | Sem honorários e perde a reputação da tabela 5.1; você **pode** recorrer (5.7) |
-| 💥 Derrota feia | r > 0,95 e chance < 50% | Perda de reputação ×1,5 e o cliente reclama publicamente |
-
-- **Limites:** a chance final fica sempre entre **5% e 95%**. Nada é garantido e nada é impossível.
-- **Derrota ensina:** perder dá **+50% de XP** nas skills do caso, para suavizar a frustração e manter o "vou tentar de novo".
-- **Sem trapaça escondida:** a chance mostrada é a chance real. A confiança do jogador no número é o que sustenta o sistema.
-
-### 5.7 Recursos (apelação): quem perde **pode** recorrer
-> O recurso **nunca é automático**. Quem perde decide se recorre, e o jogo mostra a chance de cada lado antes.
-
-**Instâncias:** 1ª instância → 2ª instância (Tribunal) → Tribunal Superior/Suprema Corte (só para casos Raros ou acima). O nome de cada tribunal vem do arquivo do país.
-
-**Quando VOCÊ perde: você escolhe.**
-```
-┌──────────────────────────────────────────────┐
-│ ❌ DERROTA · Fraude na Construtora Atlas     │
-│ Reputação: −5 (já aplicado)                  │
-│                                              │
-│ Recorrer ao Tribunal?                        │
-│ Chance de reverter:   ▶ 44% ◀                │
-│ Custas do recurso:    R$ 12.600 (1% da causa)│
-│ Duração:              6–10 semanas           │
-│ Se reverter: +R$ 252.000 e +3 de reputação   │
-│ Se perder de novo: −3 de reputação           │
-│                                              │
-│      [ Recorrer ]        [ Aceitar ]         │
-└──────────────────────────────────────────────┘
-```
-- **Chance de reverter:** a mesma fórmula do caso, com **dificuldade +10** (2ª instância) ou **+20** (Superior) e **−10 de "decisão contrária"**. Você pode preparar de novo (blocos, apoios, equipe).
-- **Custas:** 1% do valor da causa, pagas na hora. Recorrer de casos caros pesa no caixa.
-- **Reverter:** recebe os honorários de 20% e a reputação de vitória, e recupera metade da reputação perdida.
-- **Perder de novo:** perde mais **metade** da reputação da tabela. Ainda é possível recorrer ao Superior, se o caso permitir.
-- **Aceitar:** encerra o caso sem custo extra.
-
-**Quando o ADVERSÁRIO perde: ele pode recorrer, e o jogo mostra a chance.**
-```
-✅ VITÓRIA! Honorários de R$ 252.000 a receber
-⚠️ Chance de a outra parte recorrer: 60%
-   (Raro 45% + Empresa grande 15%)
-   → sorteio em 1 semana
-```
-- **Chance de recurso do adversário** (sorteada, não automática):
-
-| Fator | Efeito na chance |
-|-------|------------------|
-| Base por raridade | Comum 15% · Incomum 30% · Raro 45% · Épico 60% · Lendário 80% |
-| Perfil do adversário | Pessoa física −10% · Empresa grande +15% · Estado/governo +20% |
-| Vitória Histórica | −25% (decisão muito sólida) |
-| Limites | entre 5% e 95% |
-
-- **Sem recurso:** o caso transita em julgado e os honorários entram no caixa.
-- **Com recurso:** os honorários ficam **retidos** até o julgamento. Você defende a decisão com a mesma fórmula (dificuldade +10, mas **+10 de "decisão favorável"**), e pode preparar de novo.
-  - **Decisão mantida:** recebe os honorários e mais **+1 de reputação**.
-  - **Decisão reformada:** não recebe os honorários e perde a reputação da tabela.
-- Cada recurso leva de 4 a 12 semanas de jogo. Isso cria tensão no fluxo de caixa: dinheiro "ganho" que ainda não entrou.
-
-### 5.8 O mesmo sistema em todas as carreiras
-| Carreira | O que a "chance" mede | Alavanca própria |
-|----------|-----------------------|------------------|
-| ⚖️ Advogado | Vitória do cliente | Aceitar ou recusar casos (gestão de risco da carteira), estratégia, decidir recorrer; honorários de 20% da causa na vitória |
-| 🔎 Promotor | Condenação (ou acordo aceito) | **Diligências** (perícia, oitivas) **reduzem a dificuldade**; decidir Denunciar, Arquivar ou Acordo. Denunciar com chance baixa e perder custa imagem |
-| 🛡️ Defensor | Absolvição ou melhor resultado | **Triagem:** 30 casos por semana e poucos blocos. Distribuir o tempo onde ele mais aumenta a chance (prioridade para réus presos) |
-| 🏛️ Juiz | **Acerto** (decisão mantida em recurso) | Tempo por processo × tamanho da fila; assessores com skills próprias |
-| 📝 Exames e concursos | Aprovação em cada fase | Semanas de estudo por matéria; cada fase (objetiva, discursiva, oral) é uma rolagem própria |
-
-> Com um único sistema, o jogador aprende uma vez e entende tudo: casos, concursos, delegação e até a escolha de funcionários.
->
-> **Carreiras públicas** (Promotor, Defensor, Juiz) não recebem honorários, e sim salário fixo. Nelas a vitória rende reputação e pontos de promoção, a derrota tira reputação, e os recursos funcionam igual (para o Juiz, uma decisão reformada em recurso custa reputação).
-
-### 5.9 Coleção: Teses e Precedentes
-- Vitórias em casos raros ou acima rendem **Teses colecionáveis**, como "Nulidade de prova ilícita" ou "Desconsideração da personalidade jurídica".
-- Cada tese dá **+3 a +12** de chance em um tipo de caso e pode ser equipada (no máximo 3 por caso).
-- **Galeria de Troféus:** um troféu físico na estante do escritório (visível!) para cada Vitória Histórica ou caso lendário.
-- O **Modo Estudante (DLC/opcional)** troca a rolagem dos exames por um quiz real do país, para quem quer aprender jogando.
+### 3.4 O mesmo sistema em todas as carreiras
+- **Juiz:** julga um **acervo** de processos da sua vara. A taxa de reforma das sentenças nas instâncias superiores conta para a promoção.
+- **Promotor:** denuncia, arquiva ou propõe acordo. As condenações e a taxa de acerto contam.
+- **Defensor:** atende, defende e consegue solturas. Os atendimentos e a taxa de vitória contam.
 
 ---
 
-## 6. Skills
+## 4. Skills
 
-### 6.1 Atributos-base (0 a 100, sobem com uso)
-| Skill | Para que serve |
-|-------|----------------|
-| 🗣️ Oratória | Audiências, júri e sustentação oral |
-| ✍️ Escrita | Fase escrita; qualidade das peças; decisões de juiz |
-| 🔍 Pesquisa | Casos complexos; bônus de jurisprudência e precedentes |
-| 🤝 Negociação | Estratégia de Acordo; honorários; salários; fusões |
-| 🧠 Análise | Casos com muitas provas; investigação; acerto do juiz |
-| 👥 Liderança | Moral da equipe; eficiência dos delegados |
-| 📊 Gestão | Custos; produtividade do escritório; vazão do acervo |
-| 🌐 Networking | Captação de clientes; indicações; nomeações |
-| 🗺️ Idiomas | **Exigido para expandir** e atuar em outros países |
-| ⚖️ Integridade | Resistência a escândalos; bônus com juízes rigorosos |
+- **Áreas:** penal, cível, trabalho, família, empresarial e tributário.
+- **Habilidades transversais:**
 
-### 6.2 Árvores de especialização (perks)
-Cada área (Penal, Empresarial etc.) tem uma árvore de **3 ramos × 5 perks**. Exemplos:
-- **Penal, ramo Tribuna:** *"Voz que ecoa"*: +8% de chance em casos com júri.
-- **Empresarial, ramo Deal Maker:** *"Mesa redonda"*: acordos fecham 10 pontos percentuais mais altos (ex.: 70% → 80% do valor da causa).
-- **Gestão, ramo Pessoas:** *"Porta aberta"*: conflitos entre funcionários se resolvem sozinhos 30% das vezes.
+| Skill | Onde pesa |
+|---|---|
+| Oratória | júri, momentos decisivos, palestras |
+| Escrita | peças, juiz formalista, livros, sentenças |
+| Pesquisa | teses, artigos, mestrado e doutorado |
+| Negociação | acordos, transações penais, honorários |
+| Análise | provas, momentos decisivos, triagem de processos |
+| Didática | aulas, formação da equipe (+5 na qualidade dos candidatos no nível 3) |
 
-**XP:** vem de fazer (usar a skill no caso), estudar (blocos de agenda) e cursos (pós, LL.M., mestrado, doutorado; caros e demorados, mas dão saltos grandes e títulos para concursos).
+- As skills sobem com o uso: o XP de cada caso é ponderado pela raridade e desacelera perto de 100. Também sobem com estudo, faculdade, pós-graduação e eventos.
+- **Perks por nível** em cada área ampliam a demanda e dão bônus específicos.
 
 ---
 
-## 7. Vida pessoal
+## 5. Carreiras
 
-### 7.1 Agenda semanal (a mecânica central de tempo)
-- **7 dias × 3 blocos** (manhã, tarde, noite) = **21 blocos** por semana.
-- Você arrasta **cartões de atividade** para os blocos: Trabalho, Caso X, Estudo, Academia, Família, Encontro, Networking, Hobby, Descanso.
-- **Sono** é automático, mas uma "virada de noite" rende um bloco extra com estresse alto.
-- **Modelos de agenda** salvos e o botão "repetir semana" mantêm o jogo ágil.
+### 5.1 Advocacia
+- **Escritório próprio:** honorários entram no **caixa do escritório**, que paga aluguel, salários e manutenção. O dinheiro **pessoal** é separado.
+- **Retirada semanal** opcional do sócio titular.
+- **Sócios:**
+  - um advogado sênior pode **pedir para virar sócio**;
+  - se aceito, passa a receber uma parte do lucro em vez de salário;
+  - se recusado, a moral dele cai 35.
+- **Fim da carreira por falência:** o caixa abaixo de −R$ 25 mil fecha o escritório.
+- **Fim da carreira por reputação:** prestígio zero encerra a carreira.
 
-### 7.2 Medidores pessoais (só 4)
-| Medidor | Sobe com | Cai com | Se zerar ou estourar |
-|---------|----------|---------|----------------------|
-| ❤️ Saúde | Academia, sono, médico | Viradas, estresse crônico, idade | Doença, internação, perda de semanas |
-| ⚡ Energia | Descanso, férias | Trabalho, casos difíceis | A chance cai em todos os casos |
-| 😰 Estresse | Prazos, derrotas, conflitos | Hobby, família, terapia, férias | **Burnout**: afastamento forçado |
-| 😊 Felicidade | Relacionamentos, conquistas, lazer | Solidão, derrotas, rotina | Traços negativos e risco de vícios |
+### 5.2 Magistratura (por vara)
+| Cargo | Gabinete | Salário/sem | Requisitos |
+|---|---|---|---|
+| Juiz Substituto | 3 | R$ 7.500 | concurso |
+| Juiz Titular | 6 | R$ 8.500 | prestígio 35, 40 sentenças, reforma ≤ 35% |
+| Desembargador | 10 | R$ 10.000 | prestígio 60, 120 sentenças, reforma ≤ 25% |
+| Ministro do STJ | 14 | R$ 11.500 | prestígio 85, 250 sentenças, reforma ≤ 20% |
+| Ministro do STF | 18 | R$ 13.000 | prestígio 95, 400 sentenças, reforma ≤ 15% |
 
-### 7.3 Relacionamentos e família
-- **NPCs com memória:** colegas de faculdade reaparecem como juízes, adversários, sócios ou clientes ("Lembra de mim? Fui sua dupla no júri simulado.").
-- **Romance:** namoro → casamento → filhos (opcional). O par tem carreira própria; se o seu emprego obrigar mudança de cidade, o par pode aceitar, recusar ou terminar.
-- **Filhos** crescem com o tempo e têm traços herdados e criados por você. Um deles pode virar **herdeiro** (seção 11).
-- **Dilemas clássicos:** a apresentação de balé da filha cai no mesmo dia da sustentação oral no tribunal superior. Escolher sempre o trabalho dá Carreira +, mas a Família sofre e as consequências aparecem anos depois.
+- **Varas:** criminal, cível, família, empresarial, trabalho e federal tributária. O juiz só recebe processos da própria vara; no STF, julga todas as áreas.
+- **Propina:** se a corregedoria descobrir, o juiz é cassado.
 
-### 7.4 Patrimônio e estilo de vida
-- **Moradia:** república → apartamento → casa → mansão/cobertura. Tudo visível no jogo, e a moradia pode ser decorada.
-- **Carro, roupas e relógio** dão bônus pequenos de "Presença" no primeiro encontro com clientes de elite.
-- **Investimentos** simples (renda fixa, ações, imóveis), com risco de crise econômica (evento).
-- **Hobbies** com buffs: golfe (+Networking), corrida (+Saúde), xadrez (+Análise), teatro (+Oratória), música (−Estresse).
+### 5.3 Ministério Público
+| Cargo | Gabinete | Salário/sem | Requisitos |
+|---|---|---|---|
+| Promotor Substituto | 2 | R$ 7.300 | concurso |
+| Promotor de Justiça | 4 | R$ 8.300 | prestígio 35, 15 condenações, taxa 55% |
+| Procurador de Justiça | 7 | R$ 9.800 | prestígio 60, 50 condenações, taxa 60% |
+| Procurador-Geral de Justiça | 10 | R$ 11.200 | prestígio 85, 100 condenações, taxa 65% |
 
----
+### 5.4 Defensoria Pública
+| Cargo | Gabinete | Salário/sem | Requisitos |
+|---|---|---|---|
+| Defensor Público Substituto | 3 | R$ 7.000 | concurso |
+| Defensor Público | 5 | R$ 8.000 | prestígio 35, 60 atendimentos, taxa 50% |
+| Defensor de Classe Especial | 8 | R$ 9.500 | prestígio 60, 200 atendimentos, taxa 55% |
+| Defensor Público-Geral | 10 | R$ 11.000 | prestígio 85, 400 atendimentos, taxa 60% |
 
-## 8. Escritório: construção e gestão de pessoas
+### 5.5 Exoneração
+- Qualquer cargo público permite **pedir exoneração** e voltar à advocacia.
+- Há uma **quarentena** de 12 semanas na antiga comarca, e o prestígio é recalculado.
 
-### 8.1 Visual
-Construção **isométrica** no estilo Two Point. Você compra ou aluga um espaço, desenha salas e coloca móveis. Cada sala tem uma função:
-| Sala | Função |
-|------|--------|
-| Recepção | Captação (o atendimento ruim afasta clientes) |
-| Sala de advogados (baias → salas individuais) | Produção de casos |
-| Sala de reunião | Fechamento de contratos (+Negociação) |
-| Biblioteca / Sala de pesquisa | +Pesquisa para a equipe |
-| Copa / Área de descanso | −Estresse da equipe |
-| Sala do sócio | Status; atrai talentos |
-| TI / Arquivo | Eficiência; reduz o risco de perder prazos |
-| Sala de treinamento | XP para os funcionários |
+### 5.6 Carreira acadêmica
+- Dedicação exclusiva à pesquisa e à docência. O custo de vida é R$ 650 por semana.
+- A renda vem de bolsa, aulas, direitos autorais de livros e palestras (seção 9).
 
-### 8.2 Funcionários
-Cada funcionário tem:
-`nome, retrato, cargo, skills (as mesmas do jogador), traços (2), salário, moral, lealdade, ética, ambição, fadiga`
-- **Cargos:** Estagiário, Secretária/Recepção, Paralegal, Advogado Jr/Pl/Sr, Coordenador de área, Financeiro, RH, Marketing, TI, Gerente Administrativo, Sócio, Diretor de País.
-- **Eventos de pessoas:** pedido de aumento, proposta da concorrência, briga entre colegas, assédio (exige ação séria do RH), gravidez/licença, burnout, promoção pedida, sócio que quer levar clientes.
-
-### 8.3 Níveis do escritório e delegação (requisito-chave)
-> **Regra de ouro:** nos níveis baixos *tudo* passa pelas suas mãos; nos altos você escolhe **o que delegar e para quem**. Delegar tem custo (salário do delegado) e risco (a competência e a ética do delegado geram acertos e erros).
-
-| Nível | Porte | O que **você** faz (micro) | O que dá para **delegar** |
-|-------|-------|----------------------------|---------------------------|
-| **1. Sala Solo** | Só você | Tudo: atender cliente, cobrar, pagar contas, agendar, peticionar, marketing, escolher cada caso | Nada. Este é o nível que ensina o jogo |
-| **2. Pequeno Escritório** | 2–8 pessoas | Contratar e entrevistar (minigame de entrevista), atribuir **cada** caso, **revisar** o trabalho dos juniores (minigame de revisão: achar erros na peça), definir salários, mediar conflitos, fazer folha e cobrança | Agenda e recepção (secretária) |
-| **3. Escritório Médio** | 10–50 | Contratações-chave, clientes grandes, casos raros+ | **Gerente Administrativo** (finanças/RH) e **Coordenadores de área** (atribuição automática por *políticas*) |
-| **4. Banca Nacional** | Filiais em estados/cidades | Escolher expansões, aprovar orçamentos, acompanhar KPIs por filial, crises | **Sócio-diretor por filial** (roda a filial sozinho) |
-| **5. Firma Global** | Escritórios em países | Estratégia (Diretrizes), fusões e aquisições, grandes crises, contas globais | **Board** e **Managing Partner por país** |
-
-**Políticas de delegação** (liberadas no nível 3+), escritas como regras simples em cartões:
-- "Casos comuns de Trabalho → Coordenador Trabalhista atribui automaticamente."
-- "Contratações abaixo de Pleno → RH decide, com orçamento de até X."
-- "Honorários acima de Y → exigem minha aprovação."
-- "Se a moral de uma equipe cair abaixo de 40 → me notificar."
-
-**Qualidade do delegado:** cada decisão delegada passa por um teste com as skills e a ética do delegado. Um delegado fraco aprova clientes ruins, perde prazos ou contrata mal. Um antiético pode desviar dinheiro (evento de escândalo). Assim, contratar bons delegados vira o desafio do *mid game*.
-
-**Painel de comando (níveis 4–5):** um painel simples com 5 KPIs por unidade (Receita, Margem, Moral, Taxa de êxito, Reputação), em semáforo verde/amarelo/vermelho. Clicar em uma unidade vermelha leva à crise.
-
-### 8.4 Economia do escritório (simples)
-- **Receitas:** **honorários de 20% do valor da causa em cada vitória** (só entram depois do trânsito em julgado, ou seja, sem recurso pendente). Clientes empresariais (contrato de partido) não pagam mensalidade: eles garantem um **fluxo constante de casos**.
-- **Tensão de caixa:** como o dinheiro só entra nas vitórias, e os recursos atrasam o pagamento, o começo do jogo é apertado. Pegar casos menores e seguros paga as contas; os grandes podem transformar o escritório.
-- **Despesas:** salários, aluguel, manutenção das salas, marketing, software, impostos, anuidade da ordem.
-- **Dívida/empréstimo:** possível, com juros. Falir significa fechar o escritório (a carreira continua como empregado, com reputação ferida).
+### 5.7 Nomes no feminino
+- Todos os cargos se ajustam ao gênero do personagem: Juíza, Promotora, Ministra, Professora Titular etc.
 
 ---
 
-## 9. Expansão: o mapa (a herança do MetroSystem)
+## 6. Estrutura física e equipe
 
-### 9.1 Mapa nacional
-- Mapa estilizado do país com **cidades/estados como nós**. Cada nó mostra demanda por área, concorrência, custo de vida e reputação local.
-- Abrir uma filial acende o nó e cria uma **linha luminosa** até a sede. As filiais trocam indicações de clientes por essas linhas: quanto mais conectada a rede, maior o bônus (o efeito de "rede" do metrô).
-- **Para juiz, promotor e defensor:** o mapa mostra as comarcas e a carreira avança por **remoções e promoções**, ou seja, você se muda no mapa.
+### 6.1 Planta em blueprint
+- O escritório ou gabinete aparece como uma **planta técnica**, em estilo blueprint, com uma grade de cômodos.
+- **Imóveis da advocacia:**
 
-### 9.2 Mapa-múndi
-- Liberado no nível 4. Os nós são **cidades globais** (Nova York, Londres, São Paulo, Milão, Paris, Lisboa e outras via DLC).
-- **Requisitos para abrir em outro país** (simplificados):
-  1. **Sócio local habilitado** naquele país (contratar ou fazer joint venture), **ou**
-  2. Você mesmo **revalidar o diploma** (estudar e fazer o exame daquele país, seção 9.4).
-  3. **Idioma** mínimo em nível 40 (ou ter um diretor local fluente).
-- **Rotas internacionais:** contas globais (multinacionais) exigem presença em vários países ligados e rendem muito.
+| Imóvel | Grade | Aluguel/sem | Mudança |
+|---|---|---|---|
+| Sala comercial | 3 × 2 | R$ 900 | — |
+| Conjunto comercial | 4 × 3 | R$ 2.400 | R$ 15 mil |
+| Andar corporativo | 5 × 4 | R$ 6.000 | R$ 50 mil |
 
-### 9.3 Visual da rede
-De noite o mapa mostra as linhas pulsando com o fluxo de casos. Quanto mais o império cresce, mais bonito o mapa fica, e esse é o "print de orgulho" que o jogador compartilha.
+- **Carreira pública:**
+  - gabinete no fórum;
+  - gabinete ampliado (R$ 30 mil);
+  - andar do tribunal (R$ 80 mil, a partir de desembargador ou cargo equivalente).
 
-### 9.4 Revalidação e carreira internacional
-Qualquer personagem pode estudar em outro país (mestrado ou LL.M. de 1 a 2 anos) e fazer o exame local. Isso libera atuar ou abrir um escritório ali sem sócio e cria personagens "globais" que trocam de sistema jurídico no meio da vida.
+### 6.2 Cômodos
+| Cômodo | Custo | Manutenção/sem | Efeito |
+|---|---|---|---|
+| Sala do titular | — | — | obrigatória |
+| Sala de trabalho | R$ 8.000 | R$ 150 | 3 mesas |
+| Recepção | R$ 6.000 | R$ 120 | 1 mesa, +8 de organização, +1 caso por semana |
+| Sala de reunião | R$ 7.000 | R$ 100 | +10% em acordos |
+| Biblioteca | R$ 9.000 | R$ 120 | +2 de chance em todo caso |
+| Arquivo e TI | R$ 10.000 | R$ 200 | +15 de organização |
+| Copa | R$ 5.000 | R$ 80 | moral da equipe +3/sem, seu estresse −3 |
 
----
+### 6.3 Equipe
+| Advocacia | Blocos/sem | Salário/sem | | Carreira pública | Blocos/sem | Salário |
+|---|---|---|---|---|---|---|
+| Estagiário | 2 | R$ 450 | | Estagiário | 2 | R$ 350 |
+| Secretária | 0 (+6 org.) | R$ 900 | | Servidor efetivo | 3 (+4 org.) | pago pelo tribunal |
+| Advogado júnior | 4 | R$ 1.500 | | Assessor (comissão) | 5 | R$ 2.200 |
+| Advogado pleno | 5 | R$ 2.600 | | Chefe de gabinete | 1 + gestão | R$ 2.800 |
+| Advogado sênior | 6 | R$ 4.200 | | | | |
+| Gestor administrativo | 0 + gestão | R$ 3.200 | | | | |
+| Sócio | 7 | parte do lucro | | | | |
 
-## 10. Reputação, ética e eventos
+- **Atributos de cada pessoa:** qualidade, moral e, para o gestor, habilidade de gestão. O salário pedido acompanha a qualidade.
+- **Ações:** contratar (3 candidatos sorteados), demitir, **remover** um servidor efetivo e promover. Na advocacia, a carreira sobe de estagiário para júnior, de júnior para pleno e de pleno para sênior.
+- **Organização** vem da secretária, da recepção, do arquivo e do gestor. A **qualidade da equipe** entra como bônus na chance dos casos em que a equipe trabalhou.
+- **Lotação pública:** o tribunal cede 1 + nível do cargo servidores efetivos.
 
-### 10.1 Três reputações
-| Medidor | Efeito |
-|---------|--------|
-| ⭐ **Prestígio** (público/mídia) | Clientes grandes, eleições, nomeações |
-| 🎓 **Respeito dos pares** | Indicações, contratar talentos, nomeação para tribunais |
-| ⚖️ **Integridade** | Oculta em parte. Baixa = risco de escândalo e **processo disciplinar** (suspensão ou cassação) |
-
-### 10.2 Dilemas éticos
-- Um cliente confessa o crime em sigilo: continuar na defesa (dever profissional) ou abandonar o caso?
-- Uma prova que prejudica o seu cliente aparece: entregar ou "esquecer"? (Esquecer dá vitória agora e uma bomba-relógio de Integridade depois.)
-- Um juiz amigo oferece "facilitar" o processo.
-- Um sócio quer cobrar horas não trabalhadas.
-
-Atalhos antiéticos sempre dão ganho imediato e risco futuro. O jogo nunca obriga a corrupção.
-
-### 10.3 Eventos do mundo
-Crise econômica (falências: o Empresarial cai, a Recuperação sobe), pandemia (audiências virtuais), reforma trabalhista ou tributária (picos de demanda por área), escândalo na concorrência (chance de contratar talentos), mudança de governo (nomeações).
-
----
-
-## 11. Legado e meta-progressão
-
-- **Fim da vida profissional:** aposentadoria voluntária, compulsória (juízes têm idade-limite em vários países) ou morte natural.
-- **Tela de Legado:** linha do tempo animada da carreira, com casos lendários, cargos, patrimônio, família e frases de NPCs.
-- **Dinastia Jurídica:** continuar jogando como **filho, filha ou pupilo**, com herança de parte do dinheiro, do escritório (se houver), um traço do pai ou da mãe e o **sobrenome famoso**, que dá Prestígio inicial mas também expectativas: eventos de "vivendo à sombra do pai/da mãe".
-- **Pontos de Legado (meta-moeda):** ganhos em cada vida e gastos em bônus permanentes de início (traço extra, faculdade melhor, país extra desbloqueado). É o gancho de "só mais uma vida".
-- **Hall da Fama** (como no MetroSystem): ranking online por categoria (maior firma, juiz menos reformado, defensor com mais absolvições).
+### 6.4 Dinheiro
+- **Advocacia:** o caixa recebe os honorários e paga salários, aluguel, manutenção e filiais. Há também a retirada do titular e a distribuição de lucro aos sócios.
+- **Carreira pública:**
+  - o orçamento do gabinete (R$ 4 mil a R$ 15 mil por semana, conforme o cargo) vem do **índice de efetividade**, que mede processos concluídos contra processos novos;
+  - com orçamento negativo, há cortes, a moral da equipe cai e a efetividade cai junto;
+  - o salário do cargo vai para o dinheiro pessoal.
 
 ---
 
-## 12. Ganchos de engajamento e modelo comercial
+## 7. Mapas e expansão
 
-### 12.1 Por que vicia (de forma saudável)
-| Gancho | Implementação |
-|--------|---------------|
-| Recompensa variável | Raridade dos casos, Vitórias Históricas, teses novas, eventos |
-| Progresso sempre visível | O escritório cresce, o mapa acende, a casa muda |
-| "Só mais uma semana" | A semana termina sempre com um *cliffhanger* (resultado de caso pendente, evento chegando) |
-| Coleção | Álbum de teses, troféus, conquistas |
-| Histórias emergentes | NPCs com memória, dilemas, consequências tardias |
-| Meta-progressão | Legado e Dinastia |
-| Desafio social | **"Caso do Dia"**: o mesmo caso com a mesma *seed* para todos, com ranking global |
-| Temporadas | Pacotes temáticos gratuitos (ex.: "Temporada Direito Digital", "Temporada Grandes Júris") |
-
-### 12.2 Modelo de negócio recomendado
-- **PC/Console (Steam, Switch):** jogo **premium** (preço médio de indie) + **DLCs de países** e expansões ("Política & Tribunais Superiores", "Direito Internacional & ONU").
-- **Mobile:** versão *free-to-start* (faculdade + primeira carreira grátis, compra única libera o resto) e cosméticos (roupas, móveis, temas de mapa).
-- **Evitar:** *loot boxes* pagas (proibidas ou restritas em alguns países, como Bélgica, e malvistas pelo público), *pay-to-win* e energia limitada por tempo.
+- **Mapa regional** (São Paulo e Rio): contorno orgânico dividido em distritos (Voronoi), sem linhas de metrô nem círculos.
+- **Mapa nacional** (Brasil) e **mapa-múndi.**
+- **Filiais:** cada filial exige um prestígio mínimo e paga aluguel. Ela traz +1 caso por semana, +1 de limite de casos e bônus no sorteio de casos raros.
+- **Demanda por área** em cada local, tributário incluído.
+- Na carreira pública, o mapa mostra a comarca; promoções podem exigir mudança de cidade, o que afeta o parceiro (seção 8.2).
 
 ---
 
-## 13. Direção visual e áudio
+## 8. Vida pessoal
 
-### 13.1 Estilo
-- **2.5D isométrico estilizado**, "cozy-corporativo": cores vivas, personagens *chibi* de proporção média e muito humor visual (papéis voando, café derramado, gato do escritório).
-- **Tribunal:** muda para **câmera dramática**, com retratos grandes e expressivos, linhas de velocidade e câmera lenta na rolagem do veredito.
-- **Paleta por país** (o país "pinta" o jogo inteiro):
+### 8.1 Tempo, idade e medidores
+- **Agenda semanal de 21 blocos** (7 dias × 3 turnos):
+  - casos;
+  - estudo;
+  - lazer;
+  - família;
+  - saúde (academia);
+  - descanso.
+- **Idade:** 10 semanas de jogo equivalem a 1 ano de vida.
+- **Medidores:** saúde, felicidade, energia e estresse.
+  - felicidade acima de 80 dá +3 nos casos;
+  - a saúde cai com a idade e o estresse;
+  - saúde baixa traz risco de **doença**, com custo de R$ 5 mil e 2 semanas com menos blocos.
 
-| País | Paleta e motivos |
-|------|------------------|
-| EUA | Azul-marinho, latão, madeira clara; arranha-céus e bandeiras |
-| Brasil | Verde, amarelo e concreto modernista; plantas tropicais |
-| Inglaterra | Madeira escura, vinho, perucas e becas; chuva na janela |
-| Itália | Mármore, terracota; *palazzi* e espresso |
-| França | Azul e dourado *art nouveau*; Haussmann |
-| Portugal | Azulejo azul e branco, calçada portuguesa; elétrico amarelo |
+### 8.2 Relacionamento
+- **Namoro** só com pessoas do gênero oposto, depois casamento (R$ 30 mil, felicidade +20).
+- **Personalidade do parceiro** muda as regras:
 
-### 13.2 Evolução visual (o progresso que se vê)
-- **Personagem:** mochila e jeans → terno barato → alfaiataria → toga ou beca do cargo.
-- **Escritório:** quarto de república → sala comercial → andar → prédio próprio com o seu nome na fachada.
-- **Mapa:** apagado → rede acesa → mapa-múndi pulsando.
+| Personalidade | Efeito |
+|---|---|
+| Ciúme | reclama de semanas com 15 blocos de trabalho ou mais; valoriza cada bloco de família |
+| Ambição | gosta do seu prestígio, se irrita quando falta dinheiro, aceita mudar por promoção |
+| Vida caseira | precisa de mais família, resiste a mudanças de cidade |
+| Espírito aventureiro | lazer conta como tempo juntos, viagens valem o dobro |
+| Independência | sente menos a ausência, se apega menos, hesita em ter filhos |
+| Gosto por luxo | +R$ 600/sem de custo, valoriza presentes e casa à altura |
+| Mesma área (jurídica) | +2 de chance nos casos com a relação boa |
 
-### 13.3 Áudio
-- Trilha *lo-fi jazz* para a gestão e orquestral tensa no julgamento, crescendo até o veredito.
-- SFX marcantes: martelo, carimbo, caixa registradora, e o anúncio do veredito dublado em 6 idiomas.
+- **Eventos do casal:** aniversário, viagem, presente, briga, pedido de casamento, mudança de cidade e término.
 
----
+### 8.3 Filhos
+- Gravidez, nascimento, nome e gênero.
+- A relação com cada filho depende do tempo de família e de eventos como apresentações na escola.
+- Um filho adulto, com 22 anos ou mais e relação de pelo menos 40, pode ser **herdeiro**. Se ele estudou Direito, começa com skills melhores.
 
-## 14. Telas principais (UI)
+### 8.4 Bens e financiamento
+| Moradia | Preço | Felicidade | | Carro | Preço |
+|---|---|---|---|---|---|
+| Apartamento alugado | — | 0 | | Transporte público | — |
+| Apartamento próprio | R$ 250 mil | +1 | | Carro popular | R$ 60 mil |
+| Casa com quintal | R$ 900 mil | +2 | | Sedã executivo | R$ 150 mil |
+| Cobertura | R$ 3 milhões | +3 | | SUV de luxo | R$ 400 mil |
+| | | | | Esportivo importado | R$ 1,2 milhão |
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ 👤 Ana Ribeiro · 34 · Sócia  ❤️82 ⚡64 😰41 😊70   💰 R$ 1,2M  ⭐68 🎓55 ⚖️80 │
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│              [ VISÃO PRINCIPAL: Escritório isométrico ]              │
-│                 (ou Mapa · Casa · Tribunal)                          │
-│                                                                      │
-├───────────────┬───────────────────────────────────┬──────────────────┤
-│ 📅 AGENDA     │ 📂 CASOS ATIVOS (cartões c/ raridade)│ 🔔 EVENTOS (3)   │
-│ Seg Ter Qua…  │ 🔵 Fraude Construtora · 44% · aud 3d│ Pedro pede aumento│
-│ ▦▦▦ ▦▦▦ ▦▦▦   │ ⚪ Divórcio Souza · 88% · lote      │ Filha: recital sex│
-├───────────────┴───────────────────────────────────┴──────────────────┤
-│  🏢 Escritório   🗺️ Mapa   🏠 Vida   🧠 Skills   👥 Pessoas   ▶ PRÓXIMA SEMANA │
-└──────────────────────────────────────────────────────────────────────┘
-```
-- **Um botão gigante, "Próxima Semana":** o ritmo é dado pelo jogador, não por tempo real, o que funciona bem no mobile.
-- **Notificações** agrupadas e no máximo 3 eventos por semana, para não sobrecarregar.
+- **Financiamento pela tabela Price:**
+  - **imóvel:** entrada de 20%, prazo de 10, 20 ou 30 anos, juros de 10% ao ano;
+  - **carro:** entrada de 30%, prazo de 2, 4 ou 5 anos, juros de 20% ao ano.
+- **Aprovação:** o banco aprova parcelas até **35% da renda**.
+- **Troca:** o bem atual entra no negócio por 80% do valor (imóvel) ou 70% (carro), descontada a dívida.
+- **Inadimplência:** com 3 semanas seguidas de dinheiro pessoal negativo, o banco **retoma o bem**.
 
----
+### 8.5 Investimentos e imóveis para alugar
+- **Renda fixa:** 10% ao ano, sem oscilação.
+- **Ações:** 15% ao ano na média, com oscilação forte e crises.
+- **Fundos imobiliários:** 9% ao ano em rendimentos semanais, com pouca oscilação.
+- **Imóveis para alugar:**
+  - opções: kitnet (R$ 180 mil), apartamento de 2 quartos (R$ 400 mil), sala comercial (R$ 650 mil) e loja de rua (R$ 1,2 milhão);
+  - rendem 6% ao ano de aluguel bruto;
+  - podem ficar **vagos** e o estado de conservação cai com o tempo;
+  - dá para reformar ou vender.
 
-## 15. Arquitetura técnica
-
-### 15.1 Engine recomendada: **Godot 4**
-| Motivo | Detalhe |
-|--------|---------|
-| Gratuita e sem royalties | Bom para um projeto indie comercial |
-| 2D/2.5D excelente | Isométrico com TileMap; UI forte |
-| Exporta para tudo | Windows, Mac, Linux, Android, iOS, Web, consoles (via parceiros) |
-| Orientada a dados | JSON + `Resource` para países, casos e teses |
-
-> Alternativas: **Unity** (mais assets prontos, mais pesada) ou **Phaser 3 + React/TypeScript** (se a prioridade for Web, prototipagem rápida e integração com Firebase).
-
-### 15.2 Sistemas (módulos)
-```
-core/
-  GameState         # estado único serializável
-  TimeSystem        # semanas, idade, calendário, feriados por país
-  RNG               # seed determinística (necessária para o "Caso do Dia")
-  EventBus          # sinais entre sistemas
-systems/
-  LifeSystem        # medidores pessoais, relacionamentos, patrimônio
-  ScheduleSystem    # agenda de 21 blocos, execução semanal
-  EducationSystem   # faculdade, semestres, exames, concursos
-  CareerSystem      # máquina de estados por arquétipo + config do país
-  CaseSystem        # geração procedural e roteirizada; ciclo do caso
-  CaseResolution    # chance, preparação, estratégia, reviravoltas, momento decisivo, veredito
-  SkillSystem       # XP, níveis, árvores de perks
-  OfficeSystem      # salas, móveis, funcionários, finanças
-  DelegationSystem  # políticas, delegados, testes de decisão
-  MapSystem         # nós nacionais e globais, filiais, rotas
-  ReputationSystem  # prestígio, pares, integridade
-  WorldEventSystem  # crises, reformas, eventos
-  LegacySystem      # herdeiros, pontos de legado
-  SaveSystem        # JSON + versão + migração; nuvem opcional
-data/
-  countries/*.json  cards/*.json  case_templates/*.json  scripted_cases/*.json
-  traits.json  perks/*.json  rooms.json  events/*.json  i18n/*.csv
-```
-
-### 15.3 Modelos de dados (exemplos)
-```jsonc
-// Tese colecionável
-{ "id": "tese_prova_ilicita", "raridade": "rara",
-  "bonus": 8, "aplicaEm": { "area": "penal", "lado": "defesa" },
-  "modificadores": { "civil_law": 1.0, "common_law": 1.2 },
-  "texto": "teses.prova_ilicita.desc" }
-
-// Modelo de caso
-{ "id": "trab_justa_causa", "area": "trabalho", "raridade": "incomum",
-  "partes": { "cliente": "@npc.trabalhador", "adversario": "@npc.empresa_media" },
-  "dificuldade": [25, 45], "prazoSemanas": [4, 8],
-  "skills": { "trabalho": 0.5, "escrita": 0.3, "negociacao": 0.2 },
-  "perfilAdversario": "empresa_grande",   // afeta a chance de recurso do adversário
-  "instanciaMax": "segunda",              // "segunda" ou "superior"
-  "apoios": ["pesquisa_jurisprudencia", "preparar_testemunha", "perito"],
-  "reviravoltas": [{ "chance": 0.3, "evento": "testemunha_muda_versao" }],
-  "momentoDecisivo": "md_contradicao_testemunha" }
-
-// Funcionário
-{ "id": "emp_042", "nome": "Pedro Alves", "cargo": "advogado_pleno",
-  "skills": { "oratoria": 52, "escrita": 61, "pesquisa": 70, "gestao": 30 },
-  "tracos": ["ambicioso", "perfeccionista"], "salario": 9500,
-  "moral": 72, "lealdade": 55, "etica": 80, "fadiga": 20 }
-
-// Política de delegação
-{ "id": "pol_auto_trab", "delegado": "emp_017", "gatilho": "novo_caso",
-  "condicao": { "area": "trabalho", "raridadeMax": "incomum" },
-  "acao": "atribuir_automatico", "limiteAprovacao": 30000 }
-```
-
-### 15.4 Fórmulas-base (pontos de partida para balanceamento)
-```
-skillCaso        = Σ (peso_i × skill_i)                      // da pessoa ou da dupla (70% líder / 30% apoio)
-bonus            = preparacao + apoios + estrategia + especializacao + (prestigio−50)/10
-                   + juiz + familia + estadoPessoal + tracos + teses
-chance           = clamp(0.05, 0.95, sigmoid((skillCaso + bonus − dificuldade) / 12))
-                   // skill = dificuldade → 50% · +12 → 73% · +24 → 88% · −12 → 27%
-chanceJuri       = 0.5 + (chance − 0.5) × 0.8
-preparacao       = Σ max(0, 6 − n) para n = 1..blocos   // +5, +4, +3, +2, +1 (máx. +15)
-testeMomento     = sigmoid((skillUsada − dificuldadeMomento) / 10)
-
-valorCausa       = 5000 × 1.1^dificuldade × rand(0.8, 1.2) × fatorEconomicoPais
-honorarios       = 0.20 × valorCausa            // só na vitória; acordo: 0.20 × valorAcordo
-reputacaoGanho   = {comum:1, incomum:2, raro:3, epico:4, lendario:6}[raridade] × multEstrategia
-reputacaoPerda   = {comum:2, incomum:3, raro:5, epico:7, lendario:10}[raridade] × multEstrategia
-custasRecurso    = 0.01 × valorCausa
-chanceReverter   = chance(dificuldade + 10×instancia − 10 "decisão contrária")
-chanceManter     = chance(dificuldade + 10×instancia + 10 "decisão favorável")
-chanceRecursoAdv = clamp(0.05, 0.95, baseRaridade + perfilAdversario − (historica ? 0.25 : 0))
-xpSkill          = 10 × raridadeMult × (1 se usada no caso, 0.3 se só estudada)
-moralEquipe      += (salarioRelativo − 1)×10 + salas_descanso×2 − fadigaMedia×0.1 + liderancaChefe×0.05
-erroDelegado     = max(0.02, 0.35 − competenciaDelegado/300 − eticaDelegado/500)
-burnoutRisco     = max(0, (estresse − 80) / 20)   // testado a cada semana
-captacaoFilial   = demandaLocal × (prestigio/50) × (1 + 0.1 × filiaisConectadas)
-```
-
-### 15.5 Save e localização
-- Save local em JSON com `versao` e migração; nuvem opcional (Steam Cloud, Google Play Games, Firebase).
-- Localização via CSV com chaves (`cards.prec_boa_fe.desc`), cobrindo os 6 idiomas do lançamento: PT, EN, IT, FR, mais ES e DE.
-- Nomes de cargos e instituições vêm **do arquivo do país**, nunca fixos no código.
+### 8.6 Aposentadoria e fim da vida
+- **Aposentadoria voluntária:** a partir dos 60 anos.
+- **Compulsória:** aos 75 nas carreiras públicas.
+- **Morte:** risco crescente depois dos 70, maior com a saúde baixa.
+- O fim da vida abre a tela de **Legado**, com carreira, resultado, prestígio, patrimônio e família, e a escolha do herdeiro (seção 11).
 
 ---
 
-## 16. Escopo e roadmap
+## 9. Academia
 
-### 16.1 Princípio de escopo
-O núcleo (Agenda, Casos, Vida, Escritório níveis 1–3) precisa ser **divertido sozinho em 1 país** antes de qualquer expansão.
+- **Pós-graduação:**
 
-### 16.2 Fases
-| Fase | Conteúdo | Meta de validação |
-|------|----------|-------------------|
-| **Protótipo (4–6 semanas)** | Sistema de casos (chance, preparação, estratégias, reviravoltas, momento decisivo, veredito) com 40 modelos de caso, sem arte final | Escolher e preparar casos é divertido por 1 hora seguida? |
-| **Vertical Slice (3–4 meses)** | **Brasil**: faculdade, OAB, Advogado, agenda, vida básica, Escritório níveis 1–2, arte final de 1 cenário | 1 hora de jogo que "pede" a próxima |
-| **Alpha (+4 meses)** | **EUA** (valida common law e júri), carreiras Juiz e Promotor, Escritório nível 3 com delegação, mapa nacional | A abstração global funciona? |
-| **Beta (+4 meses)** | Inglaterra, Itália, França, Portugal; Defensor; níveis 4–5; mapa-múndi; Legado/Dinastia | Retenção D1, D7 e D30 em playtests |
-| **Lançamento** | Polimento, 6 idiomas, conquistas, Caso do Dia, Hall da Fama | Early Access no Steam |
-| **Pós-lançamento** | Temporadas, DLCs de países, Modo Estudante, mobile | |
+| Curso | Meta de progresso | Mínimo | Custo/bolsa |
+|---|---|---|---|
+| Especialização (lato sensu) | 40 | 10 semanas | R$ 600/sem |
+| Mestrado | 120 | 20 semanas | seleção; bolsa de R$ 750/sem |
+| Doutorado | 240 | 40 semanas | exige mestrado; seleção; bolsa de R$ 1.050/sem |
 
-### 16.3 Critérios de pronto do Vertical Slice
-1. Criar personagem, cursar 10 semestres e passar (ou repetir) a OAB.
-2. Jogar pelo menos 15 casos diferentes com 3 raridades, usando estratégias, apoios, momento decisivo e recursos.
-3. Abrir escritório, contratar 3 pessoas, revisar o trabalho delas e lidar com 5 tipos de evento de RH.
-4. Agenda semanal com 4 medidores pessoais funcionando, um relacionamento romântico e um dilema de família.
-5. Save e load estáveis e 60 FPS em notebook básico.
+- **Títulos dão bônus permanentes nos concursos:** especialização +2 cada (até +4), mestrado +3 e doutorado +5. Mestrado e doutorado também aumentam a qualidade da pesquisa (+5 e +10).
+- **Publicações:**
+  - **artigo** (meta 12): a qualidade define o Qualis, de A1 (+4 no índice) até B2 (+1);
+  - **livro acadêmico** (meta 60) e **manual para OAB e concursos** (meta 45): vendem exemplares que decaem 3% por semana e pagam direitos autorais (R$ 10 por exemplar no livro e R$ 6 no manual).
+- **Docência:**
+  - faculdade particular, com especialização ou mestrado;
+  - concurso para universidade pública, com doutorado;
+  - progressão de Professor Adjunto para Associado e Titular;
+  - a aula rende por bloco e desenvolve **Didática**.
+- **Palestras:** com Didática nível 2 e prestígio a partir de 40, chegam convites pagos (cachê de R$ 2 mil + R$ 80 por ponto de prestígio + R$ 60 por ponto do índice), que custam 1 bloco.
+- Fora da carreira acadêmica, a pós e as publicações podem ser feitas em paralelo, com blocos de estudo.
 
 ---
 
-## 17. Riscos e mitigação
+## 10. Amigos e rivais da faculdade
+
+- **Quatro colegas** são gerados na faculdade: dois amigos (relação 60 e 45) e dois rivais (−45 e −30).
+- Cada colega segue uma carreira própria (advocacia, magistratura, MP, Defensoria ou academia) e é **promovido com o tempo**, com cerca de 1,2% de chance por semana. Exemplos: de juiz substituto até ministro do STJ, de advogado até sócio-fundador de banca famosa.
+- **Efeitos no jogo:**
+  - um amigo advogado **indica casos**;
+  - um colega juiz pode cair no seu caso: o amigo ajuda, o rival atrapalha, e julgar um caso de amigo é uma questão ética;
+  - um rival pode estar do outro lado do processo;
+  - eventos: pedidos de favor, coautoria de artigo (A2), almoço e provocações do rival na imprensa.
+- **Ações:** almoço, ajuda e reconciliação. Um rival pode virar amigo.
+
+---
+
+## 11. Dinastia
+
+- No fim da vida, um filho elegível continua a história.
+- **O herdeiro recebe:**
+  - metade do patrimônio, menos a moradia;
+  - a moradia;
+  - um dos traços do pai ou da mãe;
+  - parte das skills, 15% do que passava de 25, ou 30% se ele estudou Direito;
+  - prestígio 30.
+- **Carreira:** o jogador escolhe a carreira do herdeiro (advocacia, juiz, promotor ou defensor).
+- O **legado** de cada geração fica registrado e as **conquistas passam ao herdeiro**.
+
+---
+
+## 12. Conquistas e Hall da Fama
+
+### 12.1 Conquistas
+- **44 conquistas em 6 categorias:**
+  - tribunais;
+  - escritório;
+  - carreira pública;
+  - academia;
+  - vida e patrimônio;
+  - dinastia.
+- **Raridade e pontos:** comum (10 pontos), rara (25), épica (50) e lendária (100), com as cores das raridades de caso.
+- **Exemplos:**
+  - "Primeiro caso lendário" e "Lenda dos tribunais" (5 lendários);
+  - "Escritório internacional" e "Supremo";
+  - "Chefe do Ministério Público";
+  - "Best-seller" (200 exemplares na primeira semana);
+  - "Bodas de prata" e "Nada a dever";
+  - "Página virada" (rival vira amigo);
+  - "Três gerações no STF".
+- **Verificação:** as conquistas são verificadas a cada tela renderizada e a cada vitória. Ao desbloquear, aparece um aviso no canto da tela e uma linha no diário.
+- **Aba Conquistas:** mostra o progresso de cada conquista e marca as que já foram obtidas **em partidas anteriores**.
+- As conquistas pertencem à **dinastia**. Algumas só existem nela, como "Polivalente" (3 carreiras na família) e "Linhagem suprema".
+
+### 12.2 Hall da Fama
+- **Quando registra:** cada vida encerrada, por morte, aposentadoria, compulsória, falência ou afastamento, entra no ranking.
+- **Onde fica:** num armazenamento próprio do navegador (`toga-hall`), que **sobrevive ao fim da partida** e ao reinício.
+- **Pontos de legado** = prestígio final + pontos das conquistas obtidas naquela vida + 1 ponto por R$ 100 mil de patrimônio (até 200).
+- **Onde aparece:** os 10 melhores na aba Conquistas e os 5 melhores na tela inicial.
+
+---
+
+## 13. Interface e técnica do protótipo
+
+### 13.1 Telas (abas)
+- **Escritório / Gabinete / Promotoria / Defensoria:** agenda, casos ativos, ofertas e diário.
+- **Estrutura e equipe:** planta, imóvel, cômodos, equipe, finanças e orçamento.
+- **Vida:** medidores, parceiro, filhos, bens e financiamentos, investimentos e aluguéis, colegas.
+- **Conquistas:** legado atual, Hall da Fama e conquistas por categoria.
+- **Academia:** formação, projetos, docência.
+- **Região, Brasil e Mundo:** mapas, só na advocacia.
+- Estudante e acadêmico têm telas principais próprias.
+
+### 13.2 Direção visual
+- Paleta de papel e tinta com acentos em latão.
+- **Fontes:** Spectral SC nos títulos, IBM Plex Sans no texto e IBM Plex Mono nos números.
+- Tema claro e escuro automáticos, cores de raridade e blueprint na planta.
+- Layout responsivo: em telas estreitas, as colunas viram uma só e as abas quebram linha.
+
+### 13.3 Técnica
+- **Formato:** um único arquivo `index.html`, com HTML, CSS e JavaScript puro, sem build.
+- **Estado:**
+  - um objeto global `S`, salvo no `localStorage` (`toga-proto`);
+  - migração de saves antigos em `start()`;
+  - o Hall da Fama fica em `toga-hall`.
+- **Interface:**
+  - renderização por string de template conforme a aba e a carreira;
+  - eventos delegados por `data-act`;
+  - modais assíncronos (`modal()` retorna uma Promise);
+  - `rolar()` faz a animação da balança.
+- **Semana:** cada carreira tem o próprio `fimSemana…`, e todas chamam `semanaAcademia()` e `semanaVida()`. `semanaVida()` cuida de dívidas, investimentos, amigos, saúde e morte.
+
+---
+
+## 14. Visão de produto (ainda não implementado)
+
+Ideias do design original que continuam valendo como direção, mas não estão no protótipo:
+
+### 14.1 Sistema jurídico global
+- Estudar em **EUA, Brasil, Inglaterra, Itália, França ou Portugal**, com um núcleo universal (os 4 arquétipos: advogado, promotor, juiz e defensor) e uma "pele" local por país: nomes, provas, cargos, júri na common law e assim por diante.
+- Revalidação do diploma para trabalhar em outro país. Hoje, o mapa-múndi só serve para abrir filiais.
+- **Implementação sugerida:** um arquivo de dados por país, com a família jurídica, a prova de ingresso, a escada de cargos e o peso do júri.
+
+### 14.2 Sistemas futuros
+- **Três reputações** (técnica, pública e ética) em vez de um prestígio único.
+- **Eventos do mundo:** crises econômicas, reformas da lei, pandemia, mudando a demanda por área.
+- **Delegação em lote** no fim de jogo: casos resolvidos pela equipe com risco.
+- **Tutorial guiado** nas primeiras semanas.
+- **Pontos de legado como meta-moeda,** para comprar bônus de início (traço extra, faculdade melhor).
+- **Ranking online:** Hall da Fama global e um **"Caso do Dia"** com a mesma *seed* para todos.
+
+### 14.3 Modelo comercial
+- **PC (Steam):** premium com preço de indie, mais DLCs de países e expansões.
+- **Mobile:** grátis para começar (faculdade e primeira carreira) e compra única para liberar o resto, mais cosméticos.
+- **Evitar:** *loot boxes*, *pay-to-win* e energia limitada por tempo.
+
+### 14.4 Produção
+- **Engine sugerida para a versão comercial:** Godot 4, com os dados (casos, teses, cargos, países) em JSON.
+- **Arte:** 2.5D isométrico "cozy-corporativo". O escritório cresce visualmente e o personagem envelhece e troca de roupa.
+- **Áudio:** trilha calma na agenda, tensão crescente na rolagem e um "carimbo" no veredito.
+- Localização em 6 idiomas.
+
+### 14.5 Próximos passos sugeridos
+1. **Playtest humano de balanceamento:** dinheiro na advocacia e nas carreiras públicas, velocidade de promoção, bolsas, financiamentos e taxa de morte.
+2. Tutorial e eventos do mundo.
+3. Segundo país (EUA) para validar a abstração global.
+4. Separar o código em módulos, se o protótipo continuar crescendo.
+
+---
+
+## 15. Riscos e mitigação
 | Risco | Mitigação |
-|-------|-----------|
-| Complexidade excessiva | Liberar sistemas aos poucos (tutorial disfarçado); auto-resolver; no máximo 5 medidores por tela |
-| Imprecisão jurídica por país | Arquivo de dados por país + consultor local + aviso de "simplificação lúdica" |
-| Casos repetitivos ou sensação de "só sorte" | Chance sempre visível e explicada; momentos decisivos; reviravoltas; raridades; recurso; resolução em lote no late game |
-| Late game vazio | Delegação com risco, crises globais, eleições e nomeações, Dinastia |
-| Tom sério demais | Humor visual, NPCs carismáticos, eventos leves entre os pesados |
-| Temas sensíveis (crimes, assédio) | Tratamento respeitoso, opção de filtro de conteúdo, classificação etária 12+/PEGI 12 |
-
----
-
-## 18. Prompt sugerido para começar a programar
-> "Usando Godot 4 (GDScript), implemente o **Protótipo** do jogo TOGA conforme as seções 5 e 15 deste documento: o sistema `CaseResolution` com a ficha do caso (dificuldade, skills exigidas com pesos, chance explicada em detalhes), preparação por blocos com retorno decrescente, os apoios e as 4 estratégias da seção 5.4, os modificadores automáticos, reviravoltas, o Momento Decisivo com chance por opção (5.5), o veredito com a animação da balança (5.6), o valor da causa crescendo com a dificuldade, honorários de 20% só na vitória, ganho e perda de reputação (5.1) e os recursos opcionais para os dois lados com a chance exibida (5.7). Carregue os modelos de caso de `data/case_templates/*.json` e as teses de `data/teses/*.json` (formatos da seção 15.3). Crie 40 modelos de caso e 15 teses de exemplo, com uma agenda simples de 21 blocos por semana. UI provisória com retângulos e texto. Inclua testes unitários para a fórmula de `chance` (limites de 5% e 95%, júri e preparação) da seção 15.4."
-
----
-
-### Apêndice A: Exemplo de primeira hora de jogo
-1. **Min 0–5:** criação da Ana: origem modesta, traços *Oradora nata* + *Ansiosa*, estuda no Brasil.
-2. **Min 5–25:** 2 semestres; ela entra no núcleo de prática e resolve o primeiro caso (tutorial do sistema de chances) defendendo um inquilino. Conhece o Lucas no júri simulado.
-3. **Min 25–40:** estágio em um escritório tóxico (evento: o chefe pede para ela ficar até meia-noite). Primeiro dilema entre vida e trabalho.
-4. **Min 40–50:** formatura (cutscene) e estudo para a OAB com a agenda (risco de burnout pelo traço *Ansiosa*).
-5. **Min 50–60:** aprovada! Escolha: aceitar a vaga de associada júnior em uma firma grande ou alugar uma sala sozinha? O jogador quer saber o que vem depois, e esse é o gancho.
+|---|---|
+| Complexidade excessiva | Liberar sistemas aos poucos (a faculdade funciona como tutorial); chance sempre explicada |
+| Sensação de "só sorte" | Ficha de chance detalhada, momento decisivo, recursos, estratégia conservadora |
+| Fim de jogo vazio | Promoções altas, filiais internacionais, academia, dinastia, conquistas e Hall da Fama |
+| Imprecisão jurídica | Aviso de "simplificação lúdica"; dados por país revisados por consultor local |
+| Temas sensíveis | Tratamento respeitoso; classificação 12+ |
