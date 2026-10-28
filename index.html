@@ -219,6 +219,8 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .conta-box:empty{display:none}
 .conta-box{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;font-size:12.5px;padding:9px 10px;border:1px dashed var(--line);border-radius:5px}
 .hall-online:empty,.hall-inicio:empty{display:none} .hall-online{display:flex;flex-direction:column;gap:6px}
+.ticker{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12px;padding:7px 10px;margin:-6px 0 14px;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:5px;background:var(--surface)}
+.ticker .tk{white-space:normal} .ticker .tk b{font-weight:600} .ticker .tk.lo b{color:var(--loss)} .ticker .tk.hi b{color:var(--win)}
 </style>
 
 <div id="app"></div>
@@ -444,9 +446,9 @@ function novoCaso(cid=S.sede,extra={},area=null){
   const C=LOC[cid];
   let rar=sortearRaridade(C,extra); let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
   if(!pool.length){ pool=TEMPLATES.filter(t=>t.area===area); }
-  const t=pickW(pool,x=>(C.areas[x.area]||1)*(tem(x.area,1)?1.5:1)*(tem(x.area,3)?1.5:1)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];
+  const t=pickW(pool,x=>(C.areas[x.area]||1)*pesoArea(x.area)*demEpoca(x.area)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];
   const d=rint(R.d[0],R.d[1]);
-  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator/100)*100;
+  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator*valorEpoca()/100)*100;
   const cliente = t.area==='empresarial' ? pick(EMPRESAS) : pick(NOMES);
   return {id:++uid,...t,rar,d,valor,hon:Math.round(valor*.2),cliente,cidade:cid,
     prazo:rint(R.prazo[0],R.prazo[1]),juiz:pick(Object.keys(JUIZES)),juizNome:pick(JNOMES),
@@ -476,7 +478,7 @@ function calcChance(c,extra=0){
   add(`Preparação (${blocos} bloco${blocos===1?'':'s'})`,pb);
   const lg=longe(c);
   for(const k in c.apoios) if(c.apoios[k] && (!APOIOS[k].longe||lg)) add(APOIOS[k].nome,APOIOS[k].bonus);
-  if(lg) add('Distância (sem escritório em '+LOC[c.cidade].nome+')',-10);
+  if(lg&&!epocaAtiva('pandemia')) add('Distância (sem escritório em '+LOC[c.cidade].nome+')',-10);
   if(c.estrategia!=='acordo') add('Estratégia '+ESTR[c.estrategia].nome.toLowerCase(),ESTR[c.estrategia].mod);
   add('Prestígio',(S.prest-50)/10);
   const j=c.juiz;
@@ -515,7 +517,7 @@ function livres(){return S.disp+gabinete()+(S.carreira==='adv'?blocoEscrita():0)
 const app=document.getElementById('app');
 function render(){
   if(!S){renderInicio();return;}
-  cqCheck();
+  aplicarTetos(); cqCheck();
   if(['estudante','academico'].includes(S.carreira) && !['vida','conquistas'].includes(view)) view='escritorio';
   if(S.carreira!=='adv' && !['brasil','estrutura','vida','academia','conquistas'].includes(view)) view='escritorio';
   if(view==='conquistas'){renderConquistas();return;}
@@ -1107,7 +1109,7 @@ async function fimSemana(){
     const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
     // agenda → preparação
     for(const c of S.casos){ c.prep+=c.semana||0; c.semana=0; for(const k in c.apoios) if(c.apoios[k]===1) c.apoios[k]=2; }
-    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; addLog(`Estudou ${SKILLS[k]} por ${S.agenda.estudo} bloco(s).`); }
     S.energia=clamp(S.energia-3.2*trab*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*lazer,0,100);
@@ -1150,9 +1152,9 @@ async function fimSemana(){
 
 function painelSkills(){ return `<section class="panel">
         <div class="panel-head"><h2>Skills</h2><span class="label">${S.traits.map(t=>TRAITS[t].nome).join(' · ')}</span></div>
-        <div class="skills">${Object.entries(SKILLS).map(([k,v])=>`<div><span>${v} <span style="color:var(--brass)">${'★'.repeat(nivel(k))}</span></span><span class="num">${Math.floor(S.skills[k])}</span><div class="bar"><i style="width:${S.skills[k]}%"></i></div></div>`).join('')}</div>
+        <div class="skills">${Object.entries(SKILLS).map(([k,v])=>`<div><span>${v} <span style="color:var(--brass)">${estrelasHtml(k)}</span></span><span class="num">${Math.floor(S.skills[k])}${ehArea(k)&&tetoArea(k)<100?`<span style="color:var(--muted);font-size:10px">/${tetoArea(k)}</span>`:''}</span><div class="bar"><i style="width:${S.skills[k]}%"></i></div></div>`).join('')}</div>
         ${S.teses.length?`<div class="chips">${S.teses.map(t=>`<span class="tag" title="+${t.bonus} em ${AREAS[t.area].nome}">${esc(t.nome)} +${t.bonus}</span>`).join('')}</div>`:'<p class="label" style="margin:0">Teses: vença casos Raros ou acima para colecionar.</p>'}
-      <details><summary>Efeitos das skills nos níveis 40 · 60 · 80</summary>${listaPerks()}</details>
+      <details><summary>Efeitos das skills nos níveis 40 · 60 · 80 (áreas: 40 · 55 · 70 · 82 · 92)</summary>${listaPerks()}</details>
       </section>`; }
 function painelDiario(){ return `<section class="panel">
         <div class="panel-head"><h2>Diário</h2><span class="label">${S.carreira==='juiz'?S.j.sentencas+' sentenças':S.carreira==='promotor'?S.p.condenacoes+' condenações':S.carreira==='defensor'?S.d.atendimentos+' atendimentos':S.carreira==='academico'||S.carreira==='estudante'?S.ac.pubs.length+' publicações':S.vitorias+'V · '+S.derrotas+'D'}</span></div>
@@ -1362,7 +1364,7 @@ async function fimSemanaJuiz(){
     const J=S.j, C=CARGOS[J.cargo], gab=gabinete();
     const tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0);
     const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
-    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
     S.energia=clamp(S.energia-3.2*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*S.agenda.lazer,0,100);
@@ -1714,7 +1716,7 @@ async function fimSemanaMP(){
     const P=S.p, C=CARGOS_MP[P.cargo], gab=gabinete();
     const tot=P.casos.reduce((a,c)=>a+(c.semana||0),0);
     const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
-    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
     S.energia=clamp(S.energia-3.2*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*S.agenda.lazer,0,100);
@@ -1820,7 +1822,7 @@ function bonusPerks(c,add){
   if(tem('pesquisa',1)&&((c.prep||0)+(c.semana||0))>0) add('Pesquisa: preparo eficiente',3);
   if(tem('analise',2)&&RORD.indexOf(c.rar)>=2) add('Análise: casos complexos',4);
   if(tem('analise',3)&&c.d>=60) add('Análise: casos muito difíceis',5);
-  if(tem(c.area,2)) add(`${AREAS[c.area].nome}: ${tem(c.area,3)?'referência':'especialista'}`,tem(c.area,3)?8:4);
+  bonusArea(c,add);
   if(S.u) bonusEstrutura(c,add);
   bonusVida(add);
 }
@@ -1831,7 +1833,9 @@ function listaPerks(){
   const linha=(nome,arr,k)=>`<li style="flex-direction:column;align-items:stretch;gap:2px"><b>${nome} <span class="num" style="color:var(--brass)">${'★'.repeat(nivel(k))}${'☆'.repeat(3-nivel(k))}</span></b>
     ${arr.map((t,i)=>`<span class="${tem(k,i+1)?'hi':''}" style="${tem(k,i+1)?'':'color:var(--muted)'}">${NIV[i]} · ${t}</span>`).join('')}</li>`;
   return `<ul class="break" style="gap:8px">${Object.entries(PERKS).map(([k,arr])=>linha(SKILLS[k],arr,k)).join('')}
-    ${linha('Áreas do direito (cada uma)',PERK_AREA,S.espec)}</ul>`;
+    <li style="flex-direction:column;align-items:stretch;gap:2px"><b>Áreas do direito (cada uma) <span class="num" style="color:var(--brass)">${estrelasHtml(S.espec)}</span></b>
+    ${PERK_AREA5.map((t,i)=>`<span class="${estrelas(S.espec)>i?'hi':''}" style="${estrelas(S.espec)>i?'':'color:var(--muted)'}">${NIV_AREA[i]} · ${i+1}★ · ${t}${i===3?' · exige especialização na área':i===4?' · exige mestrado ou doutorado na área':''}</span>`).join('')}
+    <span style="color:var(--muted)">Estudando sozinho, cada área para em 81 (3★). Leis novas aprovadas no Congresso derrubam parte da skill da área.</span></li></ul>`;
 }
 
 // ===================== DEFENSORIA PÚBLICA =====================
@@ -2050,7 +2054,7 @@ async function fimSemanaDP(){
     const D=S.d, C=CARGOS_DP[D.cargo], gab=gabinete();
     const tot=D.casos.reduce((a,c)=>a+(c.semana||0),0);
     const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
-    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
     S.energia=clamp(S.energia-3.2*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*S.agenda.lazer,0,100);
@@ -2482,6 +2486,7 @@ async function mudancaVida(cidade){
 }
 
 async function semanaVida(){
+  await semanaEpoca(); aplicarTetos();
   const V=S.vida, A=S.agenda, fam=A.familia||0, sau=A.saude||0, id=idade();
   // saúde e felicidade
   const ds=-Math.max(0,id-40)*.03-Math.max(0,S.estresse-60)/20-(S.energia<20?1:0)+Math.min(sau,4)*1.5+(V.felicidade>70?.5:0)+.3+(S.estresse<30?1:0);
@@ -2890,7 +2895,7 @@ async function fimSemanaEstudante(){
     const pessoal=estudBlocos()+A.estudo, desc=Math.max(0,S.disp-pessoal-A.lazer-vidaBlocos());
     S.energia=clamp(S.energia-2.6*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*A.lazer,0,100);
     S.estresse=clamp(S.estresse+1.8*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*A.lazer,0,100);
-    const mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    const mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
     if(A.estudo){ for(let i=0;i<A.estudo;i++) up(A.estudoSkill,1.1*mult); S.estudoTotal=(S.estudoTotal||0)+A.estudo; if(F.fase==='oab') F.oabEstudo+=A.estudo; }
     const ar=Object.keys(AREAS);
     for(let i=0;i<(A.aulas||0);i++){ up(pick(ar),.3*mult); up(pick(ar),.3*mult); up('analise',.15); up('escrita',.15); }
@@ -2939,7 +2944,7 @@ const TEMAS={
   tributario:['Tributação da economia digital','A reforma tributária e o IVA dual','Planejamento tributário e abuso de forma','Federalismo fiscal em crise'],
 };
 const tituloPesquisa=a=>pick(TEMAS[a]||TEMAS.civel);
-const acadInicial=()=>({curso:null,proj:null,pubs:[],titulos:{esp:0,mestrado:false,doutorado:false},doc:null,indice:0,selEm:0,roySemana:0});
+const acadInicial=()=>({curso:null,proj:null,pubs:[],titulos:{esp:0,mestrado:false,doutorado:false,areas:{}},doc:null,indice:0,selEm:0,roySemana:0});
 const acadBlocos=()=>{ const A=S.ac, G=S.agenda; if(!A) return 0; return (A.curso?G.curso||0:0)+(A.proj?G.pesquisa||0:0)+(A.doc?G.docencia||0:0); };
 const bonusTitulos=()=>{ const T=S.ac&&S.ac.titulos; if(!T) return 0; return Math.min(4,T.esp*2)+(T.mestrado?3:0)+(T.doutorado?5:0); };
 function rowsAcad(free){ const A=S.ac; if(!A) return '';
@@ -2962,10 +2967,10 @@ async function semanaAcademia(){ const A=S.ac, G=S.agenda; if(!A) return [];
   if(A.curso){ const c=A.curso, n=G.curso||0; c.prog+=n; if(c.mensal) pagarPessoal(c.mensal); if(c.bolsa&&S.carreira==='academico') pagarPessoal(-c.bolsa);
     for(let i=0;i<n;i++){ up('pesquisa',.25); up('escrita',.15); up(c.area,.3); }
     if(c.prog>=c.meta&&S.semana-c.inicio>=c.minSem){
-      if(c.tipo==='esp'){ A.titulos.esp++; up(c.area,6); S.prest=clamp(S.prest+1,0,100); L.push(`Especialização concluída em ${AREAS[c.area].nome}.`); A.curso=null; G.curso=0; }
+      if(c.tipo==='esp'){ A.titulos.esp++; (A.titulos.areas=A.titulos.areas||{})[c.area]=Math.max(titArea(c.area),1); up(c.area,6); S.prest=clamp(S.prest+1,0,100); L.push(`Especialização concluída em ${AREAS[c.area].nome}.`); A.curso=null; G.curso=0; }
       else { const ch=clamp(sig(((S.skills.pesquisa+S.skills.escrita)/2-(c.tipo==='doutorado'?52:42))/8),.05,.95);
         const ok=await rolar(`Defesa ${c.tipo==='doutorado'?'da tese':'da dissertação'}`,`A banca avalia a sua pesquisa em ${AREAS[c.area].nome}. Pesquisa e Escrita contam.`,ch,'Aprovado','Volte com ajustes');
-        if(ok){ A.titulos[c.tipo]=true; const pts=c.tipo==='doutorado'?5:3; A.indice+=pts; A.pubs.push({tipo:c.tipo==='doutorado'?'tese':'dissertação',titulo:c.titulo,pts,semana:S.semana});
+        if(ok){ A.titulos[c.tipo]=true; (A.titulos.areas=A.titulos.areas||{})[c.area]=2; const pts=c.tipo==='doutorado'?5:3; A.indice+=pts; A.pubs.push({tipo:c.tipo==='doutorado'?'tese':'dissertação',titulo:c.titulo,pts,semana:S.semana});
           up('pesquisa',c.tipo==='doutorado'?8:5); up(c.area,4); S.prest=clamp(S.prest+(c.tipo==='doutorado'?5:3),0,100);
           L.push(`Você agora é ${c.tipo==='doutorado'?gen('doutor','doutora'):'mestre'} em Direito.`); A.curso=null; G.curso=0; }
         else { c.meta=Math.round(c.meta*1.2); L.push('A banca pediu ajustes: mais trabalho antes da nova defesa.'); } } } }
@@ -2987,7 +2992,7 @@ async function semanaAcademia(){ const A=S.ac, G=S.agenda; if(!A) return [];
 async function escolherArea(titulo){ return await modal(`<h2>${titulo}</h2><div class="opts">${Object.entries(AREAS).map(([k,a])=>`<button class="opt" data-mv="${k}"><span>${a.nome}</span><b class="num">${Math.floor(S.skills[k])}</b><small>Sua skill na área</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]); }
 async function acMatricular(tipo){ const A=S.ac, C=CURSOS[tipo]; if(ocupado||A.curso) return;
   if(tipo==='doutorado'&&!A.titulos.mestrado) return; if(C.selecao&&A.selEm>S.semana) return;
-  const area=await escolherArea(`${C.nome}: em qual área?`); if(!area) return;
+  const area=await escolherArea(`${C.nome}: em qual área? ${tipo==='esp'?'Libera a 4ª estrela nela.':'Libera a 5ª estrela nela.'}`); if(!area) return;
   if(C.selecao){ ocupado=true; let ok;
     try{ ok=await rolar(`Seleção do ${C.nome.toLowerCase()}`,`Projeto de pesquisa, prova e entrevista. Pesquisa, ${tipo==='mestrado'?'CR da graduação':'experiência'} e publicações contam.`,chanceSelecao(tipo),'Aprovado','Não foi desta vez'); }
     finally{ ocupado=false; }
@@ -3060,7 +3065,7 @@ async function fimSemanaAcademico(){
   try{ const G=S.agenda, pessoal=acadBlocos()+G.estudo, desc=Math.max(0,S.disp-pessoal-G.lazer-vidaBlocos());
     S.energia=clamp(S.energia-2.8*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*G.lazer,0,100);
     S.estresse=clamp(S.estresse+1.8*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*G.lazer,0,100);
-    if(G.estudo){ const k=G.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    if(G.estudo){ const k=G.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<G.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100); S.estudoTotal=(S.estudoTotal||0)+G.estudo; }
     pagarPessoal(650); // vida mais simples em dedicação exclusiva
     await semanaAcademia();
@@ -3231,6 +3236,8 @@ const CONQUISTAS=[
   {id:'prof',cat:'academia',tier:'comum',nome:'Professor',desc:'Dê aulas numa faculdade.',ok:()=>!!(S.ac&&S.ac.doc)},
   {id:'a1',cat:'academia',tier:'raro',nome:'Qualis A1',desc:'Publique um artigo em revista A1.',ok:()=>pubsDe('artigo').some(p=>p.qualis==='A1')},
   {id:'best',cat:'academia',tier:'epico',nome:'Best-seller',desc:'Lance um livro que venda 200 exemplares na primeira semana.',ok:()=>pubsDe().some(p=>p.v0>=200)},
+  {id:'cinco',cat:'academia',tier:'epico',nome:'Autoridade no assunto',desc:'Chegue a 5 estrelas numa área do direito.',ok:()=>Object.keys(AREAS).some(k=>estrelas(k)>=5)},
+  {id:'reforma',cat:'casos',tier:'raro',nome:'Lei nova, estudo novo',desc:'Recupere a estrela perdida depois de uma reforma da lei.',ok:()=>!!S.epoca&&Object.keys(S.epoca.atual).some(k=>S.cq.cont['ref_'+k]!==undefined&&estrelas(k)>S.cq.cont['ref_'+k])},
   {id:'prolif',cat:'academia',tier:'epico',nome:'Autor prolífico',desc:'Some 20 publicações.',ok:()=>pubsDe().length>=20,prog:()=>[pubsDe().length,20]},
   {id:'casou',cat:'vida',tier:'comum',nome:'Sim, aceito',desc:'Case-se.',ok:ehCasado},
   {id:'bodas',cat:'vida',tier:'raro',nome:'Bodas de prata',desc:'Fique 25 anos com a mesma pessoa.',ok:()=>!!S.vida.parceiro&&S.semana-S.vida.parceiro.desde>=25*ANO,prog:()=>[S.vida.parceiro?Math.floor((S.semana-S.vida.parceiro.desde)/ANO):0,25]},
@@ -3317,6 +3324,94 @@ function renderConquistas(){ cqCheck(); const Q=S.cq, H=hallLer(), feitas=CONQUI
         return `<section class="panel"><div class="panel-head"><h2>${n}</h2><span class="label">${L.filter(c=>Q.ids[c.id]).length} de ${L.length}</span></div><div class="cqs">${L.map(card).join('')}</div></section>`; }).join('')}
     </div>
   </div>`; }
+
+// ===================== ESTRELAS DAS ÁREAS =====================
+// áreas do direito vão até 5 estrelas; estudando sozinho o teto é 3, especialização na área libera a 4ª e mestrado ou doutorado a 5ª
+const NIV_AREA=[40,55,70,82,92];
+const TETO_AREA=[81,91,100]; // sem título · especialização · mestrado/doutorado
+const PERK_AREA5=['Mais casos da área aparecem','+2 em casos da área','+4 em casos da área (especialista)','+8 em casos da área e ainda mais casos dela (referência)','+12 em casos da área e mais casos épicos e lendários dela (autoridade)'];
+const ehArea=k=>k in AREAS;
+const titArea=k=>{ const T=S.ac&&S.ac.titulos; return T&&T.areas?T.areas[k]||0:0; };
+const tetoArea=k=>TETO_AREA[titArea(k)];
+const estrelas=k=>NIV_AREA.filter(x=>S.skills[k]>=x).length;
+function aplicarTetos(){ if(!S||!S.skills) return; for(const k in AREAS) if(S.skills[k]>tetoArea(k)) S.skills[k]=tetoArea(k); }
+function estrelasHtml(k){ if(!ehArea(k)) return `${'★'.repeat(nivel(k))}`;
+  const e=estrelas(k), lib=[3,4,5][titArea(k)];
+  return `<span title="${lib===3?'Estudando sozinho: até 3 estrelas. Especialização na área libera a 4ª, mestrado ou doutorado a 5ª.':lib===4?'Especialização: até 4 estrelas. Mestrado ou doutorado na área libera a 5ª.':'Mestrado ou doutorado: até 5 estrelas.'}">${'★'.repeat(e)}${'☆'.repeat(Math.max(0,lib-e))}<span style="opacity:.25">${'☆'.repeat(5-Math.max(lib,e))}</span></span>`; }
+function bonusArea(c,add){ const e=estrelas(c.area); if(e<2) return;
+  add(`${AREAS[c.area].nome}: ${['','','','especialista','referência','autoridade'][e]||'estudo'} ${'★'.repeat(e)}`,[0,0,2,4,8,12][e]); }
+const pesoArea=a=>{ const e=estrelas(a); return (e>=1?1.5:1)*(e>=4?1.5:1)*(e>=5?1.2:1); };
+
+// ===================== ÉPOCA: CRISES, CICLOS E REFORMAS DA LEI =====================
+const EPOCAS={
+  recessao:{nome:'Recessão econômica',p:.012,dur:[20,40],grupo:'eco',dem:{empresarial:1.6,trabalho:1.5},valor:.85,
+    desc:'Empresas em crise e demissões em massa: mais casos empresariais (recuperação judicial) e trabalhistas, mas as causas valem 15% menos. A bolsa caiu 20%.',
+    ini:()=>{ const I=S.vida.inv; if(I){ I.acoes.v*=.8; I.fii.v*=.92; } }},
+  boom:{nome:'Boom econômico',p:.009,dur:[20,30],grupo:'eco',dem:{empresarial:1.4,tributario:1.25},valor:1.15,
+    desc:'Negócios em alta: causas valem 15% mais, com mais fusões e disputas tributárias. A bolsa subiu 12%.',
+    ini:()=>{ const I=S.vida.inv; if(I) I.acoes.v*=1.12; }},
+  pandemia:{nome:'Pandemia',p:.0025,dur:[15,25],grupo:'saude',dem:{familia:1.6,civel:1.2,trabalho:1.3},valor:1,
+    desc:'Audiências virtuais: some a penalidade de distância. Mais divórcios, inventários e disputas de contrato. A saúde cai mais rápido.'},
+  operacao:{nome:'Grande operação anticorrupção',p:.007,dur:[20,40],grupo:'pol',dem:{penal:1.7},valor:1.1,
+    desc:'Delações, prisões e a imprensa em cima: muito mais casos penais, e mais valiosos.'},
+};
+const REFORMAS=[
+  {id:'cpc',nome:'Novo Código de Processo Civil',area:'civel',ciclo:8,perda:.15},
+  {id:'cc',nome:'Reforma do Código Civil',area:'civel',ciclo:8,perda:.12},
+  {id:'trib',nome:'Reforma Tributária',area:'tributario',ciclo:8,perda:.20},
+  {id:'trab',nome:'Reforma Trabalhista',area:'trabalho',ciclo:8,perda:.18},
+  {id:'anticrime',nome:'Pacote Anticrime',area:'penal',ciclo:4,perda:.10},
+  {id:'cpp',nome:'Novo Código de Processo Penal',area:'penal',ciclo:8,perda:.15},
+  {id:'falencias',nome:'Nova Lei de Falências e Recuperação Judicial',area:'empresarial',ciclo:8,perda:.14},
+  {id:'ia',nome:'Marco Legal da Inteligência Artificial',area:'empresarial',ciclo:4,perda:.08},
+  {id:'familias',nome:'Estatuto das Famílias',area:'familia',ciclo:8,perda:.12},
+];
+const TRAMITA=.6, VOTACAO=ANO; // chance de um projeto entrar em pauta na janela e semanas até a votação
+function epocaInicial(){ const prox={}; for(const r of REFORMAS) prox[r.id]=S.semana+rint(1,r.ciclo*ANO); return {ev:[],proj:[],prox,atual:{},onda:{},hist:[]}; }
+const EP=()=>S.epoca||(S.epoca=epocaInicial());
+const epocaAtiva=t=>!!S&&!!S.epoca&&S.epoca.ev.some(e=>e.tipo===t&&e.ate>S.semana);
+function demEpoca(area){ if(!S||!S.epoca) return 1; let m=1; const E=S.epoca;
+  for(const e of E.ev) if(e.ate>S.semana) m*=EPOCAS[e.tipo].dem[area]||1;
+  if(E.onda[area]>S.semana) m*=1.6; return m; }
+const valorEpoca=()=>{ if(!S||!S.epoca) return 1; let m=1; for(const e of S.epoca.ev) if(e.ate>S.semana) m*=EPOCAS[e.tipo].valor; return m; };
+const multAtual=k=>S&&S.epoca&&S.epoca.atual[k]>S.semana?2:1; // curso de atualização: estudo da área rende o dobro
+
+async function semanaEpoca(){ const E=EP();
+  // crises e ciclos
+  E.ev=E.ev.filter(e=>{ if(e.ate>S.semana) return true; addLog(`Fim da época: ${EPOCAS[e.tipo].nome}.`,''); E.hist.unshift({t:`Fim: ${EPOCAS[e.tipo].nome}`,s:S.semana}); return false; });
+  for(const [t,X] of Object.entries(EPOCAS)){
+    if(E.ev.some(e=>EPOCAS[e.tipo].grupo===X.grupo)||Math.random()>=X.p) continue;
+    const dur=rint(X.dur[0],X.dur[1]); E.ev.push({tipo:t,ate:S.semana+dur,ini:S.semana}); if(X.ini) X.ini();
+    E.hist.unshift({t:`Início: ${X.nome}`,s:S.semana}); addLog(`${X.nome}: ${X.desc}`,'r');
+    await modal(`<span class="label">Notícia · semana ${S.semana}</span><h2>${X.nome}</h2><p>${X.desc}</p><p class="label" style="margin:0">Dura cerca de ${Math.round(dur/ANO*12)} meses (${dur} semanas).</p>`,[{t:'Continuar',v:1}]); }
+  if(epocaAtiva('pandemia')) S.vida.saude=clamp(S.vida.saude-.4,0,100);
+  // janelas legislativas: a cada 4 ou 8 anos, um projeto pode entrar em pauta (não é certo)
+  for(const r of REFORMAS){
+    if(S.semana<E.prox[r.id]) continue; E.prox[r.id]=S.semana+r.ciclo*ANO;
+    if(E.proj.some(p=>p.id===r.id)||Math.random()>=TRAMITA) continue;
+    const p={id:r.id,vota:S.semana+VOTACAO,ch:Math.round(rnd(.4,.8)*100)/100}; E.proj.push(p);
+    addLog(`No Congresso: “${r.nome}” entrou em pauta. Votação em ${VOTACAO} semanas, aprovação provável em ${pct(p.ch)}.`,'');
+    E.hist.unshift({t:`Em pauta: ${r.nome}`,s:S.semana}); }
+  // votações
+  for(const p of [...E.proj]){ if(S.semana<p.vota) continue; E.proj=E.proj.filter(x=>x!==p); const r=REFORMAS.find(x=>x.id===p.id);
+    const ok=await rolar(`Votação no Congresso · ${r.nome}`,`Se aprovada, parte do que você sabe de ${AREAS[r.area].nome} fica desatualizada.`,p.ch,'Aprovada','Rejeitada');
+    if(!ok){ addLog(`O Congresso rejeitou “${r.nome}”.`,'g'); E.hist.unshift({t:`Rejeitada: ${r.nome}`,s:S.semana}); continue; }
+    const k=r.area, antes=S.skills[k]; S.skills[k]=Math.max(0,antes*(1-r.perda)); E.atual[k]=S.semana+20; E.onda[k]=S.semana+30;
+    if(S.cq&&estrelas(k)<NIV_AREA.filter(x=>antes>=x).length) S.cq.cont['ref_'+k]=estrelas(k);
+    E.hist.unshift({t:`Aprovada: ${r.nome}`,s:S.semana});
+    addLog(`Aprovada a ${r.nome}: ${AREAS[k].nome} caiu de ${Math.floor(antes)} para ${Math.floor(S.skills[k])}.`,'r');
+    await modal(`<span class="label">Lei aprovada · semana ${S.semana}</span><h2>${r.nome}</h2>
+      <p>O que você sabia de ${AREAS[k].nome} ficou em parte desatualizado: a skill caiu ${pct(r.perda)}, de <b>${Math.floor(antes)}</b> para <b>${Math.floor(S.skills[k])}</b>${estrelas(k)<NIV_AREA.filter(x=>antes>=x).length?`, e você perdeu estrela${NIV_AREA.filter(x=>antes>=x).length-estrelas(k)>1?'s':''}`:''}.</p>
+      <dl class="meta"><dt>Curso de atualização</dt><dd>estudar ${AREAS[k].nome} rende o dobro por 20 semanas</dd><dt>Onda de processos</dt><dd>+60% de casos da área por 30 semanas</dd></dl>`,[{t:'Voltar a estudar',v:1,cls:'brass'}]); }
+}
+
+// faixa de notícias abaixo do cabeçalho
+function tickerHtml(){ if(!S||!S.epoca) return ''; const E=S.epoca, it=[];
+  for(const e of E.ev) if(e.ate>S.semana) it.push(`<span class="tk lo" title="${esc(EPOCAS[e.tipo].desc)}"><b>${EPOCAS[e.tipo].nome}</b> · ${e.ate-S.semana} sem</span>`);
+  for(const p of E.proj){ const r=REFORMAS.find(x=>x.id===p.id); it.push(`<span class="tk" title="Se aprovada: −${pct(r.perda)} em ${AREAS[r.area].nome}"><b>${r.nome}</b> em votação · ${pct(p.ch)} · ${Math.max(0,p.vota-S.semana)} sem</span>`); }
+  for(const k in E.atual) if(E.atual[k]>S.semana) it.push(`<span class="tk hi"><b>Atualização em ${AREAS[k].nome}</b> · estudo ×2 · ${E.atual[k]-S.semana} sem</span>`);
+  return it.length?`<div class="ticker"><span class="label">Brasil agora</span>${it.join('')}</div>`:''; }
+{ const h0=header; header=function(){ return h0()+tickerHtml(); }; }
 
 // ===================== EVENTOS =====================
 app.addEventListener('click',e=>{
@@ -3438,7 +3533,7 @@ window.TOGA_JOGO={
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
-    if(!S.cq) S.cq=cqInicial(); if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20; if(!S.npcs) criarColegas(); if(S.vida&&!S.vida.inv){ S.vida.inv=invInicial(); S.vida.alugueis=[]; }
+    if(!S.cq) S.cq=cqInicial(); if(S.ac&&!S.ac.titulos.areas){ const T=S.ac.titulos; T.areas={}; if(T.esp) T.areas[S.espec]=1; if(T.mestrado||T.doutorado) T.areas[S.espec]=2; } if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20; if(!S.npcs) criarColegas(); if(S.vida&&!S.vida.inv){ S.vida.inv=invInicial(); S.vida.alugueis=[]; }
     if(!S.vida){ S.vida=vidaInicial(25+Math.floor((S.semana-1)/ANO)); S.vida.semana0=S.semana; } if(S.agenda.familia===undefined){ S.agenda.familia=0; S.agenda.saude=0; }
     if(!S.u){ if(S.carreira==='adv') S.u=estruturaInicial(false); else estruturaPub(); } if(S.bolso===undefined) S.bolso=3000; if(S.skills.tributario===undefined) S.skills.tributario=20; if(S.j&&!S.j.vara) S.j.vara=S.espec; S.sede=S.sede||'sp'; S.filiais=S.filiais||[]; for(const c of [...S.casos,...S.ofertas]) c.cidade=c.cidade||S.sede; }
   render(); }

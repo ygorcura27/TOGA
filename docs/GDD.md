@@ -147,9 +147,60 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 | Didática | aulas, formação da equipe (+5 na qualidade dos candidatos no nível 3) |
 
 - As skills sobem com o uso: o XP de cada caso é ponderado pela raridade e desacelera perto de 100. Também sobem com estudo, faculdade, pós-graduação e eventos.
-- **Perks por nível** em cada área ampliam a demanda e dão bônus específicos.
+- **Habilidades transversais** têm 3 níveis (40 · 60 · 80), cada um com um efeito próprio.
+- **Áreas do direito têm 5 estrelas** (40 · 55 · 70 · 82 · 92), e o teto depende do título **naquela área**:
+
+| Formação na área | Teto da skill | Estrelas possíveis |
+|---|---|---|
+| Só estudo e prática | 81 | 3★ |
+| Especialização | 91 | 4★ |
+| Mestrado ou doutorado | 100 | 5★ |
+
+- **Efeito das estrelas:**
+  - 1★: mais casos da área;
+  - 2★: +2 em casos da área;
+  - 3★: +4 (especialista);
+  - 4★: +8 e ainda mais casos (referência);
+  - 5★: +12 e mais casos épicos e lendários da área (autoridade).
 
 ---
+
+## 4A. Época: crises e reformas da lei
+
+### 4A.1 Crises e ciclos
+- Os eventos sorteiam toda semana e duram meses.
+- Só existe uma época econômica por vez: recessão ou boom.
+
+| Época | Chance/sem | Duração | Efeito |
+|---|---|---|---|
+| Recessão econômica | 1,2% | 20–40 sem | empresarial ×1,6 e trabalho ×1,5 em demanda; causas −15%; ações −20% |
+| Boom econômico | 0,9% | 20–30 sem | empresarial ×1,4 e tributário ×1,25; causas +15%; ações +12% |
+| Pandemia | 0,25% | 15–25 sem | audiências virtuais (sem penalidade de distância); família ×1,6, cível ×1,2, trabalho ×1,3; saúde −0,4/sem |
+| Grande operação anticorrupção | 0,7% | 20–40 sem | penal ×1,7; causas +10% |
+
+### 4A.2 Reformas da lei
+- **Janela legislativa:** cada reforma tem uma janela a cada 4 ou 8 anos.
+  - Na janela, o projeto entra em pauta com 60% de chance. Não é certo.
+  - A votação acontece 1 ano depois, com a chance de aprovação visível (40%–80%).
+- **Reformas e perda de skill:**
+
+| Reforma | Área | Ciclo | Perda se aprovada |
+|---|---|---|---|
+| Novo Código de Processo Civil | cível | 8 anos | 15% |
+| Reforma do Código Civil | cível | 8 anos | 12% |
+| Reforma Tributária | tributário | 8 anos | 20% |
+| Reforma Trabalhista | trabalho | 8 anos | 18% |
+| Pacote Anticrime | penal | 4 anos | 10% |
+| Novo Código de Processo Penal | penal | 8 anos | 15% |
+| Nova Lei de Falências e Recuperação Judicial | empresarial | 8 anos | 14% |
+| Marco Legal da Inteligência Artificial | empresarial | 4 anos | 8% |
+| Estatuto das Famílias | família | 8 anos | 12% |
+
+- **Se a reforma for aprovada:**
+  - a skill da área cai o percentual indicado, e você pode perder estrelas;
+  - curso de atualização: o estudo da área rende o dobro por 20 semanas;
+  - onda de processos: +60% de casos da área por 30 semanas.
+- **Faixa "Brasil agora":** fica abaixo do cabeçalho e mostra as crises ativas, os projetos em votação e as atualizações em curso.
 
 ## 5. Carreiras
 
@@ -392,7 +443,7 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ## 12. Conquistas e Hall da Fama
 
 ### 12.1 Conquistas
-- **44 conquistas em 6 categorias:**
+- **46 conquistas em 6 categorias** (inclui "Autoridade no assunto", 5★ numa área, e "Lei nova, estudo novo", recuperar a estrela perdida numa reforma):
   - tribunais;
   - escritório;
   - carreira pública;
@@ -463,7 +514,6 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 
 ### 14.2 Sistemas futuros
 - **Três reputações** (técnica, pública e ética) em vez de um prestígio único.
-- **Eventos do mundo:** crises econômicas, reformas da lei, pandemia, mudando a demanda por área.
 - **Delegação em lote** no fim de jogo: casos resolvidos pela equipe com risco.
 - **Tutorial guiado** nas primeiras semanas.
 - **Pontos de legado como meta-moeda,** para comprar bônus de início (traço extra, faculdade melhor).
