@@ -2503,7 +2503,8 @@ async function semanaVida(){
     P.rel=clamp(P.rel+relSemana(P,fam),0,100);
     if(P.rel<12){
       await separar(P,'tempo');
-    } else if(P.status==='namoro'&&P.rel>=70&&S.semana-P.desde>=15&&Math.random()<.15){
+    } else if(P.status==='namoro'&&P.rel>=75&&S.semana-P.desde>=20&&S.semana>=(P.pedidoEm||0)&&Math.random()<.03){
+      P.pedidoEm=S.semana+30; // depois de tocar no assunto, só volta a ele bem mais tarde; o pedido fica sempre disponível no menu Vida
       const v=await modal(`<h2>Pedido de casamento?</h2><p>Vocês estão juntos há ${Math.round((S.semana-P.desde)/ANO*12)} meses e a relação está forte (${Math.round(P.rel)}). A festa custa ${brl(30000)}.</p>`,
         [{t:'Ainda não',v:0,cls:'ghost'},{t:'Casar',v:1,cls:'brass',dis:dinheiroPessoal()<30000}]);
       if(v){ pagarPessoal(30000); P.status='casado'; P.rel=clamp(P.rel+10,0,100); V.felicidade=clamp(V.felicidade+20,0,100); addLog(`Você se casou com ${P.nome}.`,'g'); }
@@ -2758,7 +2759,7 @@ async function acaoParceiro(tipo){ const V=S.vida, P=V.parceiro; if(!P||ocupado)
     if(tipo==='viagem'){ pagarPessoal(4000); V.falta=(V.falta||0)+2; P.rel+=P.pers==='aventura'?28:15; V.felicidade=clamp(V.felicidade+12,0,100); S.estresse=clamp(S.estresse-15,0,100); addLog(`Fim de semana de viagem com ${P.nome}.`,'g'); }
     if(tipo==='conversa'){ const ok=await rolar('Conversa sobre a relação','Oratória e Negociação contam. Vocês sentam para falar com calma.',chanceConversa(),'Vocês se entenderam','Piorou');
       P.rel+=ok?15:-5; }
-    if(tipo==='casar'){ const ch=clamp(P.rel/100+(P.pers==='ambicao'&&S.prest>50?.1:0)-(P.pers==='independencia'?.1:0),.05,.95);
+    if(tipo==='casar'){ const ch=chanceCasar();
       const ok=await rolar('Pedido de casamento',`A festa custa ${brl(30000)}.`,ch,'Sim!','Ainda não');
       if(ok){ pagarPessoal(30000); P.status='casado'; P.rel+=10; V.felicidade=clamp(V.felicidade+20,0,100); addLog(`Você se casou com ${P.nome}.`,'g'); } else P.rel-=10; }
     if(tipo==='filho'){ const ch=clamp(P.rel/100-(P.pers==='independencia'?.25:0)+(P.pers==='lar'?.1:0),.05,.95);
@@ -2770,13 +2771,14 @@ async function acaoParceiro(tipo){ const V=S.vida, P=V.parceiro; if(!P||ocupado)
     salvar();
   } finally { ocupado=false; render(); }
 }
+const chanceCasar=()=>{ const P=S.vida.parceiro; return clamp(P.rel/100+(P.pers==='ambicao'&&S.prest>50?.1:0)-(P.pers==='independencia'?.1:0),.05,.95); };
 function acoesParceiroHtml(){ const V=S.vida, P=V.parceiro, A=V.acoes||{}, f=t=>A[t]===S.semana, din=dinheiroPessoal();
   const b=(t,l,dis)=>`<button class="chip" data-act="pAcao" data-v="${t}" ${dis||f(t)?'disabled':''}>${l}</button>`;
   return `<span class="label">Ações nesta semana</span><div class="chips">
     ${b('jantar','Jantar a dois · '+brl(400),din<400)}
     ${b('viagem','Fim de semana fora · '+brl(4000)+' · −2 blocos',din<4000)}
     ${P.rel<60?b('conversa','Conversar sobre a relação · '+pct(chanceConversa())):''}
-    ${P.status==='namoro'&&P.rel>=60?b('casar','Pedir em casamento · '+brl(30000),din<30000):''}
+    ${P.status==='namoro'?b('casar','Pedir em casamento · '+brl(30000)+' · '+pct(chanceCasar()),din<30000):''}
     ${P.status==='casado'&&!V.gravidez&&V.filhos.length<4&&idade()<48?b('filho','Propor ter um filho'):''}
     <button class="chip bad" data-act="pAcao" data-v="terminar">Terminar</button></div>`; }
 
