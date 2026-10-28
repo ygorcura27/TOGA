@@ -218,6 +218,27 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 - **Fim da carreira por falência:** o caixa abaixo de −R$ 25 mil fecha o escritório.
 - **Fim da carreira por reputação:** prestígio zero encerra a carreira.
 
+### 5.1A Áreas de atuação do escritório
+- **Abertura:** o escritório abre com a área de especialização escolhida na criação e **só recebe casos das áreas que atende**. Isso vale para as ofertas, as filiais, a recepção, as indicações e os casos de fora.
+- **Nova área:**
+  - custa R$ 10 mil;
+  - exige um responsável: advogado **pleno, sênior ou sócio daquela área com pelo menos 3★ nela** (skill de área 70 ou mais).
+- **Full service:** custa R$ 50 mil, dá +5 de prestígio e libera todas as áreas. Exige um responsável em cada uma.
+- **Responsável sai:** a área fica suspensa até haver outro responsável.
+- **Contratação:** ao contratar um advogado, você escolhe a área dele. A skill dele na área vem da faixa da função:
+  - júnior: 40–62;
+  - pleno: 55–80;
+  - sênior: 68–90;
+  - sócio: 75–92.
+- **Evolução:** a skill do advogado sobe 0,25 por semana se a área é atendida (0,08 se não é) e +5 na promoção.
+
+### 5.1B Retirada do titular
+- **Valor e frequência:** a cada 4 semanas, o titular escolhe um valor e saca na hora do caixa do escritório. Há atalhos de 25%, 50% e tudo.
+- **Parte dos sócios:** do total sacado, sai o percentual dos sócios, distribuído a eles no mesmo momento.
+- **Custo de vida:** sai do dinheiro pessoal toda semana.
+- **Sem distribuição:** se passarem mais de 8 semanas sem distribuição, a moral dos sócios cai 3 por semana.
+- **Banco:** para aprovar financiamentos, o banco considera a média das retiradas das últimas 12 semanas.
+
 ### 5.2 Magistratura (por vara)
 | Cargo | Gabinete | Salário/sem | Requisitos |
 |---|---|---|---|
@@ -229,6 +250,11 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 
 - **Varas:** criminal, cível, família, empresarial, trabalho e federal tributária. O juiz só recebe processos da própria vara; no STF, julga todas as áreas.
 - **Propina:** se a corregedoria descobrir, o juiz é cassado.
+- **Carga de trabalho:**
+  - **Estudo mínimo:** o processo só vai a sentença quando o estudo acumulado chega ao mínimo da complexidade dele (comum 2, incomum 3, raro 4, épico 6, lendário 9 blocos).
+  - **Chance de acerto:** usa a mesma curva de preparação dos casos da advocacia.
+  - **Processos novos por semana:** 2 + porte da comarca + 3 por nível do cargo.
+  - **Sentença sem recurso:** rende ⅓ da reputação base.
 
 ### 5.3 Ministério Público
 | Cargo | Gabinete | Salário/sem | Requisitos |
@@ -238,6 +264,10 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 | Procurador de Justiça | 7 | R$ 9.800 | prestígio 60, 50 condenações, taxa 60% |
 | Procurador-Geral de Justiça | 10 | R$ 11.200 | prestígio 85, 100 condenações, taxa 65% |
 
+- **Carga de trabalho:**
+  - **Inquéritos novos por semana:** 2 + porte da comarca + 2 por nível do cargo.
+  - **Investigação insuficiente:** abaixo do mínimo de blocos (comum 1, incomum 2, raro 3, épico 4, lendário 5), a chance cai 5 por bloco que falta.
+
 ### 5.4 Defensoria Pública
 | Cargo | Gabinete | Salário/sem | Requisitos |
 |---|---|---|---|
@@ -245,6 +275,12 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 | Defensor Público | 5 | R$ 8.000 | prestígio 35, 60 atendimentos, taxa 50% |
 | Defensor de Classe Especial | 8 | R$ 9.500 | prestígio 60, 200 atendimentos, taxa 55% |
 | Defensor Público-Geral | 10 | R$ 11.000 | prestígio 85, 400 atendimentos, taxa 60% |
+
+- **Carga de trabalho:**
+  - **Assistidos novos por semana:** 7 + porte da comarca + 3 por nível do cargo.
+  - **Atendimento adequado:** só conta para a promoção o atendimento com o mínimo de blocos da complexidade (comum 1 … lendário 5).
+  - **Atendimento precário:** rende metade da reputação e tira 5 da chance por bloco que falta.
+- **Equipe pública:** estagiário 3 blocos, servidor 5, assessor 8, chefe de gabinete 2.
 
 ### 5.5 Exoneração
 - Qualquer cargo público permite **pedir exoneração** e voltar à advocacia.
@@ -290,10 +326,10 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ### 6.3 Equipe
 | Advocacia | Blocos/sem | Salário/sem | | Carreira pública | Blocos/sem | Salário |
 |---|---|---|---|---|---|---|
-| Estagiário | 2 | R$ 450 | | Estagiário | 2 | R$ 350 |
-| Secretária | 0 (+6 org.) | R$ 900 | | Servidor efetivo | 3 (+4 org.) | pago pelo tribunal |
-| Advogado júnior | 4 | R$ 1.500 | | Assessor (comissão) | 5 | R$ 2.200 |
-| Advogado pleno | 5 | R$ 2.600 | | Chefe de gabinete | 1 + gestão | R$ 2.800 |
+| Estagiário | 2 | R$ 450 | | Estagiário | 3 | R$ 350 |
+| Secretária | 0 (+6 org.) | R$ 900 | | Servidor efetivo | 5 (+4 org.) | pago pelo tribunal |
+| Advogado júnior | 4 | R$ 1.500 | | Assessor (comissão) | 8 | R$ 2.200 |
+| Advogado pleno | 5 | R$ 2.600 | | Chefe de gabinete | 2 + gestão | R$ 2.800 |
 | Advogado sênior | 6 | R$ 4.200 | | | | |
 | Gestor administrativo | 0 + gestão | R$ 3.200 | | | | |
 | Sócio | 7 | parte do lucro | | | | |
