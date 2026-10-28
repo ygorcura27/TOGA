@@ -96,7 +96,9 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 
 | Fonte | Efeito |
 |---|---|
-| Preparação | Σ max(0, 6 − i) por bloco, com retorno decrescente; juiz impaciente reduz para 60% |
+| Preparação | M × (1 − e^(−blocos/K)), com o porte do caso: comum M 15, K 2 (satura em ~5 blocos) · incomum 18/3 · raro 22/5 · épico 26/8 · lendário 30/12 (~30 blocos). Só contam os blocos além da manutenção; juiz impaciente reduz para 60% |
+| Manutenção atrasada | −3 por bloco de manutenção que faltou (até −18) |
+| Porte do escritório | −6 por advogado que falta: casos épicos exigem 1 advogado na equipe, lendários 2 |
 | Apoios | pesquisa de jurisprudência +5 (2 blocos), preparar testemunha +5 (1 bloco), perito +8 (custo de 0,5% da causa), parecer de jurista +10 (1%), correspondente local +10 (só fora da sede), **atalho antiético +20** (risco de ser descoberto) |
 | Estratégia | conservadora +15 (reputação ×0,5 na vitória), equilibrada, agressiva −15 (reputação ×2 na vitória e ×1,5 na derrota), buscar acordo (20% de honorários sobre 50%–80% da causa) |
 | Prestígio | (prestígio − 50) / 10 |
@@ -111,7 +113,9 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 - O **júri** comprime a chance em direção a 50%.
 
 ### 3.3 Fluxo do caso
-1. **Oferta:** 3 casos novos por semana, +1 por filial, +1 com recepção, além de indicações de amigos. Limite de 5 casos ativos, +1 por filial.
+1. **Oferta:** 3 casos novos por semana, +1 por filial, +1 com recepção, +1 a cada 2 advogados da equipe, além de indicações de amigos.
+   - **Limite de casos ativos:** 3 sozinho, +1 por advogado (júnior, pleno, sênior ou sócio), +1 a cada 2 estagiários e +1 por filial.
+   - **Manutenção semanal de cada caso** (prazos, petições, cliente): comum e incomum 1 bloco, raro 2, épico 3, lendário 4, recurso 1. A manutenção é paga primeiro; os blocos seguintes quitam o atraso e só o resto vira preparação.
 2. **Preparação** ao longo das semanas, com os blocos da agenda e da equipe.
 3. **Antecipar audiência:** encerrar antes do prazo com a preparação acumulada até ali.
 4. **Audiência:**

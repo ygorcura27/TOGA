@@ -442,7 +442,7 @@ function carregar(){try{const r=localStorage.getItem('toga-proto'); return r?JSO
 // ===================== CASOS =====================
 function temEscritorio(k){ const C=LOC[k]; if(!C) return false; if(S.carreira!=='adv') return k===comarcaAtual(); if(C.centro) return temEscritorio(C.parent); return k===S.sede||S.filiais.includes(k); }
 function longe(c){ const C=LOC[c.cidade]; return !temEscritorio(c.cidade) && !(C.nivel==='regional' && temEscritorio(C.parent)); }
-const maxCasos=()=>MAX_CASOS+S.filiais.length;
+const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length;
 const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
@@ -467,6 +467,7 @@ function gerarOfertas(){
   const of=[novoCaso(S.sede),novoCaso(S.sede),novoCaso(S.sede)];
   for(const f of S.filiais) of.push(novoCaso(f));
   if(temSala('recepcao')) of.push(novoCaso(S.sede));
+  for(let i=0;i<Math.floor(advsEquipe()/2);i++){ const c=novoCaso(S.sede); c.captado=true; of.push(c); }
   const fora=Object.keys(LOC).filter(k=>{const C=LOC[k]; return !temEscritorio(k) && !C.centro && (C.nivel!=='global'||S.prest>=40) && (C.nivel!=='regional'||temEscritorio(C.parent));});
   if(fora.length && Math.random()<.6){ const c=novoCaso(pickW(fora,k=>LOC[k].pop)); c.indicacao=true; of.push(c); }
   if(S.carreira==='adv'){ for(const c of of) marcarNPC(c); indicacoes(of); }
@@ -482,9 +483,11 @@ function tesesDoCaso(c){return S.teses.filter(t=>t.area===c.area).sort((a,b)=>b.
 function calcChance(c,extra=0){
   const items=[]; const add=(l,v)=>{ if(v) items.push([l,v]); };
   const skill=skillCaso(c);
-  const blocos=c.prep+(c.semana||0);
-  let pb=prepBonus(blocos); if(c.juiz==='impaciente') pb*=.6;
-  add(`Preparação (${blocos} bloco${blocos===1?'':'s'})`,pb);
+  const cg=cargaCaso(c,false), blocos=cg.prep;
+  let pb=prepCaso(c,blocos); if(c.juiz==='impaciente') pb*=.6;
+  add(`Preparação (${blocos} de ~${prepIdeal(c)} blocos ideais)`,Math.round(pb*10)/10);
+  if(cg.atraso) add(`Prazos e peças atrasados (${cg.atraso} bloco${cg.atraso>1?'s':''})`,penAtraso(cg.atraso));
+  if(faltaPorte(c)) add(`Escritório pequeno para o porte (faltam ${faltaPorte(c)} advogado${faltaPorte(c)>1?'s':''} na equipe)`,-6*faltaPorte(c));
   const lg=longe(c);
   for(const k in c.apoios) if(c.apoios[k] && (!APOIOS[k].longe||lg)) add(APOIOS[k].nome,APOIOS[k].bonus);
   if(lg&&!epocaAtiva('pandemia')) add('Distância (sem escritório em '+LOC[c.cidade].nome+')',-10);
@@ -877,6 +880,8 @@ function pasta(c,ativo){
       <dt>Se ganhar</dt><dd><span class="num hi">${brl(c.hon)}</span> · <span class="hi">${sgn(ganho)} prestígio</span></dd>
       <dt>Se perder</dt><dd class="lo">${sgn(-perda)} prestígio</dd>
       <dt>Audiência</dt><dd>${c.prazo<=1?'<b class="mid">na próxima semana</b>':`em ${c.prazo} semanas`}${c.juri?' · <b>com júri</b>':''}</dd>
+       <dt>Manutenção</dt><dd>${manut(c)} bloco${manut(c)>1?'s':''}/semana${c.atraso?` · <b class="lo">${c.atraso} atrasado${c.atraso>1?'s':''}</b>`:''}</dd>
+       ${PORTE[c.rar]?`<dt>Porte</dt><dd class="${faltaPorte(c)?'lo':'hi'}">exige ${PORTE[c.rar]} advogado${PORTE[c.rar]>1?'s':''} na equipe${faltaPorte(c)?` · você tem ${advsEquipe()}`:''}</dd>`:''}
       <dt>Juiz</dt><dd title="${JUIZES[c.juiz].desc}">${c.juizNome} · ${JUIZES[c.juiz].nome}${c.npcJuiz?npcTag(c.npcJuiz):''}</dd>
       <dt>Recurso do adversário</dt><dd class="num">${c.inst<maxInst(c)?pct(apelo):'sem recurso'}</dd>
     </dl>
@@ -1098,7 +1103,7 @@ async function antecipar(id){
   } finally { ocupado=false; render(); }
 }
 function criarRecurso(c,lado,retido,perdaOrig=0){
-  S.casos.push({...c,id:++uid,inst:c.inst+1,lado,retido,perdaOrig:perdaOrig||c.perdaOrig,prep:0,semana:0,apoios:{},mod:0,estrategia:'equilibrada',prazo:rint(4,8),acordoFalhou:true});
+  S.casos.push({...c,id:++uid,inst:c.inst+1,lado,retido,perdaOrig:perdaOrig||c.perdaOrig,prep:0,semana:0,atraso:0,apoios:{},mod:0,estrategia:'equilibrada',prazo:rint(4,8),acordoFalhou:true});
 }
 
 // ===================== FIM DE SEMANA =====================
@@ -1114,7 +1119,7 @@ async function fimSemana(){
     autoDistribuir();
     const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
     // agenda → preparação
-    for(const c of S.casos){ c.prep+=c.semana||0; c.semana=0; for(const k in c.apoios) if(c.apoios[k]===1) c.apoios[k]=2; }
+    for(const c of S.casos){ cargaCaso(c,true); for(const k in c.apoios) if(c.apoios[k]===1) c.apoios[k]=2; }
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; addLog(`Estudou ${SKILLS[k]} por ${S.agenda.estudo} bloco(s).`); }
@@ -3429,6 +3434,7 @@ function painelCasosAtivos(){
   const grupos={}; for(const c of rec.sort((a,b)=>a.inst-b.inst)) (grupos[nomeTribunal(c)]=grupos[nomeTribunal(c)]||[]).push(c);
   return `<section class="panel" style="background:transparent;border:0;padding:0">
       <div class="panel-head"><h2>Casos ativos</h2><span class="num">${S.casos.length}/${maxCasos()}</span></div>
+      <p class="label" style="margin:0">Limite: 3 sozinho + 1 por advogado (${advsEquipe()}) + 1 a cada 2 estagiários (${estagEquipe()})${S.filiais.length?` + ${S.filiais.length} pelas filiais`:''} · manutenção desta semana: ${S.casos.reduce((a,c)=>a+manut(c),0)} blocos</p>
       ${rec.length?`<span class="label">1ª instância · ${prim.length}</span>`:''}
       <div class="cases">${prim.length?prim.map(c=>pasta(c,true)).join(''):`<p class="empty">${rec.length?'Nenhum caso em 1ª instância.':'Nenhum caso ativo. Aceite uma das ofertas abaixo.'}</p>`}</div>
     </section>
@@ -3451,10 +3457,10 @@ const TUT={
   ],
   adv:[
     {txt:'Você abriu o seu escritório! À direita estão os <b>casos novos da semana</b>. Cada pasta mostra a dificuldade, a sua skill e a <b>chance de vitória</b>. Aceite um caso que você consiga ganhar.',alvo:'[data-act=aceitar]',ok:()=>S.casos.length>0||S.vitorias+S.derrotas>0},
-    {txt:'Agora prepare o caso: coloque <b>blocos na agenda</b> na linha do caso. Cada bloco aumenta a chance, com retorno decrescente. Até a audiência, a preparação se acumula.',alvo:'[data-act=inc][data-k=case]',ok:()=>S.casos.some(c=>(c.semana||0)+(c.prep||0)>0)||S.vitorias+S.derrotas>0},
+    {txt:'Agora prepare o caso: coloque <b>blocos na agenda</b> na linha do caso. Cada caso consome <b>blocos de manutenção</b> por semana (prazos e petições: 1 num caso comum, até 4 num lendário); faltar gera atraso e derruba a chance. O que passar da manutenção vira preparação.',alvo:'[data-act=inc][data-k=case]',ok:()=>S.casos.some(c=>(c.semana||0)+(c.prep||0)>0)||S.vitorias+S.derrotas>0},
     {txt:'Na pasta, a <b>estratégia</b> (conservadora, equilibrada, agressiva ou acordo) e os <b>apoios</b> (pesquisa, perito, parecer…) mudam a chance. Abra <b>Ver detalhes da chance</b> para ver cada bônus.',alvo:'.cases .folder details',man:true},
     {txt:'Na vitória você recebe <b>20% do valor da causa</b> e prestígio; na derrota, só perde prestígio. Quem perde pode <b>recorrer</b>, e os recursos aparecem separados por tribunal. Encerre a semana quando estiver pronto.',alvo:'[data-act=fimSemana]',ok:t=>S.semana>t.ini},
-    {txt:'Os honorários entram no <b>caixa do escritório</b>, que paga aluguel e salários. Em <b>Estrutura e equipe</b> você monta salas e contrata: um estagiário já dá 2 blocos por semana.',alvo:'[data-act=view][data-v=estrutura]',ok:t=>!!t.viu.estrutura},
+    {txt:'Os honorários entram no <b>caixa do escritório</b>, que paga aluguel e salários. Em <b>Estrutura e equipe</b> você monta salas e contrata. Sozinho você atende só 3 casos: cada advogado contratado aumenta o limite em 1, traz clientes e dá blocos; casos épicos e lendários exigem advogados na equipe.',alvo:'[data-act=view][data-v=estrutura]',ok:t=>!!t.viu.estrutura},
     {txt:'Nos mapas <b>Região, Brasil e Mundo</b> você abre filiais quando tiver prestígio: mais casos, casos maiores e o limite de casos ativos sobe.',alvo:'[data-act=view][data-v=regiao]',man:true},
     {txt:'Por último: a faixa <b>Brasil agora</b> avisa de crises e de leis em votação (uma reforma aprovada derruba parte da skill da área). A aba <b>Conquistas</b> guarda as metas de longo prazo. Boa advocacia!',alvo:'[data-act=view][data-v=conquistas]',man:true},
   ],
@@ -3483,6 +3489,26 @@ function tutMarcar(){ document.querySelectorAll('.tut-alvo').forEach(x=>x.classL
   const el=document.querySelector(`#app ${e.p.alvo}`)||document.querySelector(e.p.alvo); if(el) el.classList.add('tut-alvo'); }
 { const h1=header; header=function(){ if(S){ const e=tutEstado(); if(e) e.t.viu[view]=1; tutAvancar(); } return h1()+tutHtml(); }; }
 { const r1=render; render=function(){ r1(); tutMarcar(); }; }
+
+// ===================== CARGA DE TRABALHO E PORTE DO ESCRITÓRIO =====================
+// cada caso ativo consome blocos de manutenção (prazos, petições, cliente) antes de render preparação;
+// o limite de casos e o porte para casos grandes dependem da equipe de advogados
+const MANUT={comum:1,incomum:1,raro:2,epico:3,lendario:4};
+const manut=c=>(c.inst||1)>1?1:MANUT[c.rar];
+const PORTE={epico:1,lendario:2}; // advogados na equipe para atender o porte do caso
+const advsEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>['junior','pleno','senior','socio'].includes(f.funcao)).length:0;
+const estagEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>f.funcao==='estagiario').length:0;
+const faltaPorte=c=>Math.max(0,(PORTE[c.rar]||0)-advsEquipe());
+// aplica os blocos da semana: primeiro a manutenção, depois o atraso acumulado, o resto vira preparação
+function cargaCaso(c,aplicar){ let s=c.semana||0, at=c.atraso||0, prep=c.prep||0; const m=manut(c);
+  if(s<m){ at+=m-s; s=0; } else { s-=m; const q=Math.min(s,at); at-=q; s-=q; prep+=s; }
+  if(aplicar){ const antes=c.atraso||0; c.prep=prep; c.atraso=at; c.semana=0; if(at>antes) addLog(`Prazos apertando em “${c.titulo}”: faltaram ${at-antes} bloco(s) de manutenção.`,'r'); }
+  return {prep,atraso:at}; }
+const penAtraso=at=>-Math.min(18,at*3);
+// preparação cresce com o porte: um caso comum satura em ~5 blocos, um lendário pede ~35 (trabalho de equipe)
+const PREP_M={comum:15,incomum:18,raro:22,epico:26,lendario:30}, PREP_K={comum:2,incomum:3,raro:5,epico:8,lendario:12};
+const prepCaso=(c,n)=>PREP_M[c.rar]*(1-Math.exp(-n/PREP_K[c.rar]));
+const prepIdeal=c=>Math.round(PREP_K[c.rar]*2.5);
 
 // ===================== EVENTOS =====================
 app.addEventListener('click',e=>{
