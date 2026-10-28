@@ -2305,8 +2305,15 @@ async function contratar(funcao){
   if(U.equipe.length>=mesas()) return modal('<h2>Sem mesa livre</h2><p>Construa uma sala de trabalho ou uma recepção na planta antes de contratar.</p>',[{t:'Ok',v:1}]);
   if(funcao==='servidor'&&U.equipe.filter(f=>f.funcao==='servidor').length>=1+cargoAtual())
     return modal(`<h2>Lotação completa</h2><p>O tribunal só cede ${1+cargoAtual()} servidor(es) efetivo(s) para este cargo. Promoções aumentam a lotação.</p>`,[{t:'Ok',v:1}]);
-  let area=null; if(!pubCar()&&AE_FAIXA[funcao]){ area=await escolherArea(`${F.nome}: de qual área? Um pleno ou sênior com 3★ pode abrir a área no escritório.`); if(!area) return; }
-  const cands=[gerarCandidato(funcao,area),gerarCandidato(funcao,area),gerarCandidato(funcao,area)];
+  let cands;
+  if(!pubCar()&&AE_FAIXA[funcao]){ // advogados: candidatos gerados por área, e a escolha mostra a skill deles (não a sua)
+    const porArea={}; for(const k in AREAS) porArea[k]=[gerarCandidato(funcao,k),gerarCandidato(funcao,k),gerarCandidato(funcao,k)];
+    const at=areasEsc();
+    const area=await modal(`<h2>${F.nome}: de qual área?</h2><p>Três candidatos em cada área. Um pleno, sênior ou sócio com 3★ na área pode abrir essa área no escritório.</p>
+      <div class="opts">${Object.entries(AREAS).map(([k,A])=>{ const L=porArea[k], ae=L.map(c=>c.ae), mx=Math.max(...ae), mn=Math.min(...ae), est=L.map(estrelasF), chefe=RESP_FUNCS.includes(funcao)&&L.some(c=>estrelasF(c)>=3);
+        return `<button class="opt" data-mv="${k}"><span>${A.nome}</span><b class="num">${mn}–${mx}</b><small>Skill dos candidatos na área · ${'★'.repeat(Math.min(...est))}${Math.max(...est)>Math.min(...est)?' a '+'★'.repeat(Math.max(...est)):''}${at.includes(k)?' · área já atendida':chefe?' · algum pode abrir a área':''}</small></button>`; }).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
+    if(!area) return; cands=porArea[area]; }
+  else cands=[gerarCandidato(funcao),gerarCandidato(funcao),gerarCandidato(funcao)];
   const origem=funcao==='servidor'?'Servidores disponíveis para requisição (pagos pelo tribunal)':pubCar()?'Salário pago pelo orçamento da unidade':'Salário pago pelo caixa do escritório';
   const v=await modal(`<h2>${funcao==='servidor'?'Requisitar':'Contratar'}: ${funcao==='gestor'?nomeGestor():F.nome}</h2><p>${origem}. ${F.bl?`Rende cerca de ${F.bl} blocos por semana, conforme a moral.`:'Não atende casos, mas melhora a organização.'}</p>
     <div class="opts">${cands.map((c,i)=>`<button class="opt" data-mv="${i}"><span>${esc(c.nome)}</span><b class="num">${F.sal?brl(c.sal)+'/sem':'sem custo'}</b><small>Qualidade ${c.q}${F.g?` · gestão ${c.g}`:''} · moral ${c.moral}${c.area?` · ${AREAS[c.area].nome} ${'★'.repeat(estrelasF(c))} (${c.ae})${estrelasF(c)>=3&&RESP_FUNCS.includes(funcao)?' · pode chefiar a área':''}`:''}</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
