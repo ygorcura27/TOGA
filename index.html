@@ -565,7 +565,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='defensor'){ const D=S.d, presos=D.casos.filter(c=>c.preso).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${CARGOS_DP[D.cargo].nome} · ${CIDADES[D.comarca].nome} · Semana ${S.semana}</span></div>
+    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_DP[D.cargo].nome)} · ${CIDADES[D.comarca].nome} · Semana ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/semana</span><b>${brl(CARGOS_DP[D.cargo].salario)}</b></div>
@@ -586,7 +586,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='promotor'){ const P=S.p, atr=P.casos.filter(c=>c.fase==='inq'&&c.idade>c.meta).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${CARGOS_MP[P.cargo].nome} · ${CIDADES[P.comarca].nome} · Semana ${S.semana}</span></div>
+    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_MP[P.cargo].nome)} · ${CIDADES[P.comarca].nome} · Semana ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/semana</span><b>${brl(CARGOS_MP[P.cargo].salario)}</b></div>
@@ -862,12 +862,13 @@ function pasta(c,ativo){
 }
 
 // ===================== INÍCIO =====================
-let escolha={nome:'Ana Ribeiro',inicio:'faculdade',facul:'publica',carreira:'adv',espec:'trabalho',sede:'sp',traits:['orador','workaholic']};
+let escolha={genero:'f',nome:'Ana Ribeiro',inicio:'faculdade',facul:'publica',carreira:'adv',espec:'trabalho',sede:'sp',traits:['orador','workaholic']};
 function renderInicio(){
   app.innerHTML=`<header class="top"><div class="brand"><h1>Toga</h1><span>Protótipo · sistema de casos</span></div></header>
   <section class="panel" style="max-width:560px;margin:0 auto">
     <h2>Uma vida no Direito</h2>
     <p style="margin:0;color:var(--muted)">Você acabou de passar no exame da ordem. Aceite casos, prepare cada um e torça na hora do veredito. Honorários são sempre 20% do valor da causa e só entram quando você ganha. Perder custa prestígio. Meta: chegar a ${META_PREST} de prestígio sem quebrar o caixa.</p>
+    <div class="field"><label class="label" for="genero">Gênero</label><select id="genero"><option value="f">Feminino</option><option value="m" ${escolha.genero==='m'?'selected':''}>Masculino</option></select></div>
     <div class="field"><label class="label" for="nome">Nome</label><input id="nome" value="${esc(escolha.nome)}" maxlength="30"></div>
     <div class="field"><label class="label" for="inicio">Ponto de partida</label><select id="inicio"><option value="faculdade">Faculdade de Direito, aos 18 anos (recomendado)</option><option value="formado" ${escolha.inicio==='formado'?'selected':''}>Já formado e aprovado, aos 25 anos</option></select></div>
     <div class="field"><label class="label" for="facul">Faculdade (se começar na faculdade)</label><select id="facul">${Object.entries(FACS).map(([k,f])=>`<option value="${k}" ${escolha.facul===k?'selected':''}>${f.nome} · ${f.mensal?brl(f.mensal)+'/sem':'gratuita, exige vestibular'}</option>`).join('')}</select></div>
@@ -1145,7 +1146,7 @@ const NOMES_CARGO={
   outros:['Juiz Substituto','Juiz de Direito Titular','Desembargador do TJ','Ministro do STJ','Ministro do STF'],
 };
 const vara=()=>S.j.vara||'civel';
-const nomeCargo=i=>(NOMES_CARGO[vara()]||NOMES_CARGO.outros)[i];
+const nomeCargo=i=>fem((NOMES_CARGO[vara()]||NOMES_CARGO.outros)[i]);
 const supNome=()=>vara()==='trabalho'?'TST':'STJ';
 async function escolherVara(){
   const v=await modal(`<h2>Escolha a sua vara</h2><p>O juiz só recebe processos da área da sua vara. A carreira trabalhista termina no TST, a federal tributária e as estaduais no STJ, e todas podem chegar ao STF.</p>
@@ -1409,7 +1410,7 @@ async function promocao(){
   if(v!==J.comarca && !(await mudancaVida(CIDADES[v].nome))) return;
   J.cargo=prox; J.comarca=v; J.avisoPromo=false; J.acervo=[]; for(let i=0;i<6;i++) J.acervo.push(novoProcesso());
   addLog(`Promovido a ${nomeCargo(prox)} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
-  if(prox===4) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} semanas você chegou a Ministro do Supremo Tribunal Federal, com ${J.sentencas} sentenças e taxa de reforma de ${pct(taxaReforma())}.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
+  if(prox===4) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} semanas você chegou a ${fem('Ministro')} do Supremo Tribunal Federal, com ${J.sentencas} sentenças e taxa de reforma de ${pct(taxaReforma())}.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
 
 function fasesConcurso(tipo){ const b=Math.min(15,(S.estudoTotal||0)*.5)+bonusTitulos()+Math.min(5,((S.formacao&&S.formacao.contatos[tipo])||0)/10);
@@ -1431,10 +1432,10 @@ async function concurso(tipo='juiz'){
       if(!ok){ S.concursoEm=S.semana+8; S.estresse=clamp(S.estresse+10,0,100);
         addLog(`Reprovado na ${x.n.toLowerCase()} do concurso. Nova tentativa na semana ${S.concursoEm}.`,'r'); salvar(); return; }
     }
-    const r=await modal(`<h2 class="hi">Aprovado no concurso</h2><p>Você pode tomar posse como <b>${POSSE[tipo]}</b> em ${CIDADES[S.sede].nome}. Para isso, renuncia aos casos e fecha os escritórios. O dinheiro em caixa continua seu, e os honorários a receber são perdidos.</p>`,
+    const r=await modal(`<h2 class="hi">Aprovado no concurso</h2><p>Você pode tomar posse como <b>${fem(POSSE[tipo])}</b> em ${CIDADES[S.sede].nome}. Para isso, renuncia aos casos e fecha os escritórios. O dinheiro em caixa continua seu, e os honorários a receber são perdidos.</p>`,
       [{t:'Continuar advogando',v:0,cls:'ghost'},{t:'Tomar posse',v:1,cls:'brass'}]);
     if(r){ S.caixa+=S.bolso||0; S.bolso=0; tipo==='promotor'?iniciarMP(S.sede):tipo==='defensor'?iniciarDP(S.sede):iniciarMagistratura(S.sede,await escolherVara()); S.prest=Math.max(20,Math.round(S.prest*.6)); view='escritorio';
-      addLog(`Posse como ${POSSE[tipo]} na comarca de ${CIDADES[S.sede].nome}. Você herdou ${tipo==='promotor'?'8 inquéritos':tipo==='defensor'?'uma fila de assistidos':'um acervo de 8 processos'}.`,'g'); }
+      addLog(`Posse como ${fem(POSSE[tipo])} na comarca de ${CIDADES[S.sede].nome}. Você herdou ${tipo==='promotor'?'8 inquéritos':tipo==='defensor'?'uma fila de assistidos':'um acervo de 8 processos'}.`,'g'); }
     else addLog('Aprovado no concurso, mas preferiu continuar na advocacia.');
     salvar();
   } finally { ocupado=false; render(); }
@@ -1514,7 +1515,7 @@ const promoOkMP=()=>{const r=promoReqMP(); return !!r&&r.every(x=>x.ok)&&!((S.p.
 function xpMP(c,mult){ for(const [k,w] of [[c.area,.5],['analise',.3],['oratoria',.2]]) S.skills[k]=clamp(S.skills[k]+w*3*RAR[c.rar].xp*mult*(1-S.skills[k]/110),0,100); }
 
 function painelCarreiraMP(){ const P=S.p, C=CARGOS_MP[P.cargo], req=promoReqMP();
-  return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">${C.nome}</span></div>
+  return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">${fem(C.nome)}</span></div>
     <dl class="meta">
       <dt>Comarca</dt><dd>${CIDADES[P.comarca].nome}</dd>
       <dt>Salário</dt><dd class="num">${brl(C.salario)}/semana</dd>
@@ -1523,10 +1524,10 @@ function painelCarreiraMP(){ const P=S.p, C=CARGOS_MP[P.cargo], req=promoReqMP()
       <dt>Taxa de condenação</dt><dd class="num">${pct(taxaCond())}</dd>
       <dt>Acordos · arquivamentos</dt><dd class="num">${P.acordos} · ${P.arquivados}</dd>
     </dl>
-    ${req?`<span class="label">Para ${CARGOS_MP[P.cargo+1].nome}</span>
+    ${req?`<span class="label">Para ${fem(CARGOS_MP[P.cargo+1].nome)}</span>
       <ul class="break">${req.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
       ${P.cargo===2?'<p style="margin:0;font-size:12px;color:var(--muted)">O Procurador-Geral sai de uma lista tríplice votada pela classe e é escolhido pelo governador.</p>':''}
-      <button class="btn brass" data-act="promocao" ${promoOkMP()?'':'disabled'}>${(P.pgjEm||0)>S.semana?`Nova lista tríplice na semana ${P.pgjEm}`:'Pedir promoção a '+CARGOS_MP[P.cargo+1].nome}</button>`
+      <button class="btn brass" data-act="promocao" ${promoOkMP()?'':'disabled'}>${(P.pgjEm||0)>S.semana?`Nova lista tríplice na semana ${P.pgjEm}`:'Pedir promoção a '+fem(CARGOS_MP[P.cargo+1].nome)}</button>`
       :'<p class="hi" style="margin:0">Você chefia o Ministério Público do estado.</p>'}
     ${btnExonerar}
   </section>`; }
@@ -1729,7 +1730,7 @@ async function fimSemanaMP(){
     if(atras){ S.prest=clamp(S.prest-.3*atras*fatorAtraso(),0,100); S.estresse=clamp(S.estresse+.5*atras,0,100); }
     const novos=novosInq(P.comarca); for(let i=0;i<novos;i++) P.casos.push(novoInquerito());
     const est=semanaEstruturaPub(novos);
-    await modal(`<span class="label">Semana ${S.semana} · ${C.nome} · ${CIDADES[P.comarca].nome}</span><h2>Balanço da promotoria</h2>
+    await modal(`<span class="label">Semana ${S.semana} · ${fem(C.nome)} · ${CIDADES[P.comarca].nome}</span><h2>Balanço da promotoria</h2>
       ${notas.length?`<ul class="break">${notas.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Semana sem novidades nos processos.</p>'}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
       <dl class="meta"><dt>Inquéritos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-.3*atras)} reputação`:''}</dd>
@@ -1739,7 +1740,7 @@ async function fimSemanaMP(){
     if(S.estresse>=100){ S.disp=10; S.estresse=70; addLog('Burnout: você só terá 10 blocos na próxima semana.','r'); }
     else if(S.energia<=0){ S.disp=14; addLog('Exaustão: você só terá 14 blocos na próxima semana.','r'); }
     if(S.prest<=0) S.fim='cnmp';
-    if(!S.fim && promoOkMP() && !P.avisoPromo){ P.avisoPromo=true; addLog(`Você já pode pedir promoção a ${CARGOS_MP[P.cargo+1].nome}.`,'g'); }
+    if(!S.fim && promoOkMP() && !P.avisoPromo){ P.avisoPromo=true; addLog(`Você já pode pedir promoção a ${fem(CARGOS_MP[P.cargo+1].nome)}.`,'g'); }
     salvar(); render();
     if(S.fim){
       await modal(`<h2 class="lo">Carreira encerrada</h2><p>Sua reputação chegou a zero e o Conselho Nacional do Ministério Público afastou você. Foram ${P.condenacoes} condenações em ${S.semana-1} semanas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
@@ -1753,7 +1754,7 @@ async function promocaoMP(){
   const outras=Object.keys(CIDADES).filter(k=>k!==P.comarca).sort(()=>Math.random()-.5);
   const ops=prox===3?[P.comarca]:prox===2?Object.keys(CIDADES):[P.comarca,...outras.slice(0,3)];
   const titulo=prox===3?'Lista tríplice para Procurador-Geral':prox===2?'Escolha o Ministério Público do estado':'Escolha a comarca';
-  const v=await modal(`<h2>${titulo}</h2><p>Como ${N.nome}: orçamento base de ${brl(ORC_BASE[prox])} por semana para a unidade e salário de ${brl(N.salario)}. A equipe e a estrutura vão com você. Os inquéritos atuais ficam com o seu sucessor.</p>
+  const v=await modal(`<h2>${titulo}</h2><p>Como ${fem(N.nome)}: orçamento base de ${brl(ORC_BASE[prox])} por semana para a unidade e salário de ${brl(N.salario)}. A equipe e a estrutura vão com você. Os inquéritos atuais ficam com o seu sucessor.</p>
     <div class="opts">${ops.map(k=>`<button class="opt" data-mv="${k}"><span>${CIDADES[k].nome}${k===P.comarca?' (atual)':''}</span><b class="num">${novosInq(k)}/sem</b><small>Tamanho ${'●'.repeat(CIDADES[k].pop)}${'○'.repeat(5-CIDADES[k].pop)} · inquéritos novos por semana</small></button>`).join('')}</div>`,
     [{t:'Cancelar',v:'',cls:'ghost'}]);
   if(!v) return;
@@ -1766,8 +1767,8 @@ async function promocaoMP(){
   }
   if(v!==P.comarca && !(await mudancaVida(CIDADES[v].nome))) return;
   P.cargo=prox; P.comarca=v; P.avisoPromo=false; P.casos=[]; for(let i=0;i<6;i++) P.casos.push(novoInquerito());
-  addLog(`Promovido a ${N.nome} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
-  if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} semanas você virou Procurador-Geral de Justiça, com ${P.condenacoes} condenações e taxa de ${pct(taxaCond())}.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
+  addLog(`Promovido a ${fem(N.nome)} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
+  if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} semanas você virou ${fem('Procurador')}-Geral de Justiça, com ${P.condenacoes} condenações e taxa de ${pct(taxaCond())}.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
 
 // ===================== SKILLS: NÍVEIS E EFEITOS =====================
@@ -1871,7 +1872,7 @@ const promoOkDP=()=>{const r=promoReqDP(); return !!r&&r.every(x=>x.ok)&&!((S.d.
 const btnExonerar='<button class="btn ghost" data-act="exonerar">Pedir exoneração e advogar</button>';
 
 function painelCarreiraDP(){ const D=S.d, C=CARGOS_DP[D.cargo], req=promoReqDP();
-  return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">${C.nome}</span></div>
+  return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">${fem(C.nome)}</span></div>
     <dl class="meta">
       <dt>Comarca</dt><dd>${CIDADES[D.comarca].nome}</dd>
       <dt>Salário</dt><dd class="num">${brl(C.salario)}/semana</dd>
@@ -1881,10 +1882,10 @@ function painelCarreiraDP(){ const D=S.d, C=CARGOS_DP[D.cargo], req=promoReqDP()
       <dt>Acordos · solturas por HC</dt><dd class="num">${D.acordos} · ${D.solturas}</dd>
       <dt>Cartas de agradecimento</dt><dd class="num">${D.cartas}</dd>
     </dl>
-    ${req?`<span class="label">Para ${CARGOS_DP[D.cargo+1].nome}</span>
+    ${req?`<span class="label">Para ${fem(CARGOS_DP[D.cargo+1].nome)}</span>
       <ul class="break">${req.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
       ${D.cargo===2?'<p style="margin:0;font-size:12px;color:var(--muted)">O Defensor Público-Geral sai de uma lista tríplice votada pela classe e é escolhido pelo governador.</p>':''}
-      <button class="btn brass" data-act="promocao" ${promoOkDP()?'':'disabled'}>${(D.dpgEm||0)>S.semana?`Nova lista tríplice na semana ${D.dpgEm}`:'Pedir promoção a '+CARGOS_DP[D.cargo+1].nome}</button>`
+      <button class="btn brass" data-act="promocao" ${promoOkDP()?'':'disabled'}>${(D.dpgEm||0)>S.semana?`Nova lista tríplice na semana ${D.dpgEm}`:'Pedir promoção a '+fem(CARGOS_DP[D.cargo+1].nome)}</button>`
       :'<p class="hi" style="margin:0">Você chefia a Defensoria Pública do estado.</p>'}
     ${btnExonerar}
   </section>`; }
@@ -2048,7 +2049,7 @@ async function fimSemanaDP(){
     const vit=lote.filter(x=>x[2]).length;
     if(lote.length) addLog(`${lote.length} audiência(s) na semana: ${vit} êxito(s) e ${lote.length-vit} derrota(s).`,vit>=lote.length/2?'g':'r');
     const soma=lote.reduce((a,x)=>a+x[3],0);
-    await modal(`<span class="label">Semana ${S.semana} · ${C.nome} · ${CIDADES[D.comarca].nome}</span><h2>Balanço da Defensoria</h2>
+    await modal(`<span class="label">Semana ${S.semana} · ${fem(C.nome)} · ${CIDADES[D.comarca].nome}</span><h2>Balanço da Defensoria</h2>
       <span class="label">Audiências (${lote.length})</span>
       ${lote.length?`<ul class="break">${lote.slice(0,14).map(([c,ch,ok,d])=>`<li><span>${esc(c.titulo)} · ${pct(ch)}${c.preso?' · preso':''}</span><span class="num ${ok?'hi':'lo'}">${ok?'Êxito':'Derrota'} ${sgn(d)}</span></li>`).join('')}${lote.length>14?`<li><span>e mais ${lote.length-14}</span><span></span></li>`:''}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Nenhuma audiência comum nesta semana.</p>'}
       ${notas.length?`<ul class="break">${notas.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`:''}
@@ -2060,7 +2061,7 @@ async function fimSemanaDP(){
     if(S.estresse>=100){ S.disp=10; S.estresse=70; addLog('Burnout: você só terá 10 blocos na próxima semana.','r'); }
     else if(S.energia<=0){ S.disp=14; addLog('Exaustão: você só terá 14 blocos na próxima semana.','r'); }
     if(S.prest<=0) S.fim='dp';
-    if(!S.fim && promoOkDP() && !D.avisoPromo){ D.avisoPromo=true; addLog(`Você já pode pedir promoção a ${CARGOS_DP[D.cargo+1].nome}.`,'g'); }
+    if(!S.fim && promoOkDP() && !D.avisoPromo){ D.avisoPromo=true; addLog(`Você já pode pedir promoção a ${fem(CARGOS_DP[D.cargo+1].nome)}.`,'g'); }
     salvar(); render();
     if(S.fim){
       await modal(`<h2 class="lo">Carreira encerrada</h2><p>Sua reputação chegou a zero e a corregedoria da Defensoria afastou você. Foram ${D.atendimentos} atendimentos em ${S.semana-1} semanas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
@@ -2074,7 +2075,7 @@ async function promocaoDP(){
   const outras=Object.keys(CIDADES).filter(k=>k!==D.comarca).sort(()=>Math.random()-.5);
   const ops=prox===3?[D.comarca]:prox===2?Object.keys(CIDADES):[D.comarca,...outras.slice(0,3)];
   const titulo=prox===3?'Lista tríplice para Defensor Público-Geral':prox===2?'Escolha a Defensoria do estado':'Escolha a comarca';
-  const v=await modal(`<h2>${titulo}</h2><p>Como ${N.nome}: orçamento base de ${brl(ORC_BASE[prox])} por semana para a unidade e salário de ${brl(N.salario)}. A equipe e a estrutura vão com você. Os assistidos atuais ficam com o seu sucessor.</p>
+  const v=await modal(`<h2>${titulo}</h2><p>Como ${fem(N.nome)}: orçamento base de ${brl(ORC_BASE[prox])} por semana para a unidade e salário de ${brl(N.salario)}. A equipe e a estrutura vão com você. Os assistidos atuais ficam com o seu sucessor.</p>
     <div class="opts">${ops.map(k=>`<button class="opt" data-mv="${k}"><span>${CIDADES[k].nome}${k===D.comarca?' (atual)':''}</span><b class="num">${novosDP(k)}/sem</b><small>Tamanho ${'●'.repeat(CIDADES[k].pop)}${'○'.repeat(5-CIDADES[k].pop)} · assistidos novos por semana</small></button>`).join('')}</div>`,
     [{t:'Cancelar',v:'',cls:'ghost'}]);
   if(!v) return;
@@ -2087,14 +2088,14 @@ async function promocaoDP(){
   }
   if(v!==D.comarca && !(await mudancaVida(CIDADES[v].nome))) return;
   D.cargo=prox; D.comarca=v; D.avisoPromo=false; D.casos=[]; for(let i=0;i<8;i++) D.casos.push(novoAssistido());
-  addLog(`Promovido a ${N.nome} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
-  if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} semanas você virou Defensor Público-Geral, com ${D.atendimentos} atendimentos e ${D.cartas} cartas de agradecimento.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
+  addLog(`Promovido a ${fem(N.nome)} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
+  if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} semanas você virou ${fem('Defensor Público')}-Geral, com ${D.atendimentos} atendimentos e ${D.cartas} cartas de agradecimento.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
 
 // ===================== EXONERAÇÃO =====================
 async function exonerar(){
   if(ocupado||S.carreira==='adv') return;
-  const cargo=S.carreira==='juiz'?nomeCargo(S.j.cargo):S.carreira==='promotor'?CARGOS_MP[S.p.cargo].nome:CARGOS_DP[S.d.cargo].nome;
+  const cargo=S.carreira==='juiz'?nomeCargo(S.j.cargo):S.carreira==='promotor'?fem(CARGOS_MP[S.p.cargo].nome):fem(CARGOS_DP[S.d.cargo].nome);
   const com=comarcaAtual(), novoP=clamp(Math.round(S.prest*.9),15,100);
   const v=await modal(`<h2>Pedir exoneração?</h2><p>Você deixa o cargo de ${cargo} e volta à advocacia privada, com escritório em ${CIDADES[com].nome}. Os processos ficam com quem assumir o seu lugar.</p>
     <dl class="meta"><dt>Prestígio na advocacia</dt><dd class="num">${novoP}</dd><dt>Salário fixo</dt><dd class="lo">acaba</dd><dt>Quarentena</dt><dd>12 semanas com −5 em casos de ${CIDADES[com].nome}</dd></dl>
@@ -2131,6 +2132,12 @@ const FUNCOES={
 const PRIM=['Ana','Bruno','Carla','Diego','Elisa','Felipe','Gabriela','Hugo','Isabela','João','Karen','Lucas','Marina','Nelson','Olívia','Paulo','Rita','Sandro','Tânia','Vitor','Yara','Caio','Bianca','Davi'];
 const SOBR=['Almeida','Barros','Campos','Dias','Esteves','Freitas','Gomes','Holanda','Igarashi','Jardim','Lima','Macedo','Nogueira','Oliveira','Pires','Queiroz','Rocha','Santos','Tavares','Vieira'];
 const nomePessoa=()=>pick(PRIM)+' '+pick(SOBR);
+const PRIM_M=['Bruno','Diego','Felipe','Hugo','João','Lucas','Nelson','Paulo','Sandro','Vitor','Caio','Davi','Rafael','Tiago'];
+const PRIM_F=['Ana','Carla','Elisa','Gabriela','Isabela','Karen','Marina','Olívia','Rita','Tânia','Yara','Bianca','Luiza','Helena'];
+const nomeGenero=g=>pick(g==='m'?PRIM_M:PRIM_F)+' '+pick(SOBR);
+const FEM={Juiz:'Juíza',Promotor:'Promotora',Procurador:'Procuradora',Defensor:'Defensora',Desembargador:'Desembargadora',Ministro:'Ministra',Substituto:'Substituta','Público':'Pública',Professor:'Professora',Adjunto:'Adjunta',Associado:'Associada',Pesquisador:'Pesquisadora',Mestrando:'Mestranda',Doutorando:'Doutoranda'};
+const fem=t=>S&&S.genero==='f'?String(t).replace(/(Juiz|Promotor|Procurador|Defensor|Desembargador|Ministro|Substituto|Público|Professor|Adjunto|Associado|Pesquisador|Mestrando|Doutorando)(?![a-zçãáéíóú])/g,w=>FEM[w]):t;
+const gen=(m,f)=>S&&S.genero==='f'?f:m;
 const PROMO_ADV={estagiario:'junior',junior:'pleno',pleno:'senior'};
 const ORC_BASE=[4000,6000,9000,12000,15000];
 const CUSTO_VIDA=900;
@@ -2412,17 +2419,19 @@ function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX(
 
 // ===================== VIDA PESSOAL, IDADE E FAMÍLIA =====================
 const ANO=10; // semanas de jogo por ano de vida: a vida corre mais rápido que a agenda
+const CARROS=[{nome:'Sem carro (transporte público)',preco:0,fel:0,prest:0},{nome:'Carro popular',preco:60000,fel:.5,prest:0},{nome:'Sedã executivo',preco:150000,fel:1,prest:1},{nome:'SUV de luxo',preco:400000,fel:1.5,prest:2},{nome:'Esportivo importado',preco:1200000,fel:2.5,prest:4}];
+const manutCarro=()=>Math.round(CARROS[S.vida.carro||0].preco*.0015/10)*10;
 const MORADIAS=[{nome:'Apartamento alugado',preco:0,fel:0},{nome:'Apartamento próprio',preco:250000,fel:1},{nome:'Casa com quintal',preco:900000,fel:2},{nome:'Cobertura',preco:3000000,fel:3}];
 const AREAS_PROF=['medicina','engenharia','ensino','arquitetura','jornalismo','negócios próprios','serviço público','advocacia','tecnologia','artes'];
-function vidaInicial(idade0=25){ return {idade0,semana0:S?S.semana:1,saude:85,felicidade:60,parceiro:null,filhos:[],moradia:0,gravidez:null,doente:0,falta:0,geracao:1,legado:[],ultimoAniv:idade0}; }
+function vidaInicial(idade0=25){ return {idade0,semana0:S?S.semana:1,saude:85,felicidade:60,parceiro:null,filhos:[],moradia:0,carro:0,gravidez:null,doente:0,falta:0,geracao:1,legado:[],ultimoAniv:idade0}; }
 const idade=()=>Math.floor(S.vida.idade0+(S.semana-S.vida.semana0)/ANO);
 const idadeFilho=f=>Math.floor((S.semana-f.nasc)/ANO);
 const vidaBlocos=()=>(S.agenda.familia||0)+(S.agenda.saude||0);
 const sobrenome=()=>S.nome.trim().split(' ').slice(-1)[0];
 const dinheiroPessoal=()=>S.carreira==='adv'?S.bolso:S.caixa;
 function pagarPessoal(v){ if(S.carreira==='adv') S.bolso-=v; else S.caixa-=v; }
-function patrimonio(){ return Math.round((S.carreira==='adv'?S.caixa+S.bolso:S.caixa)+MORADIAS[S.vida.moradia].preco); }
-function blocosPerdidos(){ const V=S.vida; if(!V) return 0; const n=(V.doente>0?7:0)+(V.falta||0); V.falta=0; return n; }
+function patrimonio(){ return Math.round((S.carreira==='adv'?S.caixa+S.bolso:S.caixa)+MORADIAS[S.vida.moradia].preco+CARROS[S.vida.carro||0].preco*.7); }
+function blocosPerdidos(){ const V=S.vida; if(!V) return 0; const n=(V.doente>0?7:0)+(V.falta||0)-((V.carro||0)>0?1:0); V.falta=0; return n; }
 function bonusVida(add){ const V=S.vida; if(!V) return;
   if(V.parceiro&&V.parceiro.pers==='juridico'&&V.parceiro.rel>=50) add('Conselhos de casa (parceiro da área jurídica)',2);
   if(V.felicidade>80) add('Felicidade',3); if(V.felicidade<25) add('Infelicidade',-3); if(V.saude<40) add('Saúde frágil',-4); }
@@ -2430,7 +2439,7 @@ const temFamilia=()=>!!S.vida.parceiro||S.vida.filhos.length>0;
 function rowsVida(free){
   return `<div class="row"><span class="name">${temFamilia()?'Família':'Vida social (conhecer pessoas)'}</span>${stepper('familia',0,S.agenda.familia||0,free)}</div>
           <div class="row"><span class="name">Academia e saúde</span>${stepper('saude',0,S.agenda.saude||0,free)}</div>`; }
-function descCarreira(){ if(S.carreira==='academico') return nomeAcad(); if(S.carreira==='estudante') return 'Estudante de Direito'; return S.carreira==='juiz'?nomeCargo(S.j.cargo):S.carreira==='promotor'?CARGOS_MP[S.p.cargo].nome:S.carreira==='defensor'?CARGOS_DP[S.d.cargo].nome:(S.ex?'Advocacia (ex-'+S.ex.cargo.toLowerCase()+')':'Advocacia'); }
+function descCarreira(){ if(S.carreira==='academico') return nomeAcad(); if(S.carreira==='estudante') return 'Estudante de Direito'; return S.carreira==='juiz'?nomeCargo(S.j.cargo):S.carreira==='promotor'?fem(CARGOS_MP[S.p.cargo].nome):S.carreira==='defensor'?fem(CARGOS_DP[S.d.cargo].nome):(S.ex?'Advocacia (ex-'+S.ex.cargo.toLowerCase()+')':'Advocacia'); }
 function resumoCarreira(){ if(S.carreira==='academico'||S.carreira==='estudante') return `${S.ac.pubs.length} publicações, índice ${S.ac.indice}`; return S.carreira==='juiz'?`${S.j.sentencas} sentenças, ${pct(taxaReforma())} reformadas`:S.carreira==='promotor'?`${S.p.condenacoes} condenações`:S.carreira==='defensor'?`${S.d.atendimentos} atendimentos, ${S.d.cartas} cartas de agradecimento`:`${S.vitorias} vitórias e ${S.derrotas} derrotas`; }
 
 async function mudancaVida(cidade){
@@ -2450,11 +2459,11 @@ async function semanaVida(){
   V.saude=clamp(V.saude+ds,0,100);
   S.estresse=clamp(S.estresse-sau*1.5,0,100);
   const df=(50-V.felicidade)*.08+A.lazer*1+(temFamilia()?fam*1:fam*.4)+(V.parceiro?V.parceiro.rel/100:0)+V.filhos.length*.3
-    -(S.estresse>70?2:0)-(!V.parceiro&&id>=35?1:0)+MORADIAS[V.moradia].fel;
+    -(S.estresse>70?2:0)-(!V.parceiro&&id>=35?1:0)+MORADIAS[V.moradia].fel+CARROS[V.carro||0].fel;
   V.felicidade=clamp(V.felicidade+df,0,100);
   if(V.felicidade<25) S.estresse=clamp(S.estresse+3,0,100);
   // custos da família
-  const custo=(V.parceiro&&V.parceiro.status==='casado'?300:0)+(V.parceiro&&V.parceiro.pers==='luxo'?600:0)+V.filhos.filter(f=>idadeFilho(f)<22).length*400;
+  const custo=(V.parceiro&&V.parceiro.status==='casado'?300:0)+(V.parceiro&&V.parceiro.pers==='luxo'?600:0)+V.filhos.filter(f=>idadeFilho(f)<22).length*400+manutCarro();
   if(custo) pagarPessoal(custo);
   // aniversário
   if(id>V.ultimoAniv){ V.ultimoAniv=id; addLog(`Você fez ${id} anos.`); }
@@ -2475,16 +2484,16 @@ async function semanaVida(){
       if(v){ V.gravidez=S.semana+ANO; addLog('Vocês vão ter um bebê daqui a um ano.','g'); } else P.rel=clamp(P.rel-4,0,100);
     }
   } else if(fam>0&&Math.random()<Math.min(.45,fam*.1)){
-    const nome=nomePessoa(), prof=pick(AREAS_PROF), pers=pick(Object.keys(PERS_PARC));
+    const pg=S.genero==='m'?'f':'m', nome=nomeGenero(pg), prof=pick(AREAS_PROF), pers=pick(Object.keys(PERS_PARC));
     const v=await modal(`<h2>Você conheceu alguém</h2><p>${esc(nome)}, que trabalha com ${prof}, gostou da conversa e quer sair de novo.</p><p style="font-size:12.5px"><b>Personalidade: ${PERS_PARC[pers].nome}.</b> ${PERS_PARC[pers].desc}</p>`,[{t:'Não é o momento',v:0,cls:'ghost'},{t:'Começar a namorar',v:1,cls:'brass'}]);
-    if(v){ V.parceiro={nome,prof,pers,rel:45,desde:S.semana,status:'namoro'}; V.felicidade=clamp(V.felicidade+10,0,100); addLog(`Você começou a namorar ${nome}.`,'g'); }
+    if(v){ V.parceiro={nome,prof,pers,genero:pg,rel:45,desde:S.semana,status:'namoro'}; V.felicidade=clamp(V.felicidade+10,0,100); addLog(`Você começou a namorar ${nome}.`,'g'); }
   }
   if(V.parceiro&&Math.random()<.12) await eventoParceiro(V.parceiro);
   // nascimento
   if(V.gravidez&&S.semana>=V.gravidez){
-    const f={id:++uid,nome:pick(PRIM)+' '+sobrenome(),nasc:S.semana,rel:70,direito:false,decidiu:false}; V.filhos.push(f); V.gravidez=null;
+    const gf=Math.random()<.5?'m':'f', f={id:++uid,genero:gf,nome:pick(gf==='m'?PRIM_M:PRIM_F)+' '+sobrenome(),nasc:S.semana,rel:70,direito:false,decidiu:false}; V.filhos.push(f); V.gravidez=null;
     V.felicidade=clamp(V.felicidade+15,0,100);
-    await modal(`<h2 class="hi">${esc(f.nome.split(' ')[0])} nasceu</h2><p>Bem-vindo à família. O bebê muda a rotina: tempo de família na agenda mantém a relação forte.</p>`,[{t:'Continuar',v:1,cls:'brass'}]);
+    await modal(`<h2 class="hi">${esc(f.nome.split(' ')[0])} nasceu</h2><p>${f.genero==='f'?'Bem-vinda':'Bem-vindo'} à família. O bebê muda a rotina: tempo de família na agenda mantém a relação forte.</p>`,[{t:'Continuar',v:1,cls:'brass'}]);
     addLog(`Nasceu ${f.nome}.`,'g');
   }
   // filhos
@@ -2528,7 +2537,7 @@ async function fimVida(motivo){
 }
 function herdeiro(f,car,pat,legado){
   const old=S, cid=['juiz','promotor','defensor'].includes(old.carreira)?comarcaAtual():old.sede, traits=[old.traits[0],pick(Object.keys(TRAITS).filter(t=>t!==old.traits[0]))];
-  novoJogo(f.nome,old.espec,traits,cid);
+  novoJogo(f.nome,old.espec,traits,cid); S.genero=f.genero||pick(['m','f']);
   const V=S.vida; V.idade0=idadeFilho(f)+0; V.ultimoAniv=V.idade0; V.geracao=old.vida.geracao+1; V.legado=legado; V.moradia=old.vida.moradia;
   const herança=Math.max(0,Math.round((pat-MORADIAS[old.vida.moradia].preco)*.5));
   for(const k in S.skills) S.skills[k]=clamp(S.skills[k]+Math.max(0,old.skills[k]-25)*(f.direito?.3:.15),0,100);
@@ -2539,27 +2548,43 @@ function herdeiro(f,car,pat,legado){
   view='escritorio'; salvar();
 }
 
-function comprarMoradia(){ const V=S.vida, prox=MORADIAS[V.moradia+1]; if(!prox) return;
-  const delta=prox.preco-MORADIAS[V.moradia].preco*.8; if(dinheiroPessoal()<delta) return;
-  pagarPessoal(delta); V.moradia++; V.felicidade=clamp(V.felicidade+8,0,100); addLog(`Você comprou: ${prox.nome}.`,'g'); salvar(); render(); }
+const custoTroca=(lista,atual,novo,venda)=>lista[novo].preco-lista[atual].preco*venda;
+function comprarMoradia(i){ const V=S.vida; if(i===V.moradia||!MORADIAS[i]) return;
+  const c=custoTroca(MORADIAS,V.moradia,i,.8); if(c>0&&dinheiroPessoal()<c) return;
+  pagarPessoal(c); const melhor=i>V.moradia; V.moradia=i; V.felicidade=clamp(V.felicidade+(melhor?8:-8),0,100);
+  addLog(i?`Você comprou: ${MORADIAS[i].nome}${c<0?` e ficou com ${brl(-c)} da venda`:''}.`:`Você vendeu o imóvel por ${brl(-c)} e voltou a morar de aluguel.`,'g'); salvar(); render(); }
+function comprarCarro(i){ const V=S.vida, at=V.carro||0; if(i===at||!CARROS[i]) return;
+  const c=custoTroca(CARROS,at,i,.7); if(c>0&&dinheiroPessoal()<c) return;
+  pagarPessoal(c); if(CARROS[i].prest>CARROS[at].prest) S.prest=clamp(S.prest+CARROS[i].prest-CARROS[at].prest,0,100);
+  V.carro=i; if(i>at) V.felicidade=clamp(V.felicidade+5,0,100);
+  addLog(i?`Você comprou: ${CARROS[i].nome}${c<0?` e ainda sobrou ${brl(-c)} da venda do antigo`:''}.`:`Você vendeu o carro por ${brl(-c)}.`,'g'); salvar(); render(); }
+function painelBens(){ const V=S.vida, din=dinheiroPessoal(), at=V.carro||0;
+  const item=(lista,i,atual,venda,act,extra)=>{ const it=lista[i], c=custoTroca(lista,atual,i,venda), meu=i===atual;
+    return `<button class="opt" data-act="${act}" data-v="${i}" ${meu||(c>0&&din<c)?'disabled':''}><span>${it.nome}${meu?' · atual':''}</span><b class="num">${meu?'—':c>=0?brl(c):'+'+brl(-c)}</b><small>${extra(it)}</small></button>`; };
+  return `<section class="panel"><div class="panel-head"><h2>Casa e carro</h2><span class="label">pago com o dinheiro pessoal</span></div>
+    <span class="label">Moradia · o imóvel atual entra no negócio por 80% do valor</span>
+    <div class="opts">${MORADIAS.map((_,i)=>item(MORADIAS,i,V.moradia,.8,'moradia',m=>`${m.preco?'Valor '+brl(m.preco)+' · ':''}felicidade +${m.fel} por semana`)).join('')}</div>
+    <span class="label">Carro · o atual entra por 70% do valor</span>
+    <div class="opts">${CARROS.map((_,i)=>item(CARROS,i,at,.7,'carro',c=>c.preco?`Valor ${brl(c.preco)} · +1 bloco por semana (menos tempo no trânsito) · felicidade +${c.fel}/sem · manutenção ${brl(Math.round(c.preco*.0015/10)*10)}/sem${c.prest?` · +${c.prest} de prestígio`:''}`:'Sem custo, mas o trânsito come tempo da agenda')).join('')}</div>
+  </section>`; }
 async function aposentar(){ if(idade()<60||ocupado) return;
   const v=await modal(`<h2>Aposentar-se?</h2><p>Você encerra a carreira aos ${idade()} anos. Se houver filhos adultos, a história continua com um deles.</p>`,[{t:'Continuar trabalhando',v:0,cls:'ghost'},{t:'Aposentar',v:1}]);
   if(!v) return; ocupado=true; try{ await fimVida('aposentadoria'); } finally { ocupado=false; render(); } }
 
-function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro, prox=MORADIAS[V.moradia+1], delta=prox?prox.preco-MORADIAS[V.moradia].preco*.8:0;
+function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro;
   const barra=(l,v,c)=>`<span>${l}</span><div class="bar"><i style="width:${v}%;background:${c}"></i></div><span class="num">${Math.round(v)}</span>`;
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
       <section class="panel"><div class="panel-head"><h2>${esc(S.nome)}</h2><span class="label">${id} anos · ${V.geracao}ª geração</span></div>
         <div class="vs">${barra('Saúde',V.saude,'var(--win)')}${barra('Felicidade',V.felicidade,'var(--brass)')}${barra('Energia',S.energia,'var(--b-case)')}${barra('Estresse',S.estresse,'var(--loss)')}</div>
-        <dl class="meta"><dt>Moradia</dt><dd>${MORADIAS[V.moradia].nome}</dd><dt>Dinheiro pessoal</dt><dd class="num">${brl(dinheiroPessoal())}</dd><dt>Patrimônio</dt><dd class="num">${brl(patrimonio())}</dd>
+        <dl class="meta"><dt>Moradia</dt><dd>${MORADIAS[V.moradia].nome}</dd><dt>Carro</dt><dd>${CARROS[V.carro||0].nome}</dd><dt>Dinheiro pessoal</dt><dd class="num">${brl(dinheiroPessoal())}</dd><dt>Patrimônio</dt><dd class="num">${brl(patrimonio())}</dd>
           ${V.doente>0?`<dt>Saúde</dt><dd class="lo">em tratamento (${V.doente} sem)</dd>`:''}
           <dt>Aposentadoria</dt><dd>${['juiz','promotor','defensor'].includes(S.carreira)?`compulsória aos 75 · faltam ${Math.max(0,75-id)} anos`:'quando quiser, a partir dos 60'}</dd></dl>
-        ${prox?`<button class="btn ghost" data-act="moradia" ${dinheiroPessoal()<delta?'disabled':''}>Mudar para ${prox.nome} · ${brl(delta)} (a atual entra no negócio)</button>`:''}
         <button class="btn ghost" data-act="aposentar" ${id<60?'disabled':''}>${id<60?`Aposentadoria a partir dos 60 (faltam ${60-id} anos)`:'Aposentar-se'}</button>
         <p style="margin:0;font-size:12px;color:var(--muted)">A vida corre mais rápido que a agenda: cada ${ANO} semanas jogadas são 1 ano de idade. Saúde cai com a idade e o estresse; academia recupera. Felicidade acima de 80 dá +3 nos casos; saúde abaixo de 40 tira 4.</p>
       </section>
+      ${painelBens()}
       <section class="panel"><div class="panel-head"><h2>Rotina</h2></div>
         <ul class="break">
           <li><span>${temFamilia()?'Família':'Vida social'}</span><span class="num">${S.agenda.familia||0} bloco(s)/sem</span></li>
@@ -2861,15 +2886,15 @@ async function semanaAcademia(){ const A=S.ac, G=S.agenda; if(!A) return [];
         const ok=await rolar(`Defesa ${c.tipo==='doutorado'?'da tese':'da dissertação'}`,`A banca avalia a sua pesquisa em ${AREAS[c.area].nome}. Pesquisa e Escrita contam.`,ch,'Aprovado','Volte com ajustes');
         if(ok){ A.titulos[c.tipo]=true; const pts=c.tipo==='doutorado'?5:3; A.indice+=pts; A.pubs.push({tipo:c.tipo==='doutorado'?'tese':'dissertação',titulo:c.titulo,pts,semana:S.semana});
           up('pesquisa',c.tipo==='doutorado'?8:5); up(c.area,4); S.prest=clamp(S.prest+(c.tipo==='doutorado'?5:3),0,100);
-          L.push(`Você agora é ${c.tipo==='doutorado'?'doutor':'mestre'} em Direito.`); A.curso=null; G.curso=0; }
+          L.push(`Você agora é ${c.tipo==='doutorado'?gen('doutor','doutora'):'mestre'} em Direito.`); A.curso=null; G.curso=0; }
         else { c.meta=Math.round(c.meta*1.2); L.push('A banca pediu ajustes: mais trabalho antes da nova defesa.'); } } } }
   if(A.proj){ const pj=A.proj, n=G.pesquisa||0; pj.prog+=n; for(let i=0;i<n;i++){ up('pesquisa',.3); up('escrita',.25); }
     if(pj.prog>=pj.meta){ L.push(publicar(pj)); A.proj=null; G.pesquisa=0; } }
   let ganho=0;
   if(A.doc){ const n=G.docencia||0; ganho+=n*remuneracaoAula(); for(let i=0;i<n;i++){ up('didatica',.6); up('oratoria',.15); }
     if(A.doc.tipo==='publica'){ if(A.doc.nivel===0&&A.indice>=25){ A.doc.nivel=1; L.push('Progressão: Professor Associado.'); }
-      else if(A.doc.nivel===1&&A.indice>=60&&S.skills.didatica>=60){ A.doc.nivel=2; S.prest=clamp(S.prest+3,0,100); L.push('Você virou Professor Titular.'); } }
-    if(n&&Math.random()<.05){ const bom=S.skills.didatica>=55; S.prest=clamp(S.prest+(bom?1:-1),0,100); L.push(bom?'A turma elegeu você professor homenageado.':'Os alunos reclamaram das aulas na avaliação docente.'); } }
+      else if(A.doc.nivel===1&&A.indice>=60&&S.skills.didatica>=60){ A.doc.nivel=2; S.prest=clamp(S.prest+3,0,100); L.push(`Você virou ${fem('Professor')} Titular.`); } }
+    if(n&&Math.random()<.05){ const bom=S.skills.didatica>=55; S.prest=clamp(S.prest+(bom?1:-1),0,100); L.push(bom?`A turma elegeu você ${gen('professor homenageado','professora homenageada')}.`:'Os alunos reclamaram das aulas na avaliação docente.'); } }
   let roy=0; for(const p of A.pubs) if(p.v0){ const v=p.v0*Math.pow(.97,S.semana-p.semana); if(v>=1) roy+=Math.round(v*(p.tipo==='manual'?6:10)); }
   A.roySemana=roy; ganho+=roy;
   if(ganho){ pagarPessoal(-ganho); L.push(`Academia: ${brl(ganho)} em aulas e direitos autorais.`); }
@@ -2900,7 +2925,8 @@ async function acDocencia(tipo){ const A=S.ac; if(ocupado||A.doc) return;
   A.doc={tipo,nivel:0}; S.agenda.docencia=Math.max(S.agenda.docencia||0,3);
   addLog(tipo==='publica'?'Você tomou posse como Professor Adjunto numa universidade pública.':'Você começou a dar aulas numa faculdade particular.','g'); salvar(); render(); }
 function iniciarAcademico(){ S.carreira='academico'; S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0; S.u=estruturaInicial(true); if(!S.ac) S.ac=acadInicial(); view='escritorio'; }
-function nomeAcad(){ const A=S.ac; return A.doc?(A.doc.tipo==='publica'?NIVEIS_DOC[A.doc.nivel||0]:'Professor de faculdade particular'):A.curso&&A.curso.tipo!=='esp'?(A.curso.tipo==='doutorado'?'Doutorando':'Mestrando'):'Pesquisador'; }
+function nomeAcad(){ return fem(nomeAcad0()); }
+function nomeAcad0(){ const A=S.ac; return A.doc?(A.doc.tipo==='publica'?NIVEIS_DOC[A.doc.nivel||0]:'Professor de faculdade particular'):A.curso&&A.curso.tipo!=='esp'?(A.curso.tipo==='doutorado'?'Doutorando':'Mestrando'):'Pesquisador'; }
 function painelFormacao(){ const A=S.ac, T=A.titulos, c=A.curso;
   return `<section class="panel"><div class="panel-head"><h2>Formação</h2><span class="label">títulos +${bonusTitulos()} em concursos</span></div>
     <ul class="break"><li><span>Graduação em Direito${S.formacao?' · '+FACS[S.formacao.tier].nome:''}</span><span class="num">${S.formacao?'CR '+S.formacao.cr.toLocaleString('pt-BR',{maximumFractionDigits:1}):'✓'}</span></li>
@@ -2973,16 +2999,17 @@ app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
   const a=b.dataset.act, id=+b.dataset.id, v=b.dataset.v;
   if(a==='trait'){ const t=escolha.traits; if(t.includes(v)) escolha.traits=t.filter(x=>x!==v); else if(t.length<2) t.push(v); else { t.shift(); t.push(v);}
-    escolha.nome=document.getElementById('nome').value; escolha.espec=document.getElementById('espec').value; escolha.sede=document.getElementById('sede').value; escolha.carreira=document.getElementById('carreira').value; escolha.inicio=document.getElementById('inicio').value; escolha.facul=document.getElementById('facul').value; render(); return; }
+    escolha.nome=document.getElementById('nome').value; escolha.espec=document.getElementById('espec').value; escolha.sede=document.getElementById('sede').value; escolha.carreira=document.getElementById('carreira').value; escolha.inicio=document.getElementById('inicio').value; escolha.facul=document.getElementById('facul').value; escolha.genero=document.getElementById('genero').value; render(); return; }
   if(a==='comecar'){ escolha.nome=document.getElementById('nome').value.trim()||'Ana Ribeiro'; escolha.espec=document.getElementById('espec').value;
     escolha.sede=document.getElementById('sede').value;
     escolha.carreira=document.getElementById('carreira').value;
     escolha.inicio=document.getElementById('inicio').value; escolha.facul=document.getElementById('facul').value;
-    novoJogo(escolha.nome,escolha.espec,[...escolha.traits],escolha.sede);
+    escolha.genero=document.getElementById('genero').value;
+    novoJogo(escolha.nome,escolha.espec,[...escolha.traits],escolha.sede); S.genero=escolha.genero;
     if(escolha.inicio==='faculdade'){ view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; iniciarComFaculdade(escolha.facul); return; }
-    if(escolha.carreira==='defensor'){ iniciarDP(escolha.sede); S.log=[]; addLog(`Posse como Defensor Público Substituto em ${CIDADES[escolha.sede].nome}. A fila de assistidos já está grande.`); }
-    if(escolha.carreira==='promotor'){ iniciarMP(escolha.sede); S.log=[]; addLog(`Posse como Promotor Substituto na comarca de ${CIDADES[escolha.sede].nome}. Você herdou 8 inquéritos.`); }
-    if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.log=[]; addLog(`Posse como Juiz Substituto na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
+    if(escolha.carreira==='defensor'){ iniciarDP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Defensor Público Substituto')} em ${CIDADES[escolha.sede].nome}. A fila de assistidos já está grande.`); }
+    if(escolha.carreira==='promotor'){ iniciarMP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Promotor Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou 8 inquéritos.`); }
+    if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Juiz Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
   if(!S) return;
   if(a==='view'){ view=v; render(); window.scrollTo(0,0); return; }
   if(a==='cidade'){ sel[view]=v; render(); return; }
@@ -3013,7 +3040,8 @@ app.addEventListener('click',e=>{
   if(a==='dpAcordo'){ dpAcordo(id); return; }
   if(a==='jConciliar'){ jConciliar(id); return; }
   if(a==='exonerar'){ exonerar(); return; }
-  if(a==='moradia'){ comprarMoradia(); return; }
+  if(a==='moradia'){ comprarMoradia(+v); return; }
+  if(a==='carro'){ comprarCarro(+v); return; }
   if(a==='pAcao'){ acaoParceiro(v); return; }
   if(a==='facEstagio'){ facEstagio(); return; }
   if(a==='facEstagioSair'){ S.fac.estagio=null; S.agenda.estagio=0; salvar(); render(); return; }
@@ -3043,12 +3071,13 @@ app.addEventListener('click',e=>{
 });
 app.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ') && e.target.matches && e.target.matches('g[data-act]')){ e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
-app.addEventListener('change',e=>{ if(e.target.dataset.act==='autoDist'&&S){ S.u.auto=e.target.checked; salvar(); return; }
+app.addEventListener('change',e=>{ if(e.target.id==='genero'&&!S){ const n=document.getElementById('nome'); if(n&&['Ana Ribeiro','André Ribeiro'].includes(n.value)) n.value=e.target.value==='m'?'André Ribeiro':'Ana Ribeiro'; return; }
+  if(e.target.dataset.act==='autoDist'&&S){ S.u.auto=e.target.checked; salvar(); return; }
   if(e.target.dataset.act==='estudoSkill'&&S){ S.agenda.estudoSkill=e.target.value; salvar(); } });
 
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
-  if(S){ S.carreira=S.carreira||'adv';
+  if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
     if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20;
     if(!S.vida){ S.vida=vidaInicial(25+Math.floor((S.semana-1)/ANO)); S.vida.semana0=S.semana; } if(S.agenda.familia===undefined){ S.agenda.familia=0; S.agenda.saude=0; }
     if(!S.u){ if(S.carreira==='adv') S.u=estruturaInicial(false); else estruturaPub(); } if(S.bolso===undefined) S.bolso=3000; if(S.skills.tributario===undefined) S.skills.tributario=20; if(S.j&&!S.j.vara) S.j.vara=S.espec; S.sede=S.sede||'sp'; S.filiais=S.filiais||[]; for(const c of [...S.casos,...S.ofertas]) c.cidade=c.cidade||S.sede; }
