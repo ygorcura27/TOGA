@@ -1522,7 +1522,8 @@ const TEMPLATES_MP=[
   TM('Organização criminosa','penal','pf',['epico','lendario']),
 ];
 const novosInq=k=>2+CIDADES[k].pop+2*(S&&S.p?S.p.cargo:0);
-const MIN_ATD={comum:1,incomum:2,raro:3,epico:4,lendario:5}; // blocos mínimos de diligência/atendimento antes de ir a juízo
+const MIN_ATD={comum:1,incomum:2,raro:3,epico:4,lendario:5};
+const dilig=c=>(c.prep||0)+(c.semana||0); // diligência acumulada no inquérito, contando os blocos desta semana // blocos mínimos de diligência/atendimento antes de ir a juízo
 const taxaCond=()=>{const t=S.p.condenacoes+S.p.absolvicoes; return t?S.p.condenacoes/t:0;};
 const comarcaAtual=()=>S.carreira==='juiz'?S.j.comarca:S.carreira==='defensor'?S.d.comarca:S.p.comarca;
 function novoInquerito(){
@@ -1542,7 +1543,9 @@ function iniciarMP(cid){
 function calcCondenacao(c){
   const items=[]; const add=(l,v)=>{ if(v) items.push([l,v]); };
   const skill=.5*S.skills[c.area]+.3*S.skills.analise+.2*S.skills.oratoria;
-  const n=c.prep+(c.semana||0); add(`Diligências e preparo (${n} de ~${prepIdeal(c)} blocos ideais)`,Math.round(prepCaso(c,n)*10)/10);
+  const cg=c.fase==='juizo'?cargaCaso(c,false):{prep:c.prep+(c.semana||0),atraso:0}, n=cg.prep;
+  add(`Diligências e preparo (${n} de ~${prepIdeal(c)} blocos ideais)`,Math.round(prepCaso(c,n)*10)/10);
+  if(cg.atraso) add(`Audiências e alegações atrasadas (${cg.atraso} bloco${cg.atraso>1?'s':''})`,penAtraso(cg.atraso));
   if((c.inst||1)===1&&n<MIN_ATD[c.rar]) add(`Investigação insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(c.revelado) add('Indícios de inocência',-25);
   if(S.p.cargo>=2) add('Experiência no tribunal',3);
@@ -1616,11 +1619,11 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
       <li><b>Chance final (entre 5% e 95%)</b><b class="num">${pct(cc.ch)}</b></li></ul></details>
     <div class="ctl">
       <div class="row"><span class="name">${inq?'Blocos de diligência':'Blocos de preparo'}</span>${stepper('inq',c.id,c.semana||0,livres())}</div>
-      ${inq?`<p style="margin:0;font-size:11.5px;color:var(--muted)">Diligências aumentam a chance e podem revelar que o investigado é inocente.</p>
+      ${inq?`<p style="margin:0;font-size:11.5px;color:var(--muted)">Diligências aumentam a chance e podem revelar que o investigado é inocente. Denunciar exige ${MIN_ATD[c.rar]} bloco${MIN_ATD[c.rar]>1?'s':''} de diligência; arquivar, 1. Em juízo, a ação penal consome ${manut(c)} bloco${manut(c)>1?'s':''} por semana.</p>
       <div class="actions">
-        <button class="btn ghost" data-act="mpArquivar" data-id="${c.id}">Arquivar</button>
+        <button class="btn ghost" data-act="mpArquivar" data-id="${c.id}" ${dilig(c)>=1?'':'disabled title="O arquivamento precisa de pelo menos 1 bloco de análise do inquérito"'}>${dilig(c)>=1?'Arquivar':'Arquivar · 1 bloco'}</button>
         ${c.acordo?`<button class="btn ghost" data-act="mpAcordo" data-id="${c.id}" ${podeAcordo?'':'disabled'} title="Acordo de não persecução penal">${c.acordoFalhou?'Acordo recusado':`Acordo · ${pct(chanceAcordoMP())}`}</button>`:''}
-        <button class="btn" data-act="mpDenunciar" data-id="${c.id}">Denunciar</button>
+        <button class="btn" data-act="mpDenunciar" data-id="${c.id}" ${dilig(c)>=MIN_ATD[c.rar]?'':'disabled'}>${dilig(c)>=MIN_ATD[c.rar]?'Denunciar':`Denunciar · faltam ${MIN_ATD[c.rar]-dilig(c)} bloco${MIN_ATD[c.rar]-dilig(c)>1?'s':''} de diligência`}</button>
       </div>`:''}
     </div>
   </article>`; }
@@ -1672,7 +1675,7 @@ function renderPromotoria(){
 }
 
 async function mpDenunciar(id){
-  const P=S.p, c=P.casos.find(x=>x.id===id); if(!c||ocupado) return;
+  const P=S.p, c=P.casos.find(x=>x.id===id); if(!c||ocupado||dilig(c)<MIN_ATD[c.rar]) return;
   if(c.revelado){
     const v=await modal(`<h2>Denunciar mesmo assim?</h2><p>As diligências encontraram indícios de que ${esc(c.reu)} é inocente. Denunciar assim custa 20 de integridade.</p>`,[{t:'Cancelar',v:0,cls:'ghost'},{t:'Denunciar',v:1}]);
     if(!v) return; S.integ=clamp(S.integ-20,0,100);
@@ -1692,7 +1695,7 @@ async function mpAcordo(id){
   } finally { ocupado=false; render(); }
 }
 async function mpArquivar(id){
-  const P=S.p, c=P.casos.find(x=>x.id===id); if(!c||ocupado) return; const e=efeitoArquivar(c);
+  const P=S.p, c=P.casos.find(x=>x.id===id); if(!c||ocupado||dilig(c)<1) return; const e=efeitoArquivar(c);
   const v=await modal(`<h2>Arquivar o inquérito?</h2><p>${e.t}.</p><p class="num ${e.v>0?'hi':e.v<0?'lo':''}">${sgn(e.v)} reputação</p>`,[{t:'Cancelar',v:0,cls:'ghost'},{t:'Arquivar',v:1}]);
   if(!v) return;
   S.prest=clamp(S.prest+e.v,0,100); P.arquivados++; P.casos=P.casos.filter(x=>x.id!==id);
@@ -1751,7 +1754,7 @@ async function fimSemanaMP(){
     for(const c of P.casos){ const n=c.semana||0;
       if(n && c.fase==='inq' && c.inocente && !c.revelado){ for(let i=0;i<n;i++) if(Math.random()<(tem('analise',2)?.35:.2)){ c.revelado=true; break; }
         if(c.revelado){ notas.push(`Diligência encontrou indícios de inocência em “${c.titulo}”.`); addLog(`Indícios de inocência em “${c.titulo}”.`,'g'); } }
-      c.prep+=n; c.semana=0; }
+      if(c.fase==='juizo') cargaCaso(c,true); else { c.prep+=n; c.semana=0; } }
     // audiências
     for(const c of P.casos) if(c.fase==='juizo') c.prazo--;
     const hoje=P.casos.filter(c=>c.fase==='juizo'&&c.prazo<=0);
