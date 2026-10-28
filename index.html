@@ -221,6 +221,15 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .hall-online:empty,.hall-inicio:empty{display:none} .hall-online{display:flex;flex-direction:column;gap:6px}
 .ticker{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:12px;padding:7px 10px;margin:-6px 0 14px;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:5px;background:var(--surface)}
 .ticker .tk{white-space:normal} .ticker .tk b{font-weight:600} .ticker .tk.lo b{color:var(--loss)} .ticker .tk.hi b{color:var(--win)}
+.tut{display:flex;flex-direction:column;gap:8px;padding:12px 14px;margin:-6px 0 14px;border:1px solid var(--brass);border-radius:6px;background:color-mix(in srgb,var(--brass) 9%,var(--surface));max-width:760px}
+.tut p{margin:0;font-size:13.5px;line-height:1.5} .tut .btn{align-self:flex-start}
+.tut-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tut .lnk{background:none;border:0;padding:0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer}
+.tut-alvo{outline:2px solid var(--brass);outline-offset:3px;border-radius:4px;animation:tutpulse 1.6s ease-in-out infinite}
+@keyframes tutpulse{0%,100%{outline-color:var(--brass)}50%{outline-color:transparent}}
+.trib{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.trib-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.trib-head b{font-family:var(--f-display);font-size:14px}
 </style>
 
 <div id="app"></div>
@@ -561,10 +570,7 @@ function render(){
       ${painelSkills()}${painelCarreiraAdv()}${painelDiario()}
     </div>
     <div class="col">
-      <section class="panel" style="background:transparent;border:0;padding:0">
-        <div class="panel-head"><h2>Casos ativos</h2><span class="num">${S.casos.length}/${maxCasos()}</span></div>
-        <div class="cases">${S.casos.length?S.casos.map(c=>pasta(c,true)).join(''):'<p class="empty">Nenhum caso ativo. Aceite uma das ofertas abaixo.</p>'}</div>
-      </section>
+      ${painelCasosAtivos()}
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Novos casos desta semana</h2><span class="label">Renovam toda semana</span></div>
         <div class="cases">${S.ofertas.length?S.ofertas.map(c=>pasta(c,false)).join(''):'<p class="empty">Sem ofertas restantes nesta semana.</p>'}</div>
@@ -1334,7 +1340,7 @@ function renderGabinete(){
         <div class="cases">${ordem.length?ordem.map(procCard).join(''):'<p class="empty">Acervo zerado. Novos processos chegam na próxima semana.</p>'}</div>
       </section>
       ${J.recursos.length?`<section class="panel"><div class="panel-head"><h2>Suas sentenças em recurso</h2><span class="num">${J.recursos.length}</span></div>
-        <ul class="break">${J.recursos.map(r=>`<li><span>${esc(r.titulo)} · ${r.inst} em ${r.semanas} sem</span><span class="num ${cls(r.ch)}">${pct(r.ch)} de manter</span></li>`).join('')}</ul></section>`:''}
+        ${[...new Set(J.recursos.map(r=>r.inst))].map(t=>`<span class="label">${t} · ${J.recursos.filter(r=>r.inst===t).length}</span><ul class="break">${J.recursos.filter(r=>r.inst===t).map(r=>`<li><span>${esc(r.titulo)} · em ${r.semanas} sem</span><span class="num ${cls(r.ch)}">${pct(r.ch)} de manter</span></li>`).join('')}</ul>`).join('')}</section>`:''}
     </div>
   </div>`;
 }
@@ -2574,7 +2580,7 @@ async function fimVida(motivo){
 }
 function herdeiro(f,car,pat,legado){
   const old=S, cid=['juiz','promotor','defensor'].includes(old.carreira)?comarcaAtual():old.sede, traits=[old.traits[0],pick(Object.keys(TRAITS).filter(t=>t!==old.traits[0]))];
-  novoJogo(f.nome,old.espec,traits,cid); S.genero=f.genero||pick(['m','f']); S.cq=old.cq||cqInicial();
+  novoJogo(f.nome,old.espec,traits,cid); S.genero=f.genero||pick(['m','f']); S.cq=old.cq||cqInicial(); S.tut={off:true,t:{}};
   const V=S.vida; V.idade0=idadeFilho(f)+0; V.ultimoAniv=V.idade0; V.geracao=old.vida.geracao+1; V.legado=legado; V.moradia=old.vida.moradia;
   const herança=Math.max(0,Math.round((pat-MORADIAS[old.vida.moradia].preco)*.5));
   for(const k in S.skills) S.skills[k]=clamp(S.skills[k]+Math.max(0,old.skills[k]-25)*(f.direito?.3:.15),0,100);
@@ -2895,8 +2901,8 @@ async function fimSemanaEstudante(){
     const pessoal=estudBlocos()+A.estudo, desc=Math.max(0,S.disp-pessoal-A.lazer-vidaBlocos());
     S.energia=clamp(S.energia-2.6*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*A.lazer,0,100);
     S.estresse=clamp(S.estresse+1.8*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*A.lazer,0,100);
-    const mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
-    if(A.estudo){ for(let i=0;i<A.estudo;i++) up(A.estudoSkill,1.1*mult); S.estudoTotal=(S.estudoTotal||0)+A.estudo; if(F.fase==='oab') F.oabEstudo+=A.estudo; }
+    const mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1);
+    if(A.estudo){ for(let i=0;i<A.estudo;i++) up(A.estudoSkill,1.1*mult*multAtual(A.estudoSkill)); S.estudoTotal=(S.estudoTotal||0)+A.estudo; if(F.fase==='oab') F.oabEstudo+=A.estudo; }
     const ar=Object.keys(AREAS);
     for(let i=0;i<(A.aulas||0);i++){ up(pick(ar),.3*mult); up(pick(ar),.3*mult); up('analise',.15); up('escrita',.15); }
     if(F.estagio&&A.estagio){ for(let i=0;i<A.estagio;i++){ up(F.estagio.area,.8); up('negociacao',.25); } S.caixa+=F.estagio.bolsa*A.estagio; F.contatos[F.estagio.tipo]+=A.estagio; }
@@ -3413,6 +3419,71 @@ function tickerHtml(){ if(!S||!S.epoca) return ''; const E=S.epoca, it=[];
   return it.length?`<div class="ticker"><span class="label">Brasil agora</span>${it.join('')}</div>`:''; }
 { const h0=header; header=function(){ return h0()+tickerHtml(); }; }
 
+// ===================== CASOS ATIVOS: 1ª INSTÂNCIA E RECURSOS POR TRIBUNAL =====================
+function nomeTribunal(c){ const a=c.area;
+  if(c.inst===2) return a==='trabalho'?'TRT · Tribunal Regional do Trabalho':a==='tributario'?'TRF · Tribunal Regional Federal':'TJ · Tribunal de Justiça';
+  if(c.inst===3) return a==='trabalho'?'TST · Tribunal Superior do Trabalho':'STJ · Superior Tribunal de Justiça';
+  return 'STF · Supremo Tribunal Federal'; }
+function painelCasosAtivos(){
+  const prim=S.casos.filter(c=>(c.inst||1)===1), rec=S.casos.filter(c=>(c.inst||1)>1);
+  const grupos={}; for(const c of rec.sort((a,b)=>a.inst-b.inst)) (grupos[nomeTribunal(c)]=grupos[nomeTribunal(c)]||[]).push(c);
+  return `<section class="panel" style="background:transparent;border:0;padding:0">
+      <div class="panel-head"><h2>Casos ativos</h2><span class="num">${S.casos.length}/${maxCasos()}</span></div>
+      ${rec.length?`<span class="label">1ª instância · ${prim.length}</span>`:''}
+      <div class="cases">${prim.length?prim.map(c=>pasta(c,true)).join(''):`<p class="empty">${rec.length?'Nenhum caso em 1ª instância.':'Nenhum caso ativo. Aceite uma das ofertas abaixo.'}</p>`}</div>
+    </section>
+    ${rec.length?`<section class="panel recursos" style="background:transparent;border:0;padding:0">
+      <div class="panel-head"><h2>Recursos</h2><span class="num">${rec.length}</span></div>
+      ${Object.entries(grupos).map(([t,L])=>`<div class="trib"><div class="trib-head"><b>${t}</b><span class="label">${(()=>{ const m=L.filter(c=>c.lado==='recorrente').length, o=L.length-m; return [m?`${m} seu${m>1?'s':''} (você recorreu)`:'',o?`${o} da outra parte`:''].filter(Boolean).join(' · '); })()}</span></div>
+        <div class="cases">${L.map(c=>pasta(c,true)).join('')}</div></div>`).join('')}
+    </section>`:''}`; }
+
+// ===================== TUTORIAL GUIADO =====================
+// cartão-guia não bloqueante nas primeiras semanas; cada passo conclui sozinho quando o jogador faz a ação, ou com "Entendi"
+const TUT={
+  fac:[
+    {txt:'Bem-vindo à faculdade! A sua semana tem <b>21 blocos</b> de tempo (7 dias × 3 turnos). Mantenha pelo menos <b>4 blocos em Aulas</b>: menos que isso em 3 semanas do semestre reprova por falta.',alvo:'[data-act=inc][data-k=aulas]',man:true},
+    {txt:'Escolha uma área no <b>Estudo extra</b> e coloque blocos. Estudar sobe a skill e cada área tem estrelas: estudando sozinho você chega a 3★; especialização libera a 4ª e mestrado a 5ª.',alvo:'#estudo-skill',ok:()=>S.agenda.estudo>0},
+    {txt:'Fique de olho na <b>energia</b> e no <b>estresse</b> no topo da tela. Blocos livres viram descanso; lazer baixa o estresse. Com energia baixa ou estresse alto, tudo rende menos.',alvo:'header.top',man:true},
+    {txt:'Tudo pronto: clique em <b>Encerrar semana</b>. O semestre tem 5 semanas e a nota depende dos blocos de aula, da sua Análise e da sua Escrita.',alvo:'[data-act=fimSemana]',ok:t=>S.semana>t.ini},
+    {txt:'Abra a aba <b>Vida</b>: saúde, felicidade, namoro, moradia e os seus colegas da faculdade (dois amigos e dois rivais que vão cruzar o seu caminho na carreira).',alvo:'[data-act=view][data-v=vida]',ok:t=>!!t.viu.vida},
+    {txt:'Do 3º semestre em diante abrem o <b>estágio</b> (bolsa e contatos na carreira) e a <b>iniciação científica</b> (seu primeiro artigo). No fim do curso vem o <b>Exame da OAB</b>. Boa faculdade!',alvo:'[data-act=facEstagio]',man:true},
+  ],
+  adv:[
+    {txt:'Você abriu o seu escritório! À direita estão os <b>casos novos da semana</b>. Cada pasta mostra a dificuldade, a sua skill e a <b>chance de vitória</b>. Aceite um caso que você consiga ganhar.',alvo:'[data-act=aceitar]',ok:()=>S.casos.length>0||S.vitorias+S.derrotas>0},
+    {txt:'Agora prepare o caso: coloque <b>blocos na agenda</b> na linha do caso. Cada bloco aumenta a chance, com retorno decrescente. Até a audiência, a preparação se acumula.',alvo:'[data-act=inc][data-k=case]',ok:()=>S.casos.some(c=>(c.semana||0)+(c.prep||0)>0)||S.vitorias+S.derrotas>0},
+    {txt:'Na pasta, a <b>estratégia</b> (conservadora, equilibrada, agressiva ou acordo) e os <b>apoios</b> (pesquisa, perito, parecer…) mudam a chance. Abra <b>Ver detalhes da chance</b> para ver cada bônus.',alvo:'.cases .folder details',man:true},
+    {txt:'Na vitória você recebe <b>20% do valor da causa</b> e prestígio; na derrota, só perde prestígio. Quem perde pode <b>recorrer</b>, e os recursos aparecem separados por tribunal. Encerre a semana quando estiver pronto.',alvo:'[data-act=fimSemana]',ok:t=>S.semana>t.ini},
+    {txt:'Os honorários entram no <b>caixa do escritório</b>, que paga aluguel e salários. Em <b>Estrutura e equipe</b> você monta salas e contrata: um estagiário já dá 2 blocos por semana.',alvo:'[data-act=view][data-v=estrutura]',ok:t=>!!t.viu.estrutura},
+    {txt:'Nos mapas <b>Região, Brasil e Mundo</b> você abre filiais quando tiver prestígio: mais casos, casos maiores e o limite de casos ativos sobe.',alvo:'[data-act=view][data-v=regiao]',man:true},
+    {txt:'Por último: a faixa <b>Brasil agora</b> avisa de crises e de leis em votação (uma reforma aprovada derruba parte da skill da área). A aba <b>Conquistas</b> guarda as metas de longo prazo. Boa advocacia!',alvo:'[data-act=view][data-v=conquistas]',man:true},
+  ],
+  pub:[
+    {txt:'Você tomou posse! Toda semana chegam processos para o seu gabinete. Distribua os <b>blocos da agenda</b> entre eles: cada bloco é trabalho feito, e a equipe soma blocos extras.',alvo:'.rows',man:true},
+    {txt:'O painel de <b>carreira</b> mostra os requisitos de promoção: prestígio, produção e qualidade das decisões. Promoções aumentam o salário, o gabinete e o tipo de processo.',alvo:'.panel .meta',man:true},
+    {txt:'Em <b>Estrutura e equipe</b>, o orçamento do gabinete vem do <b>índice de efetividade</b>: concluir mais do que chega aumenta o dinheiro para contratar.',alvo:'[data-act=view][data-v=estrutura]',ok:t=>!!t.viu.estrutura},
+    {txt:'Quando estiver pronto, <b>encerre a semana</b>. Cuide também da aba <b>Vida</b>: saúde, família e patrimônio contam até o fim da carreira.',alvo:'[data-act=fimSemana]',ok:t=>S.semana>t.ini},
+  ],
+  acad:[
+    {txt:'Bem-vindo à academia! Aqui a renda vem de <b>bolsa, aulas, livros e palestras</b>. Matricule-se num mestrado ou comece um projeto de pesquisa.',alvo:'.panel',man:true},
+    {txt:'Mestrado e doutorado na área liberam a <b>5ª estrela</b> nela. Artigos sobem o índice de produção; livros vendem e pagam direitos autorais.',alvo:'.panel',man:true},
+    {txt:'Distribua os blocos entre curso, pesquisa e docência e <b>encerre a semana</b>.',alvo:'[data-act=fimSemana]',ok:t=>S.semana>t.ini},
+  ],
+};
+const trilhaTut=()=>S.carreira==='estudante'?'fac':S.carreira==='adv'?'adv':S.carreira==='academico'?'acad':'pub';
+function tutEstado(){ if(!S) return null; const U=S.tut||(S.tut={off:false,t:{}}); if(U.off) return null;
+  const k=trilhaTut(), t=U.t[k]||(U.t[k]={i:0,ini:S.semana,viu:{}}); if(t.i>=TUT[k].length) return null; return {k,t,p:TUT[k][t.i],n:TUT[k].length}; }
+function tutAvancar(){ const e=tutEstado(); if(!e) return false; let mudou=false;
+  while(e.t.i<TUT[e.k].length){ const p=TUT[e.k][e.t.i]; if(p.man||!p.ok(e.t)) break; e.t.i++; e.t.ini=S.semana; mudou=true; }
+  return mudou; }
+function tutHtml(){ const e=tutEstado(); if(!e) return '';
+  return `<div class="tut"><div class="tut-top"><span class="label">Tutorial · ${e.t.i+1} de ${e.n}</span><button class="lnk" data-act="tutSair">Pular tutorial</button></div>
+    <p>${e.p.txt}</p>${e.p.man?`<button class="btn" data-act="tutOk">Entendi</button>`:'<span class="label">Faça a ação destacada para continuar</span>'}</div>`; }
+function tutMarcar(){ document.querySelectorAll('.tut-alvo').forEach(x=>x.classList.remove('tut-alvo')); const e=tutEstado(); if(!e||!e.p.alvo) return;
+  const el=document.querySelector(`#app ${e.p.alvo}`)||document.querySelector(e.p.alvo); if(el) el.classList.add('tut-alvo'); }
+{ const h1=header; header=function(){ if(S){ const e=tutEstado(); if(e) e.t.viu[view]=1; tutAvancar(); } return h1()+tutHtml(); }; }
+{ const r1=render; render=function(){ r1(); tutMarcar(); }; }
+
 // ===================== EVENTOS =====================
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
@@ -3493,6 +3564,8 @@ app.addEventListener('click',e=>{
   if(a==='antecipar'){ antecipar(id); return; }
   if(a==='login'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.login().catch(err=>modal(`<h2>Não foi possível entrar</h2><p>${esc(err.message||err)}</p>`,[{t:'Ok',v:1}])); return; }
   if(a==='logout'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.logout(); return; }
+  if(a==='tutOk'){ const e=tutEstado(); if(e){ e.t.i++; e.t.ini=S.semana; } salvar(); render(); return; }
+  if(a==='tutSair'){ if(S){ S.tut=S.tut||{t:{}}; S.tut.off=true; } salvar(); render(); return; }
   if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }
   salvar(); render();
 });
@@ -3533,7 +3606,7 @@ window.TOGA_JOGO={
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
-    if(!S.cq) S.cq=cqInicial(); if(S.ac&&!S.ac.titulos.areas){ const T=S.ac.titulos; T.areas={}; if(T.esp) T.areas[S.espec]=1; if(T.mestrado||T.doutorado) T.areas[S.espec]=2; } if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20; if(!S.npcs) criarColegas(); if(S.vida&&!S.vida.inv){ S.vida.inv=invInicial(); S.vida.alugueis=[]; }
+    if(!S.tut) S.tut={off:S.semana>3,t:{}}; if(!S.cq) S.cq=cqInicial(); if(S.ac&&!S.ac.titulos.areas){ const T=S.ac.titulos; T.areas={}; if(T.esp) T.areas[S.espec]=1; if(T.mestrado||T.doutorado) T.areas[S.espec]=2; } if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20; if(!S.npcs) criarColegas(); if(S.vida&&!S.vida.inv){ S.vida.inv=invInicial(); S.vida.alugueis=[]; }
     if(!S.vida){ S.vida=vidaInicial(25+Math.floor((S.semana-1)/ANO)); S.vida.semana0=S.semana; } if(S.agenda.familia===undefined){ S.agenda.familia=0; S.agenda.saude=0; }
     if(!S.u){ if(S.carreira==='adv') S.u=estruturaInicial(false); else estruturaPub(); } if(S.bolso===undefined) S.bolso=3000; if(S.skills.tributario===undefined) S.skills.tributario=20; if(S.j&&!S.j.vara) S.j.vara=S.espec; S.sede=S.sede||'sp'; S.filiais=S.filiais||[]; for(const c of [...S.casos,...S.ofertas]) c.cidade=c.cidade||S.sede; }
   render(); }

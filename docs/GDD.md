@@ -482,6 +482,27 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 - **Região, Brasil e Mundo:** mapas, só na advocacia.
 - Estudante e acadêmico têm telas principais próprias.
 
+### 13.1A Tutorial guiado
+- **Onde aparece:** um cartão-guia não bloqueante abaixo do cabeçalho nas primeiras semanas. Ele destaca na tela o botão ou o campo da vez.
+- **Como avança:**
+  - passos de ação avançam sozinhos quando o jogador faz a ação (aceitar um caso, pôr blocos, encerrar a semana, abrir uma aba);
+  - passos de explicação têm o botão "Entendi".
+- **Trilhas:**
+  - faculdade: 6 passos;
+  - advocacia: 7 passos (ofertas, preparação, estratégia e apoios, honorários e recursos, estrutura, mapas, Brasil agora e conquistas);
+  - carreira pública: 4 passos;
+  - academia: 3 passos.
+- Ao trocar de carreira, a trilha nova começa do zero. "Pular tutorial" desliga tudo. Herdeiros e saves antigos começam sem tutorial.
+
+### 13.1B Casos ativos e recursos
+- Os casos ativos se dividem em **1ª instância** e **Recursos**.
+- Os recursos são agrupados por tribunal:
+  - TJ, TRT (trabalho) ou TRF (tributário);
+  - STJ ou TST (trabalho);
+  - STF.
+- Cada grupo conta os recursos seus e os da outra parte.
+- No gabinete do juiz, as sentenças em recurso também aparecem separadas por tribunal.
+
 ### 13.2 Direção visual
 - Paleta de papel e tinta com acentos em latão.
 - **Fontes:** Spectral SC nos títulos, IBM Plex Sans no texto e IBM Plex Mono nos números.
@@ -515,7 +536,6 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 ### 14.2 Sistemas futuros
 - **Três reputações** (técnica, pública e ética) em vez de um prestígio único.
 - **Delegação em lote** no fim de jogo: casos resolvidos pela equipe com risco.
-- **Tutorial guiado** nas primeiras semanas.
 - **Pontos de legado como meta-moeda,** para comprar bônus de início (traço extra, faculdade melhor).
 - **Ranking online:** Hall da Fama global e um **"Caso do Dia"** com a mesma *seed* para todos.
 
