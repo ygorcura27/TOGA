@@ -2430,7 +2430,7 @@ const vidaBlocos=()=>(S.agenda.familia||0)+(S.agenda.saude||0);
 const sobrenome=()=>S.nome.trim().split(' ').slice(-1)[0];
 const dinheiroPessoal=()=>S.carreira==='adv'?S.bolso:S.caixa;
 function pagarPessoal(v){ if(S.carreira==='adv') S.bolso-=v; else S.caixa-=v; }
-function patrimonio(){ return Math.round((S.carreira==='adv'?S.caixa+S.bolso:S.caixa)+MORADIAS[S.vida.moradia].preco+CARROS[S.vida.carro||0].preco*.7); }
+function patrimonio(){ return Math.round((S.carreira==='adv'?S.caixa+S.bolso:S.caixa)+MORADIAS[S.vida.moradia].preco+CARROS[S.vida.carro||0].preco*.7-saldoDivida()); }
 function blocosPerdidos(){ const V=S.vida; if(!V) return 0; const n=(V.doente>0?7:0)+(V.falta||0)-((V.carro||0)>0?1:0); V.falta=0; return n; }
 function bonusVida(add){ const V=S.vida; if(!V) return;
   if(V.parceiro&&V.parceiro.pers==='juridico'&&V.parceiro.rel>=50) add('Conselhos de casa (parceiro da área jurídica)',2);
@@ -2465,6 +2465,7 @@ async function semanaVida(){
   // custos da família
   const custo=(V.parceiro&&V.parceiro.status==='casado'?300:0)+(V.parceiro&&V.parceiro.pers==='luxo'?600:0)+V.filhos.filter(f=>idadeFilho(f)<22).length*400+manutCarro();
   if(custo) pagarPessoal(custo);
+  semanaDividas();
   // aniversário
   if(id>V.ultimoAniv){ V.ultimoAniv=id; addLog(`Você fez ${id} anos.`); }
   // relacionamento
@@ -2548,25 +2549,70 @@ function herdeiro(f,car,pat,legado){
   view='escritorio'; salvar();
 }
 
-const custoTroca=(lista,atual,novo,venda)=>lista[novo].preco-lista[atual].preco*venda;
-function comprarMoradia(i){ const V=S.vida; if(i===V.moradia||!MORADIAS[i]) return;
-  const c=custoTroca(MORADIAS,V.moradia,i,.8); if(c>0&&dinheiroPessoal()<c) return;
-  pagarPessoal(c); const melhor=i>V.moradia; V.moradia=i; V.felicidade=clamp(V.felicidade+(melhor?8:-8),0,100);
-  addLog(i?`Você comprou: ${MORADIAS[i].nome}${c<0?` e ficou com ${brl(-c)} da venda`:''}.`:`Você vendeu o imóvel por ${brl(-c)} e voltou a morar de aluguel.`,'g'); salvar(); render(); }
-function comprarCarro(i){ const V=S.vida, at=V.carro||0; if(i===at||!CARROS[i]) return;
-  const c=custoTroca(CARROS,at,i,.7); if(c>0&&dinheiroPessoal()<c) return;
-  pagarPessoal(c); if(CARROS[i].prest>CARROS[at].prest) S.prest=clamp(S.prest+CARROS[i].prest-CARROS[at].prest,0,100);
-  V.carro=i; if(i>at) V.felicidade=clamp(V.felicidade+5,0,100);
-  addLog(i?`Você comprou: ${CARROS[i].nome}${c<0?` e ainda sobrou ${brl(-c)} da venda do antigo`:''}.`:`Você vendeu o carro por ${brl(-c)}.`,'g'); salvar(); render(); }
-function painelBens(){ const V=S.vida, din=dinheiroPessoal(), at=V.carro||0;
-  const item=(lista,i,atual,venda,act,extra)=>{ const it=lista[i], c=custoTroca(lista,atual,i,venda), meu=i===atual;
-    return `<button class="opt" data-act="${act}" data-v="${i}" ${meu||(c>0&&din<c)?'disabled':''}><span>${it.nome}${meu?' · atual':''}</span><b class="num">${meu?'—':c>=0?brl(c):'+'+brl(-c)}</b><small>${extra(it)}</small></button>`; };
-  return `<section class="panel"><div class="panel-head"><h2>Casa e carro</h2><span class="label">pago com o dinheiro pessoal</span></div>
-    <span class="label">Moradia · o imóvel atual entra no negócio por 80% do valor</span>
-    <div class="opts">${MORADIAS.map((_,i)=>item(MORADIAS,i,V.moradia,.8,'moradia',m=>`${m.preco?'Valor '+brl(m.preco)+' · ':''}felicidade +${m.fel} por semana`)).join('')}</div>
-    <span class="label">Carro · o atual entra por 70% do valor</span>
-    <div class="opts">${CARROS.map((_,i)=>item(CARROS,i,at,.7,'carro',c=>c.preco?`Valor ${brl(c.preco)} · +1 bloco por semana (menos tempo no trânsito) · felicidade +${c.fel}/sem · manutenção ${brl(Math.round(c.preco*.0015/10)*10)}/sem${c.prest?` · +${c.prest} de prestígio`:''}`:'Sem custo, mas o trânsito come tempo da agenda')).join('')}</div>
+// financiamento de casa e carro: entrada, prazo, juros (tabela Price) e aprovação pela renda
+const FIN={
+  moradia:{entrada:.2,prazos:[10,20,30],juros:.10,lista:()=>MORADIAS,venda:.8,campo:'moradia'},
+  carro:{entrada:.3,prazos:[2,4,5],juros:.20,lista:()=>CARROS,venda:.7,campo:'carro'},
+};
+const saldoDivida=t=>(S.vida.dividas||[]).filter(d=>!t||d.tipo===t).reduce((a,d)=>a+d.saldo,0);
+const comprometido=()=>(S.vida.dividas||[]).reduce((a,d)=>a+d.parcela,0);
+function rendaSemanal(){
+  if(['juiz','promotor','defensor'].includes(S.carreira)) return salarioAtual();
+  if(S.carreira==='adv') return S.u.retirada;
+  if(S.carreira==='estudante') return MESADA+(S.fac&&S.fac.estagio?S.fac.estagio.bolsa*(S.agenda.estagio||0):0);
+  const A=S.ac; return (A.curso&&A.curso.bolsa?A.curso.bolsa:0)+(A.doc?remuneracaoAula()*(S.agenda.docencia||0):0)+(A.roySemana||0); }
+function parcelaDe(P,anos,j){ const r=Math.pow(1+j,1/ANO)-1, n=anos*ANO; return {r,n,parcela:Math.round(P*r/(1-Math.pow(1+r,-n)))}; }
+const creditoTroca=tipo=>{ const F=FIN[tipo], at=S.vida[F.campo]||0; return F.lista()[at].preco*F.venda-saldoDivida(tipo); };
+async function comprarBem(tipo,i){ const F=FIN[tipo], L=F.lista(), V=S.vida, at=V[F.campo]||0; if(i===at||!L[i]||ocupado) return;
+  const credito=creditoTroca(tipo), custo=Math.round(L[i].preco-credito), din=dinheiroPessoal();
+  if(custo<=0){ trocarBem(tipo,i,custo,null); return; }
+  const entrada=Math.round(custo*F.entrada), fin=custo-entrada, renda=rendaSemanal(), lim=renda*.35-comprometido();
+  const ops=F.prazos.map(a=>{ const x=parcelaDe(fin,a,F.juros); return {a,...x,total:x.parcela*x.n,ok:x.parcela<=lim&&din>=entrada}; });
+  const v=await modal(`<h2>Comprar: ${L[i].nome}</h2>
+    <p>Valor de ${brl(L[i].preco)}. ${credito>0?`O bem atual entra por ${brl(credito)}${saldoDivida(tipo)?', já descontada a dívida dele':''}.`:credito<0?`O bem atual ainda deve ${brl(-credito)} além do que vale.`:''} Falta pagar <b>${brl(custo)}</b>.</p>
+    <div class="opts"><button class="opt" data-mv="vista" ${din<custo?'disabled':''}><span>À vista</span><b class="num">${brl(custo)}</b><small>${din<custo?'Dinheiro pessoal insuficiente':'Sem juros'}</small></button>
+    ${ops.map(o=>`<button class="opt" data-mv="${o.a}" ${o.ok?'':'disabled'}><span>Financiar em ${o.a} anos</span><b class="num">${brl(o.parcela)}/sem</b><small>Entrada de ${brl(entrada)} (${pct(F.entrada)}) · juros de ${pct(F.juros)} ao ano · total pago ${brl(o.total+entrada)}${o.ok?'':din<entrada?' · falta dinheiro para a entrada':' · parcela acima de 35% da sua renda'}</small></button>`).join('')}</div>
+    <p style="font-size:12px;color:var(--muted);margin:0">Renda considerada: ${brl(renda)} por semana. Parcelas que você já paga: ${brl(comprometido())} por semana. O banco aprova parcelas de até 35% da renda. Com 3 semanas seguidas de dinheiro pessoal negativo, o banco retoma o bem.</p>`,
+    [{t:'Cancelar',v:'',cls:'ghost'}]);
+  if(!v) return;
+  if(v==='vista') trocarBem(tipo,i,custo,null);
+  else { const o=ops.find(x=>String(x.a)===v); trocarBem(tipo,i,entrada,{saldo:fin,parcela:o.parcela,restantes:o.n,r:o.r,anos:o.a}); } }
+function trocarBem(tipo,i,pagar,div){ const F=FIN[tipo], L=F.lista(), V=S.vida, at=V[F.campo]||0;
+  V.dividas=(V.dividas||[]).filter(d=>d.tipo!==tipo); // a dívida do bem antigo é quitada na troca
+  pagarPessoal(pagar);
+  if(div) V.dividas.push({id:++uid,tipo,nome:L[i].nome,...div});
+  if(tipo==='carro'&&L[i].prest>L[at].prest) S.prest=clamp(S.prest+L[i].prest-L[at].prest,0,100);
+  V.felicidade=clamp(V.felicidade+(i>at?(tipo==='moradia'?8:5):-5),0,100); V[F.campo]=i;
+  addLog(i?`${div?'Financiou':'Comprou'}: ${L[i].nome}${div?` em ${div.anos} anos, ${brl(div.parcela)} por semana`:''}${pagar<0?`, e sobraram ${brl(-pagar)}`:''}.`:`Você vendeu ${tipo==='moradia'?'o imóvel':'o carro'}${pagar<0?' e recebeu '+brl(-pagar):''}.`,'g');
+  salvar(); render(); }
+function semanaDividas(){ const V=S.vida; if(!V.dividas||!V.dividas.length){ V.atraso=0; return; }
+  for(const d of V.dividas){ pagarPessoal(d.parcela); d.saldo=Math.max(0,d.saldo*(1+d.r)-d.parcela); d.restantes--; }
+  for(const d of V.dividas) if(d.restantes<=0||d.saldo<1) addLog(`Financiamento quitado: ${d.nome}.`,'g');
+  V.dividas=V.dividas.filter(d=>d.restantes>0&&d.saldo>=1);
+  if(dinheiroPessoal()<0&&V.dividas.length){ V.atraso=(V.atraso||0)+1; addLog(`Parcelas atrasadas: ${V.atraso} de 3 semanas antes da retomada.`,'r');
+    if(V.atraso>=3){ const d=V.dividas[0]; V[FIN[d.tipo].campo]=0; V.dividas=V.dividas.filter(x=>x!==d); V.atraso=0;
+      S.prest=clamp(S.prest-3,0,100); V.felicidade=clamp(V.felicidade-15,0,100); addLog(`O banco retomou: ${d.nome}. −3 de prestígio.`,'r'); } }
+  else V.atraso=0; }
+function quitarDivida(id){ const V=S.vida, d=(V.dividas||[]).find(x=>x.id===id); if(!d||dinheiroPessoal()<d.saldo) return;
+  pagarPessoal(Math.round(d.saldo)); V.dividas=V.dividas.filter(x=>x!==d); addLog(`Você quitou antecipado: ${d.nome}.`,'g'); salvar(); render(); }
+function painelDividas(){ const V=S.vida, D=V.dividas||[]; if(!D.length) return '';
+  return `<section class="panel"><div class="panel-head"><h2>Financiamentos</h2><span class="num">${brl(comprometido())}/sem</span></div>
+    ${D.map(d=>`<div class="row" style="flex-wrap:wrap"><span class="name">${d.nome} · ${Math.ceil(d.restantes/ANO)} ano(s) restantes</span><span class="num">saldo ${brl(d.saldo)}</span>
+      <button class="chip" data-act="quitar" data-id="${d.id}" ${dinheiroPessoal()<d.saldo?'disabled':''}>Quitar</button></div>`).join('')}
+    ${V.atraso?`<p class="lo" style="margin:0;font-size:12.5px">Parcelas atrasadas há ${V.atraso} semana(s). Na terceira, o banco retoma o bem.</p>`:''}
+    <p style="margin:0;font-size:12px;color:var(--muted)">As parcelas saem do dinheiro pessoal toda semana. Quitar antes evita os juros restantes.</p></section>`; }
+function painelBens(){ const V=S.vida;
+  const item=(tipo,i)=>{ const F=FIN[tipo], L=F.lista(), it=L[i], at=V[F.campo]||0, meu=i===at, c=Math.round(it.preco-creditoTroca(tipo));
+    const extra=tipo==='moradia'?`${it.preco?'Valor '+brl(it.preco)+' · ':''}felicidade +${it.fel} por semana${it.preco?' · financiável em até 30 anos':''}`
+      :it.preco?`Valor ${brl(it.preco)} · +1 bloco por semana (menos tempo no trânsito) · felicidade +${it.fel}/sem · manutenção ${brl(Math.round(it.preco*.0015/10)*10)}/sem${it.prest?` · +${it.prest} de prestígio`:''}`:'Sem custo, mas o trânsito come tempo da agenda';
+    return `<button class="opt" data-act="${tipo}" data-v="${i}" ${meu?'disabled':''}><span>${it.nome}${meu?' · atual':''}</span><b class="num">${meu?'—':c>=0?brl(c):'+'+brl(-c)}</b><small>${extra}</small></button>`; };
+  return `<section class="panel"><div class="panel-head"><h2>Casa e carro</h2><span class="label">à vista ou financiado</span></div>
+    <span class="label">Moradia · o imóvel atual entra por 80% do valor, menos o que ainda deve</span>
+    <div class="opts">${MORADIAS.map((_,i)=>item('moradia',i)).join('')}</div>
+    <span class="label">Carro · o atual entra por 70% do valor, menos o que ainda deve</span>
+    <div class="opts">${CARROS.map((_,i)=>item('carro',i)).join('')}</div>
   </section>`; }
+
 async function aposentar(){ if(idade()<60||ocupado) return;
   const v=await modal(`<h2>Aposentar-se?</h2><p>Você encerra a carreira aos ${idade()} anos. Se houver filhos adultos, a história continua com um deles.</p>`,[{t:'Continuar trabalhando',v:0,cls:'ghost'},{t:'Aposentar',v:1}]);
   if(!v) return; ocupado=true; try{ await fimVida('aposentadoria'); } finally { ocupado=false; render(); } }
@@ -2584,7 +2630,7 @@ function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro;
         <button class="btn ghost" data-act="aposentar" ${id<60?'disabled':''}>${id<60?`Aposentadoria a partir dos 60 (faltam ${60-id} anos)`:'Aposentar-se'}</button>
         <p style="margin:0;font-size:12px;color:var(--muted)">A vida corre mais rápido que a agenda: cada ${ANO} semanas jogadas são 1 ano de idade. Saúde cai com a idade e o estresse; academia recupera. Felicidade acima de 80 dá +3 nos casos; saúde abaixo de 40 tira 4.</p>
       </section>
-      ${painelBens()}
+      ${painelBens()}${painelDividas()}
       <section class="panel"><div class="panel-head"><h2>Rotina</h2></div>
         <ul class="break">
           <li><span>${temFamilia()?'Família':'Vida social'}</span><span class="num">${S.agenda.familia||0} bloco(s)/sem</span></li>
@@ -3040,8 +3086,9 @@ app.addEventListener('click',e=>{
   if(a==='dpAcordo'){ dpAcordo(id); return; }
   if(a==='jConciliar'){ jConciliar(id); return; }
   if(a==='exonerar'){ exonerar(); return; }
-  if(a==='moradia'){ comprarMoradia(+v); return; }
-  if(a==='carro'){ comprarCarro(+v); return; }
+  if(a==='moradia'){ comprarBem('moradia',+v); return; }
+  if(a==='carro'){ comprarBem('carro',+v); return; }
+  if(a==='quitar'){ quitarDivida(id); return; }
   if(a==='pAcao'){ acaoParceiro(v); return; }
   if(a==='facEstagio'){ facEstagio(); return; }
   if(a==='facEstagioSair'){ S.fac.estagio=null; S.agenda.estagio=0; salvar(); render(); return; }
