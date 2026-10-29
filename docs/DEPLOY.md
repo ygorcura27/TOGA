@@ -1,4 +1,14 @@
-# Publicar o TOGA online (Netlify + Firebase)
+# Publicar o TOGA online
+
+**No ar em https://toga-jogo.netlify.app.** O save na nuvem e o Hall da Fama global funcionam só com o Netlify:
+- `netlify/functions/save.mts` (`/api/save`): GET, PUT ou DELETE do jogo salvo, identificado por um código de 16 caracteres aleatórios. O código é a chave do jogador.
+- `netlify/functions/hall.mts` (`/api/hall`): POST de uma vida encerrada e GET do top 20.
+- Os dados ficam em Netlify Blobs, nos stores `saves` e `hall`. As duas funções têm limite de requisições por IP.
+- No navegador, `web/online-netlify.js` cria ou usa o código, grava sozinho e pergunta qual save usar quando a nuvem e o navegador divergem.
+
+O Firebase (abaixo) é opcional e substitui o save por código pelo login com Google. Quando `FIREBASE_CONFIG` existe, o módulo do Netlify se desliga.
+
+# Opção com Firebase (Netlify + Firebase)
 
 O jogo funciona sem Firebase: sem configuração, ele roda offline e salva só no navegador.
 Com Firebase, ganha **login com Google, save na nuvem** (continuar em outro aparelho) e **Hall da Fama global**.
