@@ -3595,6 +3595,7 @@ function semanaAreasEquipe(){ if(S.carreira!=='adv') return; for(const f of S.u.
 // ===================== EVENTOS =====================
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
+  if(['SELECT','INPUT','OPTION','TEXTAREA'].includes(b.tagName)) return; // campos usam 'change'; redesenhar aqui fechava o seletor aberto
   const a=b.dataset.act, id=+b.dataset.id, v=b.dataset.v;
   if(a==='trait'){ const t=escolha.traits; if(t.includes(v)) escolha.traits=t.filter(x=>x!==v); else if(t.length<2) t.push(v); else { t.shift(); t.push(v);}
     escolha.nome=document.getElementById('nome').value; escolha.espec=document.getElementById('espec').value; escolha.sede=document.getElementById('sede').value; escolha.carreira=document.getElementById('carreira').value; escolha.inicio=document.getElementById('inicio').value; escolha.facul=document.getElementById('facul').value; escolha.genero=document.getElementById('genero').value; render(); return; }
