@@ -7,9 +7,18 @@ const MAX = 900_000 // bytes do save serializado
 
 export default async (req: Request, context: Context) => {
   const url = new URL(req.url)
-  const codigo = (url.searchParams.get("codigo") || "").toUpperCase().replace(/[^A-Z0-9]/g, "")
-  if (!COD.test(codigo)) return Response.json({ erro: "código inválido" }, { status: 400 })
   const store = getStore({ name: "saves", consistency: "strong" })
+  // dono do save: conta (token de sessão no cabeçalho Authorization) ou código de save na URL
+  let codigo = ""
+  const auth = req.headers.get("authorization") || ""
+  if (auth.startsWith("Bearer ")) {
+    const sess: any = await getStore({ name: "sessoes", consistency: "strong" }).get(auth.slice(7).trim(), { type: "json" })
+    if (!sess) return Response.json({ erro: "sessão expirada, entre de novo" }, { status: 401 })
+    codigo = "u:" + sess.usuario
+  } else {
+    codigo = (url.searchParams.get("codigo") || "").toUpperCase().replace(/[^A-Z0-9]/g, "")
+    if (!COD.test(codigo)) return Response.json({ erro: "código inválido" }, { status: 400 })
+  }
 
   if (req.method === "GET") {
     const s = await store.get(codigo, { type: "json" })

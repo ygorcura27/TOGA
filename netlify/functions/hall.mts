@@ -13,7 +13,7 @@ export default async (req: Request, context: Context) => {
     const e = {
       nome: txt(v.nome, 40), geracao: int(v.geracao, 1, 99), carreira: txt(v.carreira, 60), resumo: txt(v.resumo, 120),
       idade: int(v.idade, 18, 120), prest: int(v.prest, 0, 100), patrimonio: int(v.patrimonio, -1e9, 1e11), conq: int(v.conq, 0, 200),
-      pontos: int(v.pontos, 0, 5000), motivo: txt(v.motivo, 20), data: new Date().toISOString().slice(0, 10), jogador: txt(v.jogador, 8),
+      pontos: int(v.pontos, 0, 5000), motivo: txt(v.motivo, 20), data: new Date().toISOString().slice(0, 10), jogador: txt(v.jogador, 10),
     }
     if (!e.nome) return Response.json({ erro: "nome obrigatório" }, { status: 400 })
     const chave = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
