@@ -5,7 +5,8 @@
   "scripts": {
     "montar": "node scripts/montar.mjs",
     "build": "node scripts/montar.mjs && node scripts/build.mjs",
-    "test": "node scripts/montar.mjs --check && node tests/regras.test.cjs && node tests/carreiras.test.cjs"
+    "test": "node scripts/montar.mjs --check && node tests/regras.test.cjs && node tests/carreiras.test.cjs",
+    "sim": "node tests/sim-niveis.cjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.7",
