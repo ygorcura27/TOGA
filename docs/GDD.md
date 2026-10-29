@@ -118,12 +118,21 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 
 | Nível | Requisitos (acumulados) | Casos até | Causas | Partido |
 |---|---|---|---|---|
-| Iniciante | — | raro | ×0,6 | ×1 |
-| Local | conjunto comercial, 2 advogados | épico | ×0,8 | ×1 |
-| Regional | 4 advogados, 1 filial, 2 clientes fixos, prestígio 45, 3 anos | lendário | ×1 | ×1,2 |
-| Nacional | andar corporativo, 8 advogados, filial em outro estado, 4 clientes, 3 áreas, prestígio 65, 6 anos | lendário | ×1,35 | ×1,5 |
-| High Tier | 15 advogados, filiais em 3 estados, 6 clientes, full service, prestígio 80, 10 anos | lendário | ×2,2 | ×2,5 |
+| Iniciante | — | raro | ×0,85 | ×1 |
+| Local | conjunto comercial, 2 advogados | épico | ×1,15 | ×1,2 |
+| Regional | 4 advogados, 1 filial, 2 clientes fixos, prestígio 45, 3 anos | épico | ×1,2 | ×1,4 |
+| Nacional | andar corporativo, 8 advogados, filial em outro estado, 4 clientes, 3 áreas, prestígio 65, 6 anos | lendário | ×1 | ×1,6 |
+| High Tier | 15 advogados, filiais em 3 estados, 6 clientes, full service, prestígio 80, 10 anos | lendário | ×1,7 | ×2,5 |
 
+   - **Valor da causa:** 5.000 × 1,06^dificuldade × fator da cidade × multiplicador do nível. Uma causa comum vale cerca de R$ 16 mil, uma épica R$ 300 mil e uma lendária R$ 1 milhão.
+   - **Simulação econômica** (`npm run sim`, robô muito habilidoso, 24 meses), ganho líquido por mês:
+     - iniciante: R$ 3,7 mil;
+     - local: R$ 10,8 mil;
+     - regional: R$ 26,6 mil;
+     - regional com equipe de nacional: R$ 39 mil;
+     - High Tier: R$ 219 mil.
+     - Para comparar, o juiz ganha R$ 25 mil líquidos como substituto e R$ 39,4 mil como ministro do STF.
+   - **Recursos:** ficam numa fila própria, não ocupam vaga e não podem ser antecipados. São julgados em 2 meses no tribunal, 3 no STJ/TST e 4 no STF.
    - **Limite de casos ativos:** 3 sozinho, +1 por advogado (júnior, pleno, sênior ou sócio), +1 a cada 2 estagiários e +1 por filial.
    - **Manutenção semanal de cada caso** (prazos, petições, cliente): comum e incomum 1 bloco, raro 2, épico 3, lendário 4, recurso 1. A manutenção é paga primeiro; os blocos seguintes quitam o atraso e só o resto vira preparação.
 2. **Preparação** ao longo das semanas, com os blocos da agenda e da equipe.
