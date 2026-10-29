@@ -473,7 +473,7 @@ function gerarOfertas(){
   const fora=Object.keys(LOC).filter(k=>{const C=LOC[k]; return !temEscritorio(k) && !C.centro && (C.nivel!=='global'||S.prest>=40) && (C.nivel!=='regional'||temEscritorio(C.parent));});
   if(fora.length && Math.random()<.6){ const c=casoEsc(pickW(fora,k=>LOC[k].pop)); c.indicacao=true; of.push(c); }
   if(S.carreira==='adv'){ for(const c of of) marcarNPC(c); indicacoes(of); }
-  S.ofertas=of;
+  S.ofertas=of; ofertasClientes();
 }
 // épico e lendário envolvem questão constitucional e podem chegar ao STF (recurso extraordinário)
 function maxInst(c){const r=RORD.indexOf(c.rar); return r>=3?4:r>=2?3:2;}
@@ -572,7 +572,7 @@ function render(){
         <p class="label" style="margin:0">Blocos livres viram descanso e recuperam energia.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
-      ${painelSkills()}${painelCarreiraAdv()}${painelDiario()}
+      ${painelSkills()}${painelClientes()}${painelCarreiraAdv()}${painelDiario()}
     </div>
     <div class="col">
       ${painelCasosAtivos()}
@@ -871,7 +871,7 @@ function pasta(c,ativo){
     <span class="stamp" style="color:var(--r-${c.rar})">${R.nome}</span>
     <h3>${esc(c.titulo)}</h3>
     ${instTxt}
-    ${c.indicadoPor?`<span class="tag">Indicação de ${esc(c.indicadoPor)}</span>`:''}
+    ${c.indicadoPor?`<span class="tag">Indicação de ${esc(c.indicadoPor)}</span>`:''}${c.clienteFixo?'<span class="tag" style="background:var(--brass);color:#fff">Cliente da casa</span>':''}
     ${c.indicacao&&!temEscritorio(c.cidade)?'<span class="tag">Indicação de outra cidade</span>':''}
     <dl class="meta">
       <dt>Local</dt><dd>${nomeLocal(c.cidade)}${longe(c)?' · <span class="lo">sem escritório (−10)</span>':''}</dd>
@@ -1019,12 +1019,12 @@ async function audiencia(c){
     if(c.lado==='recorrido') dPrest=res==='historica'?2:1;
     else if(c.lado==='recorrente') dPrest=R.ganho+c.perdaOrig/2;
     else dPrest=R.ganho*(E.win||1)*(res==='historica'?2:1);
-    S.vitorias++; S.estresse=clamp(S.estresse-5,0,100); ganharXp(c,1); cqVitoria(c,res);
+    S.vitorias++; S.estresse=clamp(S.estresse-5,0,100); ganharXp(c,1); cqVitoria(c,res); clienteVitoria(c);
   } else {
     if(c.lado==='recorrido') dPrest=-R.perda;
     else if(c.lado==='recorrente') dPrest=-R.perda/2;
     else dPrest=-R.perda*E.loss*(res==='feia'?1.5:1);
-    S.derrotas++; S.estresse=clamp(S.estresse+8,0,100); ganharXp(c,1.5);
+    S.derrotas++; S.estresse=clamp(S.estresse+8,0,100); ganharXp(c,1.5); clienteDerrota(c);
   }
   if(win&&tem('oratoria',3)&&RORD.indexOf(c.rar)>=2) dPrest+=1;
   S.prest=clamp(S.prest+dPrest,0,100);
@@ -1266,7 +1266,7 @@ function painelCarreiraJuiz(){ const J=S.j, C=CARGOS[J.cargo], req=promoReq();
     <dl class="meta">
       <dt>Vara</dt><dd>${VARAS[vara()]}</dd>
       <dt>Comarca</dt><dd>${CIDADES[J.comarca].nome}</dd>
-      <dt>Salário</dt><dd class="num">${brl(C.salario)}/mês</dd>
+      <dt>Salário</dt><dd class="num">${brl(C.salario)}/mês</dd>${linhaPol()}
       <dt>Sentenças</dt><dd class="num">${J.sentencas}</dd>
       <dt>Mantidas · reformadas</dt><dd class="num">${J.mantidas} · ${J.reformas}</dd>
       <dt>Taxa de reforma</dt><dd class="num">${pct(taxaReforma())}</dd>
@@ -1456,8 +1456,13 @@ async function promocao(){
     <div class="opts">${ops.map(k=>`<button class="opt" data-mv="${k}"><span>${prox>=3?'Brasília · '+(prox===4?'STF':supNome()):CIDADES[k].nome}${k===J.comarca?' (atual)':''}</span><b class="num">${novosPorSemana(k)}/mês</b><small>Tamanho ${'●'.repeat(CIDADES[k].pop)}${'○'.repeat(5-CIDADES[k].pop)} · processos novos por mês</small></button>`).join('')}</div>`,
     [{t:'Cancelar',v:'',cls:'ghost'}]);
   if(!v) return;
+  if(prox===2||prox===3){ const ch=prox===2?clamp(.35+(S.prest-60)/50+(capPol()-30)/100,.1,.92):clamp(.3+(S.prest-85)/30+(capPol()-40)/80,.1,.9); let ok;
+    ocupado=true;
+    try{ ok=await rolar(prox===2?'Lista de merecimento':'Indicação do Presidente da República',prox===2?`O tribunal vota a promoção por merecimento. Reputação ${Math.round(S.prest)} e capital político ${Math.round(capPol())} pesam.`:`O tribunal superior envia uma lista e o Presidente escolhe. Reputação ${Math.round(S.prest)} e capital político ${Math.round(capPol())} pesam.`,ch,prox===2?'Promovido':'Indicado','Outro nome escolhido'); }
+    finally{ ocupado=false; }
+    if(!ok){ J.stfEm=S.semana+6; addLog(`${prox===2?'O tribunal promoveu outro juiz por merecimento':'O Presidente escolheu outro nome'}. Nova chance no mês ${J.stfEm}.`,'r'); salvar(); render(); return; } }
   if(prox===4){
-    const ch=clamp(.4+(S.integ-60)/100+(S.prest-95)/20,.1,.9); let ok;
+    const ch=clamp(.4+(S.integ-60)/100+(S.prest-95)/20+(capPol()-50)/150,.1,.9); let ok;
     ocupado=true;
     try{ ok=await rolar('Sabatina no Senado',`O Presidente indicou você ao STF. Agora o Senado precisa aprovar. Integridade ${Math.round(S.integ)} pesa na votação.`,ch,'Aprovado','Rejeitado'); }
     finally{ ocupado=false; }
@@ -1579,7 +1584,7 @@ function painelCarreiraMP(){ const P=S.p, C=CARGOS_MP[P.cargo], req=promoReqMP()
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">${fem(C.nome)}</span></div>
     <dl class="meta">
       <dt>Comarca</dt><dd>${CIDADES[P.comarca].nome}</dd>
-      <dt>Salário</dt><dd class="num">${brl(C.salario)}/mês</dd>
+      <dt>Salário</dt><dd class="num">${brl(C.salario)}/mês</dd>${linhaPol()}
       <dt>Denúncias</dt><dd class="num">${P.denuncias}</dd>
       <dt>Condenações · absolvições</dt><dd class="num">${P.condenacoes} · ${P.absolvicoes}</dd>
       <dt>Taxa de condenação</dt><dd class="num">${pct(taxaCond())}</dd>
@@ -1820,9 +1825,9 @@ async function promocaoMP(){
     [{t:'Cancelar',v:'',cls:'ghost'}]);
   if(!v) return;
   if(prox===3){
-    const ch=clamp(.35+(S.prest-85)/40+(S.integ-60)/200,.1,.9);
+    const ch=clamp(.35+(S.prest-85)/40+(S.integ-60)/200+(capPol()-40)/120,.1,.9);
     ocupado=true; let ok;
-    try{ ok=await rolar('Escolha do governador',`Você entrou na lista tríplice. Reputação ${Math.round(S.prest)} e integridade ${Math.round(S.integ)} pesam na escolha.`,ch,'Nomeado','Outro escolhido'); }
+    try{ ok=await rolar('Escolha do governador',`Você entrou na lista tríplice. Reputação ${Math.round(S.prest)}, integridade ${Math.round(S.integ)} e capital político ${Math.round(capPol())} pesam na escolha.`,ch,'Nomeado','Outro escolhido'); }
     finally{ ocupado=false; }
     if(!ok){ P.pgjEm=S.semana+12; addLog(`O governador escolheu outro nome da lista tríplice. Nova lista no mês ${P.pgjEm}.`,'r'); salvar(); render(); return; }
   }
@@ -1939,7 +1944,7 @@ function painelCarreiraDP(){ const D=S.d, C=CARGOS_DP[D.cargo], req=promoReqDP()
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">${fem(C.nome)}</span></div>
     <dl class="meta">
       <dt>Comarca</dt><dd>${CIDADES[D.comarca].nome}</dd>
-      <dt>Salário</dt><dd class="num">${brl(C.salario)}/mês</dd>
+      <dt>Salário</dt><dd class="num">${brl(C.salario)}/mês</dd>${linhaPol()}
       <dt>Atendimentos concluídos</dt><dd class="num">${D.atendimentos}</dd>
       <dt>Vitórias · derrotas</dt><dd class="num">${D.vitorias} · ${D.derrotas}</dd>
       <dt>Taxa de êxito</dt><dd class="num">${pct(taxaDP())}</dd>
@@ -2145,9 +2150,9 @@ async function promocaoDP(){
     [{t:'Cancelar',v:'',cls:'ghost'}]);
   if(!v) return;
   if(prox===3){
-    const ch=clamp(.35+(S.prest-85)/40+(S.integ-60)/200,.1,.9); let ok;
+    const ch=clamp(.35+(S.prest-85)/40+(S.integ-60)/200+(capPol()-40)/120,.1,.9); let ok;
     ocupado=true;
-    try{ ok=await rolar('Escolha do governador',`Você entrou na lista tríplice. Reputação ${Math.round(S.prest)} e integridade ${Math.round(S.integ)} pesam na escolha.`,ch,'Nomeado','Outro escolhido'); }
+    try{ ok=await rolar('Escolha do governador',`Você entrou na lista tríplice. Reputação ${Math.round(S.prest)}, integridade ${Math.round(S.integ)} e capital político ${Math.round(capPol())} pesam na escolha.`,ch,'Nomeado','Outro escolhido'); }
     finally{ ocupado=false; }
     if(!ok){ D.dpgEm=S.semana+12; addLog(`O governador escolheu outro nome da lista. Nova lista no mês ${D.dpgEm}.`,'r'); salvar(); render(); return; }
   }
@@ -2527,7 +2532,7 @@ async function mudancaVida(cidade){
 }
 
 async function semanaVida(){
-  await semanaEpoca(); aplicarTetos();
+  await semanaEpoca(); aplicarTetos(); semanaPolitica(); await semanaClientes();
   const V=S.vida, A=S.agenda, fam=A.familia||0, sau=A.saude||0, id=idade();
   // saúde e felicidade
   const ds=-Math.max(0,id-40)*.03-Math.max(0,S.estresse-60)/20-(S.energia<20?1:0)+Math.min(sau,4)*1.5+(V.felicidade>70?.5:0)+.3+(S.estresse<30?1:0);
@@ -3629,6 +3634,53 @@ async function resumoMes(a){ const b=fotoMes(), adv=S.carreira==='adv';
   if(v==='off'){ S.semResumo=true; addLog('Resumo do mês desligado. Para religar, use o botão no Diário.'); salvar(); render(); } }
 { const f0=fimSemana; fimSemana=async function(){ if(!S||ocupado) return f0(); const a=fotoMes(); await f0(); if(S&&S.semana>a.semana&&!S.semResumo&&!document.querySelector('.ov')) await resumoMes(a); }; }
 
+// ===================== CAPITAL POLÍTICO (carreiras públicas) =====================
+// listas de merecimento, indicação presidencial e listas tríplices pesam reputação, integridade e articulação política
+const capPol=()=>{ const amigos=(S.npcs||[]).filter(n=>n.rel>=50&&n.nivel>=2).length; return clamp((S.pol??10)+Math.min(20,amigos*5),0,100); };
+function articular(){ if(ocupado||S.polEm===S.semana||dinheiroPessoal()<2000) return;
+  pagarPessoal(2000); S.vida.falta=(S.vida.falta||0)+2; S.polEm=S.semana;
+  const g=Math.round((5+S.skills.negociacao/25+S.skills.oratoria/40)*10)/10; S.pol=clamp((S.pol??10)+g,0,100);
+  addLog(`Você circulou em eventos, associações e gabinetes: capital político +${g.toLocaleString('pt-BR')}.`,'g'); salvar(); render(); }
+const linhaPol=()=>`<dt>Capital político</dt><dd class="num">${Math.round(capPol())} <button class="chip" data-act="articular" ${S.polEm===S.semana||dinheiroPessoal()<2000?'disabled':''} title="Eventos, associações de classe e conversas em gabinetes. Custa 2 blocos no próximo mês e ${brl(2000)}.">${S.polEm===S.semana?'articulado neste mês':'Articular apoio · '+brl(2000)}</button></dd>`;
+function semanaPolitica(){ if(['juiz','promotor','defensor'].includes(S.carreira)) S.pol=clamp((S.pol??10)-.4,0,100); }
+
+// ===================== CLIENTES DA CASA E CONCORRÊNCIA (advocacia) =====================
+// clientes satisfeitos viram fixos: pagam partido mensal e mandam casos; escritórios rivais disputam clientes e advogados
+const RIVAIS_NOMES=['Mattos & Leme Advogados','Rocha Carvalho Sociedade de Advogados','Prates, Amaral & Associados','Nogueira Freitas Advocacia','Campos Vieira Advogados'];
+function rivais(){ if(!S.rivais){ const L=[...RIVAIS_NOMES].sort(()=>Math.random()-.5).slice(0,3); S.rivais=L.map(n=>({nome:n,prest:rint(30,65)})); } return S.rivais; }
+const partidoDe=c=>clamp(Math.round(c.valor*.0015/100)*100,800,8000);
+function clienteVitoria(c){ if(S.carreira!=='adv') return; S.clientes=S.clientes||[];
+  const f=c.clienteFixo&&S.clientes.find(x=>x.id===c.clienteFixo);
+  if(f){ f.satisf=clamp(f.satisf+10,0,100); f.casos++; return; }
+  if((c.inst||1)===1&&RORD.indexOf(c.rar)>=2&&S.clientes.length<8&&Math.random()<.35){
+    const n={id:++uid,nome:c.cliente,area:c.area,satisf:65,partido:partidoDe(c),casos:1,desde:S.semana};
+    S.clientes.push(n); addLog(`${n.nome} gostou do resultado e virou cliente fixo: partido de ${brl(n.partido)} por mês.`,'g'); } }
+function clienteDerrota(c){ if(S.carreira!=='adv'||!c.clienteFixo) return; const f=(S.clientes||[]).find(x=>x.id===c.clienteFixo); if(f) f.satisf=clamp(f.satisf-20,0,100); }
+function ofertasClientes(){ if(S.carreira!=='adv') return; for(const f of S.clientes||[]) if(Math.random()<.3){
+  const a=areasAtivas().includes(f.area)?f.area:areaOferta(S.sede), c=novoCaso(S.sede,{},a); c.cliente=f.nome; c.clienteFixo=f.id; S.ofertas.push(c); } }
+async function semanaClientes(){ if(S.carreira!=='adv') return; const U=S.u, L=S.clientes||[], R=rivais();
+  let tot=0; for(const f of L){ S.caixa+=f.partido; U.honSemana+=f.partido; tot+=f.partido; }
+  if(tot) addLog(`Partido mensal de ${L.length} cliente${L.length>1?'s':''} fixo${L.length>1?'s':''}: ${brl(tot)}.`);
+  for(const f of [...L]){ const rv=pick(R);
+    if(f.satisf<=20){ S.clientes=S.clientes.filter(x=>x!==f); addLog(`${f.nome} se cansou dos resultados e deixou o escritório.`,'r'); }
+    else if(f.satisf<50&&Math.random()<.05){ S.clientes=S.clientes.filter(x=>x!==f); rv.prest=clamp(rv.prest+2,0,100); addLog(`${f.nome} trocou o seu escritório pelo ${rv.nome}.`,'r'); } }
+  for(const r of R) r.prest=clamp(r.prest+rnd(-1.5,1.5)+(55-r.prest)*.02,5,100);
+  // rival tenta levar um advogado bom e insatisfeito
+  const alvo=U.equipe.filter(f=>['pleno','senior'].includes(f.funcao)&&f.moral<75).sort((a,b)=>b.q-a.q)[0];
+  if(alvo&&Math.random()<.04){ const rv=pick(R), novo=Math.round(alvo.sal*1.25/50)*50;
+    const v=await modal(`<h2>Proposta da concorrência</h2><p>O ${esc(rv.nome)} ofereceu a ${esc(alvo.nome)} (${nomeFuncao(alvo).toLowerCase()}, qualidade ${Math.round(alvo.q)}) um salário maior para mudar de escritório.</p>
+      <div class="opts"><button class="opt" data-mv="cobrir"><span>Cobrir a proposta</span><b class="num">${brl(novo)}/mês</b><small>Salário +25% e moral +15. ${esc(alvo.nome.split(' ')[0])} fica.</small></button>
+      <button class="opt" data-mv="deixar"><span>Deixar ir</span><b class="num">−1 advogado</b><small>Você economiza o salário, mas perde os blocos e pode perder um cliente junto.</small></button></div>`,[]);
+    if(v==='cobrir'){ alvo.sal=novo; alvo.salBase=novo; alvo.moral=clamp(alvo.moral+15,0,100); addLog(`Você cobriu a proposta do ${rv.nome}: ${alvo.nome} fica por ${brl(novo)}/mês.`,'g'); }
+    else { removeFunc(alvo.id); rv.prest=clamp(rv.prest+3,0,100); addLog(`${alvo.nome} foi para o ${rv.nome}.`,'r');
+      const cl=(S.clientes||[]).find(x=>x.area===alvo.area); if(cl&&Math.random()<.5){ S.clientes=S.clientes.filter(x=>x!==cl); addLog(`E levou o cliente ${cl.nome}.`,'r'); } } } }
+function painelClientes(){ const L=S.clientes||[], R=rivais(), ranking=[{nome:'Seu escritório',prest:S.prest,eu:true},...R].sort((a,b)=>b.prest-a.prest);
+  return `<section class="panel"><div class="panel-head"><h2>Clientes e concorrência</h2><span class="label">${L.length} cliente${L.length===1?'':'s'} fixo${L.length===1?'':'s'}</span></div>
+    ${L.length?`<ul class="break">${L.map(f=>`<li><span><b>${esc(f.nome)}</b> · ${AREAS[f.area].nome} · ${f.casos} caso${f.casos>1?'s':''}</span><span class="num ${f.satisf>=60?'hi':f.satisf<40?'lo':''}">${brl(f.partido)}/mês · satisfação ${Math.round(f.satisf)}</span></li>`).join('')}</ul>`
+      :'<p style="margin:0;font-size:12.5px;color:var(--muted)">Ganhe casos raros ou maiores para conquistar clientes fixos: eles pagam partido mensal e mandam casos novos. Derrotas derrubam a satisfação; abaixo de 50, a concorrência pode levá-los.</p>'}
+    <span class="label">Prestígio na praça</span>
+    <ol class="hall">${ranking.map((r,i)=>`<li class="${r.eu?'top':''}"><span class="num pos">${i+1}</span><div><b>${esc(r.nome)}</b></div><b class="num pts">${Math.round(r.prest)}</b></li>`).join('')}</ol></section>`; }
+
 // ===================== EVENTOS =====================
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
@@ -3716,6 +3768,7 @@ app.addEventListener('click',e=>{
   if(a==='tutOk'){ const e=tutEstado(); if(e){ e.t.i++; e.t.ini=S.semana; } salvar(); render(); return; }
   if(a==='tutSair'){ if(S){ S.tut=S.tut||{t:{}}; S.tut.off=true; } salvar(); render(); return; }
   if(a==='toggleResumo'){ S.semResumo=!S.semResumo; salvar(); render(); return; }
+  if(a==='articular'){ articular(); return; }
   if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }
   salvar(); render();
 });
