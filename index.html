@@ -670,7 +670,7 @@ function header(){
     <div class="stat"><span class="label">Pessoal</span><b class="${S.bolso<0?'lo':''}">${brl(S.bolso)}</b></div>
     <div class="stat"><span class="label">A receber</span><b>${brl(S.aReceber)}</b></div>
     <div class="stat"><span class="label">Custo/semana</span><b>${brl(custoSemanal())}</b></div>
-    <div class="stat"><span class="label">Prestígio · meta ${META_PREST}</span><b>${Math.round(S.prest)}</b><div class="meter"><i style="width:${S.prest}%"></i></div></div>
+    <div class="stat"><span class="label">Prestígio</span><b>${Math.round(S.prest)}</b><div class="meter"><i style="width:${S.prest}%"></i></div></div>
     <div class="stat"><span class="label">Energia</span><b>${Math.round(S.energia)}</b><div class="meter e"><i style="width:${S.energia}%"></i></div></div>
     <div class="stat"><span class="label">Estresse</span><b>${Math.round(S.estresse)}</b><div class="meter s"><i style="width:${S.estresse}%"></i></div></div>
     <div class="stat"><span class="label">Saúde</span><b class="${S.vida.saude<40?'lo':''}">${Math.round(S.vida.saude)}</b><div class="meter e"><i style="width:${S.vida.saude}%"></i></div></div>
@@ -1156,9 +1156,6 @@ async function fimSemana(){
     if(S.fim){
       await modal(`<h2 class="lo">${S.fim==='falencia'?'Falência':'Carreira encerrada'}</h2><p>${S.fim==='falencia'?'O caixa passou de −R$ 25 mil e o escritório fechou.':'Seu prestígio chegou a zero e nenhum cliente quer mais contratar você.'} Você durou ${S.semana-1} semanas, com ${S.vitorias} vitórias e ${S.derrotas} derrotas.</p>`,[{t:'Nova carreira',v:1,cls:'brass'}]);
       hallRegistrar(S.fim==='falencia'?'falencia':'encerrada'); S=null; apagarSave(); render();
-    } else if(!S.metaAtingida && S.prest>=META_PREST){
-      S.metaAtingida=true; salvar();
-      await modal(`<h2 class="hi">Meta atingida</h2><p>Em ${S.semana-1} semanas você chegou a ${Math.round(S.prest)} de prestígio, com ${brl(S.caixa)} em caixa. No jogo completo, aqui você abriria o escritório de verdade e contrataria a primeira equipe.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
     }
   } finally { ocupado=false; render(); }
 }
