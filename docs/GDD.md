@@ -32,7 +32,7 @@ LOOP MÉDIO · uma SEMANA
   Planejar a agenda (21 blocos) → aceitar casos → fim de semana: audiências,
   acordos, finanças, equipe, academia, vida pessoal, amigos → eventos e escolhas
 
-LOOP LONGO · uma VIDA (10 semanas = 1 ano de idade)
+LOOP LONGO · uma VIDA (1 rodada = 1 mês; 12 meses = 1 ano de idade)
   Faculdade → OAB/concurso → carreira e promoções → escritório e filiais
   → família, patrimônio, títulos → aposentadoria/morte → HERDEIRO
 ```
@@ -375,7 +375,7 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
   - família;
   - saúde (academia);
   - descanso.
-- **Idade:** 10 semanas de jogo equivalem a 1 ano de vida.
+- **Idade:** cada rodada é um mês; 12 rodadas equivalem a 1 ano de vida.
 - **Medidores:** saúde, felicidade, energia e estresse.
   - felicidade acima de 80 dá +3 nos casos;
   - a saúde cai com a idade e o estresse;
@@ -557,17 +557,11 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 - Layout responsivo: em telas estreitas, as colunas viram uma só e as abas quebram linha.
 
 ### 13.3 Técnica
-- **Formato:** um único arquivo `index.html`, com HTML, CSS e JavaScript puro, sem build.
-- **Estado:**
-  - um objeto global `S`, salvo no `localStorage` (`toga-proto`);
-  - migração de saves antigos em `start()`;
-  - o Hall da Fama fica em `toga-hall`.
-- **Interface:**
-  - renderização por string de template conforme a aba e a carreira;
-  - eventos delegados por `data-act`;
-  - modais assíncronos (`modal()` retorna uma Promise);
-  - `rolar()` faz a animação da balança.
-- **Semana:** cada carreira tem o próprio `fimSemana…`, e todas chamam `semanaAcademia()` e `semanaVida()`. `semanaVida()` cuida de dívidas, investimentos, amigos, saúde e morte.
+- **Código-fonte em `src/`:** módulos JavaScript por assunto (`src/js/NN-*.js`), mais o CSS e o esqueleto HTML.
+- **Montagem:** `scripts/montar.mjs` monta o `index.html` em arquivo único, sem build, que abre direto no navegador. O Netlify roda `npm run build`, que monta e gera `dist/`.
+- **Estado:** um objeto `S`, salvo em `localStorage` (`toga-proto`), com migração de saves antigos em `start()`. Online, o save vai para a conta, pelas funções do Netlify com Netlify Blobs.
+- **Tempo:** cada rodada é **um mês**, e `ANO = 12` rodadas formam um ano de vida.
+- **Testes:** `npm test` confere a montagem, roda os testes de regras pelo gancho `?teste` e joga 8 meses em cada carreira com um robô.
 
 ---
 

@@ -22,3 +22,21 @@ Protótipo jogável de simulação de carreira jurídica. Tudo roda num único a
 - Versão publicada: https://claude.ai/artifact/5mYeCmyvi3t7fpJi4qQm1R (privada; compartilhe pelo menu Share).
 - Ou baixe o `index.html` e abra no navegador. O progresso fica salvo no próprio navegador.
 - **Jogar online: https://toga-jogo.netlify.app** · conta com usuário e senha para salvar na nuvem (botão "Entrar ou criar conta"; o código de save também funciona) e Hall da Fama global, pelas funções do Netlify em `netlify/functions/`. O Firebase continua como opção: veja [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+## Estrutura do código
+- `src/`: o código-fonte do jogo, dividido por assunto.
+  - `src/js/NN-*.js`: módulos em ordem de carregamento, como casos, magistratura, Ministério Público, Defensoria, estrutura, vida, academia, época, tutorial e resumo do mês.
+  - `src/estilo.css`: o CSS do jogo.
+  - `src/head.html`, `src/corpo.html` e `src/rodape.html`: o esqueleto da página.
+- `index.html`: o jogo montado em arquivo único. **Não edite à mão:** altere `src/` e rode `npm run montar`.
+- `scripts/montar.mjs`: monta o `index.html`. `scripts/build.mjs` gera `dist/` para o Netlify.
+- `netlify/functions/`: contas, save na nuvem e Hall da Fama.
+- `web/`: módulos online carregados só no site.
+
+## Testes
+```bash
+npx playwright install chromium   # uma vez
+npm test                          # confere se o index.html está montado, roda os testes de regras e joga 8 meses em cada carreira
+```
+- `tests/regras.test.cjs`: abre o jogo com `?teste` e confere as regras centrais: chance entre 5% e 95%, honorários de 20%, preparação por porte, manutenção, limite de casos, teto das áreas e retirada.
+- `tests/carreiras.test.cjs`: começa cada carreira, joga alguns meses com um robô e falha se aparecer erro de JavaScript, texto antigo ("semana") ou save perdido. `MESES=24 npm test` joga mais tempo.
