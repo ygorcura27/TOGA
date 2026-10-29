@@ -1245,8 +1245,8 @@ const promoOk=()=>{const r=promoReq(); return !!r&&r.every(x=>x.ok)&&!((S.j.stfE
 function xpJuiz(p,mult){ for(const [k,w] of [[p.area,.5],['escrita',.3],['analise',.2]]) S.skills[k]=clamp(S.skills[k]+w*3*RAR[p.rar].xp*mult*(1-S.skills[k]/110),0,100); }
 
 function painelCarreiraAdv(){
-  const cedo=S.semana-(S.semanaFormatura||0)<20, espera=(S.concursoEm||0)>S.semana, dis=cedo||espera||S.caixa<3000;
-  const txt=t=>cedo?`Disponível a partir da semana ${(S.semanaFormatura||0)+20}`:espera?`Nova tentativa na semana ${S.concursoEm}`:t;
+  const cedo=S.semana-(S.semanaFormatura||0)<20, espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000, dis=cedo||espera||semDin;
+  const txt=t=>cedo?`${t} · disponível na semana ${(S.semanaFormatura||0)+20}`:espera?`${t} · nova tentativa na semana ${S.concursoEm}`:semDin?`${t} · inscrição de ${brl(3000)}: falta dinheiro pessoal (faça uma retirada)`:t;
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">Advocacia</span></div>
     <p style="margin:0;font-size:12.5px">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria têm três fases eliminatórias: objetiva, discursiva e oral. Exigem prática jurídica (no protótipo, 20 semanas) e inscrição de ${brl(3000)}. Blocos de estudo acumulados dão bônus nas provas.</p>
     <button class="btn ghost" data-act="concurso" data-v="juiz" ${dis?'disabled':''}>${txt('Concurso para juiz')}</button>
@@ -1474,9 +1474,9 @@ async function concurso(tipo='juiz'){
     <dl class="meta">${fs.map(x=>`<dt>${x.n} · skill ${x.sk} vs ${x.d}</dt><dd class="num ${cls(x.ch)}">${pct(x.ch)}</dd>`).join('')}
       <dt>Aprovação nas três</dt><dd class="num">${pct(fs.reduce((a,x)=>a*x.ch,1))}</dd><dt>Inscrição</dt><dd class="num">${brl(3000)}</dd></dl>`,
     [{t:'Agora não',v:0,cls:'ghost'},{t:'Fazer as provas',v:1,cls:'brass'}]);
-  if(!v) return; ocupado=true;
+  if(!v||dinheiroPessoal()<3000) return; ocupado=true;
   try{
-    S.caixa-=3000;
+    pagarPessoal(3000);
     for(const x of fs){
       const ok=await rolar(x.n,`Skill ${x.sk} + estudo ${b.toLocaleString('pt-BR')} contra dificuldade ${x.d}.`,x.ch,'Aprovado','Reprovado');
       if(!ok){ S.concursoEm=S.semana+8; S.estresse=clamp(S.estresse+10,0,100);
