@@ -501,6 +501,9 @@ function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].niv
   if(r.anos) it.push({l:`${r.anos} anos de escritório`,ok:anosEscritorio()>=r.anos,v:anosEscritorio()});
   return it; }
 function tierEscritorio(){ if(!S.u||S.carreira!=='adv') return 0; let t=0; for(let i=1;i<TIERS.length;i++){ if(checarTier(TIERS[i].req).every(x=>x.ok)) t=i; else break; } return t; }
+// casos em 1ª instância ocupam vaga; recursos ficam numa fila própria e não limitam a entrada de casos novos
+const casos1=()=>S.casos.filter(c=>(c.inst||1)===1).length;
+const PRAZO_REC={2:2,3:3,4:4}; // meses até o julgamento: tribunal, STJ/TST, STF (sem poder antecipar)
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
     epico:(p>=35?(p-30)*.4:0)+(p>=25?f:0),lendario:p>=65?(p-60)*.15:0};}
@@ -917,10 +920,10 @@ function pasta(c,ativo){
         const info=[`+${a.bonus}`, a.blocos?`${a.blocos} bloco${a.blocos>1?'s':''}`:'', custo?brl(custo):'', a.bad?'risco de escândalo':''].filter(Boolean).join(' · ');
         const dis = st===2 || (!st && ((a.blocos && livres()<a.blocos) || (custo && S.caixa<custo)));
         return `<button class="chip ${st?'on':''} ${a.bad?'bad':''}" data-act="apoio" data-id="${c.id}" data-v="${k}" ${dis?'disabled':''} title="${info}">${a.nome}${st===2?' ✓':''} <span class="num">(${info})</span></button>`;}).join('')}</div>
-      <button class="btn ghost" data-act="antecipar" data-id="${c.id}" ${c.estrategia==='acordo'?'disabled title="Troque a estratégia para antecipar"':''}>Antecipar audiência · chance atual ${pct(cc.ch)}</button>
+      <button class="btn ghost" data-act="antecipar" data-id="${c.id}" ${(c.inst||1)>1?'disabled title="Recursos seguem a pauta do tribunal"':c.estrategia==='acordo'?'disabled title="Troque a estratégia para antecipar"':''}>${(c.inst||1)>1?`Julgamento em ${c.prazo} ${c.prazo>1?'meses':'mês'} · pauta do tribunal`:`Antecipar audiência · chance atual ${pct(cc.ch)}`}</button>
     </div>`;
   } else {
-    ctl=`<div class="actions"><button class="btn ghost" data-act="recusar" data-id="${c.id}">Recusar</button><button class="btn" data-act="aceitar" data-id="${c.id}" ${S.casos.length>=maxCasos()?'disabled title="Limite de casos ativos"':''}>Aceitar</button></div>`;
+    ctl=`<div class="actions"><button class="btn ghost" data-act="recusar" data-id="${c.id}">Recusar</button><button class="btn" data-act="aceitar" data-id="${c.id}" ${casos1()>=maxCasos()?'disabled title="Limite de casos ativos"':''}>Aceitar</button></div>`;
   }
   return `<article class="folder" data-area="${A.nome}">
     <span class="stamp" style="color:var(--r-${c.rar})">${R.nome}</span>
@@ -1140,7 +1143,7 @@ async function audiencia(c){
   }
 }
 async function antecipar(id){
-  if(ocupado) return; const c=S.casos.find(x=>x.id===id); if(!c) return;
+  if(ocupado) return; const c=S.casos.find(x=>x.id===id); if(!c||(c.inst||1)>1) return; // recurso segue a pauta do tribunal
   const cc=calcChance(c);
   const v=await modal(`<span class="label">${esc(c.titulo)}</span><h2>Antecipar a audiência?</h2>
     <p>O julgamento acontece agora, com a chance atual. Você abre mão de ${c.prazo} ${c.prazo>1?'meses':'mês'} de preparação. Os blocos deste mês já colocados no caso contam e saem da sua agenda.</p>
@@ -1160,7 +1163,7 @@ async function antecipar(id){
   } finally { ocupado=false; render(); }
 }
 function criarRecurso(c,lado,retido,perdaOrig=0){
-  S.casos.push({...c,id:++uid,inst:c.inst+1,lado,retido,perdaOrig:perdaOrig||c.perdaOrig,prep:0,semana:0,atraso:0,apoios:{},mod:0,estrategia:'equilibrada',prazo:rint(4,8),acordoFalhou:true});
+  S.casos.push({...c,id:++uid,inst:c.inst+1,lado,retido,perdaOrig:perdaOrig||c.perdaOrig,prep:0,semana:0,atraso:0,apoios:{},mod:0,estrategia:'equilibrada',prazo:PRAZO_REC[c.inst+1]||4,acordoFalhou:true});
 }
 
 // ===================== FIM DE SEMANA =====================
@@ -3295,7 +3298,7 @@ async function eticaAmigoJuiz(c){ const n=npcPor(c.npcJuiz);
   c.etica=true;
   if(v==='declarar'){ c.npcJuiz=null; c.juizNome=pick(JNOMES); S.integ=clamp(S.integ+2,0,100); }
   else { c.amizadeOculta=true; S.integ=clamp(S.integ-8,0,100); if(Math.random()<.15){ S.prest=clamp(S.prest-5,0,100); addLog('A imprensa revelou a sua amizade com o juiz do caso. −5 de prestígio.','r'); } }
-  if(S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==c.id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`); }
+  if(casos1()<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==c.id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`); }
   salvar(); render(); }
 async function semanaAmigos(){ const N=S.npcs||[]; if(!N.length) return;
   for(const n of N){ n.rel+= n.rel>0?-.4:n.rel<-20?.2:0; n.rel=clamp(n.rel,-100,100);
@@ -3550,13 +3553,14 @@ function painelCasosAtivos(){
   const prim=S.casos.filter(c=>(c.inst||1)===1), rec=S.casos.filter(c=>(c.inst||1)>1);
   const grupos={}; for(const c of rec.sort((a,b)=>a.inst-b.inst)) (grupos[nomeTribunal(c)]=grupos[nomeTribunal(c)]||[]).push(c);
   return `<section class="panel" style="background:transparent;border:0;padding:0">
-      <div class="panel-head"><h2>Casos ativos</h2><span class="num">${S.casos.length}/${maxCasos()}</span></div>
+      <div class="panel-head"><h2>Casos ativos</h2><span class="num">${casos1()}/${maxCasos()}</span></div>
       <p class="label" style="margin:0">${TIERS[tierEscritorio()].nome}: casos até ${RAR[RORD[TIERS[tierEscritorio()].rarMax]].nome.toLowerCase()}, causas ×${TIERS[tierEscritorio()].valor.toLocaleString('pt-BR')} (o nível sobe em Estrutura e equipe) · Limite: 3 sozinho + 1 por advogado (${advsEquipe()}) + 1 a cada 2 estagiários (${estagEquipe()})${S.filiais.length?` + ${S.filiais.length} pelas filiais`:''} · manutenção deste mês: ${S.casos.reduce((a,c)=>a+manut(c),0)} blocos</p>
       ${rec.length?`<span class="label">1ª instância · ${prim.length}</span>`:''}
       <div class="cases">${prim.length?prim.map(c=>pasta(c,true)).join(''):`<p class="empty">${rec.length?'Nenhum caso em 1ª instância.':'Nenhum caso ativo. Aceite uma das ofertas abaixo.'}</p>`}</div>
     </section>
     ${rec.length?`<section class="panel recursos" style="background:transparent;border:0;padding:0">
       <div class="panel-head"><h2>Recursos</h2><span class="num">${rec.length}</span></div>
+      <p class="label" style="margin:0">Fila dos tribunais: não ocupa vaga de casos ativos e não pode ser antecipada. Tribunal em 2 meses, STJ/TST em 3, STF em 4. Dá para preparar memoriais e sustentação enquanto espera.</p>
       ${Object.entries(grupos).map(([t,L])=>`<div class="trib"><div class="trib-head"><b>${t}</b><span class="label">${(()=>{ const m=L.filter(c=>c.lado==='recorrente').length, o=L.length-m; return [m?`${m} seu${m>1?'s':''} (você recorreu)`:'',o?`${o} da outra parte`:''].filter(Boolean).join(' · '); })()}</span></div>
         <div class="cases">${L.map(c=>pasta(c,true)).join('')}</div></div>`).join('')}
     </section>`:''}`; }
@@ -3793,7 +3797,7 @@ app.addEventListener('click',e=>{
         if(r && S && !motivoAbrir(v)){ S.caixa-=custo; S.filiais.push(v);
           addLog(`Nova ${tipo} em ${nomeLocal(v)} por ${brl(custo)}.`,'g'); salvar(); render(); } });
     return; }
-  if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&S.casos.length<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
+  if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&casos1()<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
   if(a==='recusar'){ S.ofertas=S.ofertas.filter(x=>x.id!==id); }
   if(a==='inc'||a==='dec'){ const d=a==='inc'?1:-1; if(d>0&&livres()<=0) return;
     if(b.dataset.k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
@@ -4018,6 +4022,7 @@ window.claude?.hot?.snapshot?.(()=>({S}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 // gancho para os testes automáticos (tests/): só existe quando a página abre com ?teste na URL
 if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set S(v){ S=v; },
-  calcChance, prepCaso, prepIdeal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar };
+  calcChance, prepCaso, prepIdeal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
+  fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio };
 })();
 </script>

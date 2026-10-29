@@ -10,4 +10,5 @@ window.claude?.hot?.snapshot?.(()=>({S}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 // gancho para os testes automáticos (tests/): só existe quando a página abre com ?teste na URL
 if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set S(v){ S=v; },
-  calcChance, prepCaso, prepIdeal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar };
+  calcChance, prepCaso, prepIdeal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
+  fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio };

@@ -121,7 +121,7 @@ async function audiencia(c){
   }
 }
 async function antecipar(id){
-  if(ocupado) return; const c=S.casos.find(x=>x.id===id); if(!c) return;
+  if(ocupado) return; const c=S.casos.find(x=>x.id===id); if(!c||(c.inst||1)>1) return; // recurso segue a pauta do tribunal
   const cc=calcChance(c);
   const v=await modal(`<span class="label">${esc(c.titulo)}</span><h2>Antecipar a audiência?</h2>
     <p>O julgamento acontece agora, com a chance atual. Você abre mão de ${c.prazo} ${c.prazo>1?'meses':'mês'} de preparação. Os blocos deste mês já colocados no caso contam e saem da sua agenda.</p>
@@ -141,6 +141,6 @@ async function antecipar(id){
   } finally { ocupado=false; render(); }
 }
 function criarRecurso(c,lado,retido,perdaOrig=0){
-  S.casos.push({...c,id:++uid,inst:c.inst+1,lado,retido,perdaOrig:perdaOrig||c.perdaOrig,prep:0,semana:0,atraso:0,apoios:{},mod:0,estrategia:'equilibrada',prazo:rint(4,8),acordoFalhou:true});
+  S.casos.push({...c,id:++uid,inst:c.inst+1,lado,retido,perdaOrig:perdaOrig||c.perdaOrig,prep:0,semana:0,atraso:0,apoios:{},mod:0,estrategia:'equilibrada',prazo:PRAZO_REC[c.inst+1]||4,acordoFalhou:true});
 }
 

@@ -28,7 +28,7 @@ app.addEventListener('click',e=>{
         if(r && S && !motivoAbrir(v)){ S.caixa-=custo; S.filiais.push(v);
           addLog(`Nova ${tipo} em ${nomeLocal(v)} por ${brl(custo)}.`,'g'); salvar(); render(); } });
     return; }
-  if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&S.casos.length<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
+  if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&casos1()<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
   if(a==='recusar'){ S.ofertas=S.ofertas.filter(x=>x.id!==id); }
   if(a==='inc'||a==='dec'){ const d=a==='inc'?1:-1; if(d>0&&livres()<=0) return;
     if(b.dataset.k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }

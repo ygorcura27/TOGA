@@ -28,6 +28,9 @@ function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].niv
   if(r.anos) it.push({l:`${r.anos} anos de escritório`,ok:anosEscritorio()>=r.anos,v:anosEscritorio()});
   return it; }
 function tierEscritorio(){ if(!S.u||S.carreira!=='adv') return 0; let t=0; for(let i=1;i<TIERS.length;i++){ if(checarTier(TIERS[i].req).every(x=>x.ok)) t=i; else break; } return t; }
+// casos em 1ª instância ocupam vaga; recursos ficam numa fila própria e não limitam a entrada de casos novos
+const casos1=()=>S.casos.filter(c=>(c.inst||1)===1).length;
+const PRAZO_REC={2:2,3:3,4:4}; // meses até o julgamento: tribunal, STJ/TST, STF (sem poder antecipar)
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
     epico:(p>=35?(p-30)*.4:0)+(p>=25?f:0),lendario:p>=65?(p-60)*.15:0};}

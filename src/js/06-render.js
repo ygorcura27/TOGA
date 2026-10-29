@@ -333,10 +333,10 @@ function pasta(c,ativo){
         const info=[`+${a.bonus}`, a.blocos?`${a.blocos} bloco${a.blocos>1?'s':''}`:'', custo?brl(custo):'', a.bad?'risco de escândalo':''].filter(Boolean).join(' · ');
         const dis = st===2 || (!st && ((a.blocos && livres()<a.blocos) || (custo && S.caixa<custo)));
         return `<button class="chip ${st?'on':''} ${a.bad?'bad':''}" data-act="apoio" data-id="${c.id}" data-v="${k}" ${dis?'disabled':''} title="${info}">${a.nome}${st===2?' ✓':''} <span class="num">(${info})</span></button>`;}).join('')}</div>
-      <button class="btn ghost" data-act="antecipar" data-id="${c.id}" ${c.estrategia==='acordo'?'disabled title="Troque a estratégia para antecipar"':''}>Antecipar audiência · chance atual ${pct(cc.ch)}</button>
+      <button class="btn ghost" data-act="antecipar" data-id="${c.id}" ${(c.inst||1)>1?'disabled title="Recursos seguem a pauta do tribunal"':c.estrategia==='acordo'?'disabled title="Troque a estratégia para antecipar"':''}>${(c.inst||1)>1?`Julgamento em ${c.prazo} ${c.prazo>1?'meses':'mês'} · pauta do tribunal`:`Antecipar audiência · chance atual ${pct(cc.ch)}`}</button>
     </div>`;
   } else {
-    ctl=`<div class="actions"><button class="btn ghost" data-act="recusar" data-id="${c.id}">Recusar</button><button class="btn" data-act="aceitar" data-id="${c.id}" ${S.casos.length>=maxCasos()?'disabled title="Limite de casos ativos"':''}>Aceitar</button></div>`;
+    ctl=`<div class="actions"><button class="btn ghost" data-act="recusar" data-id="${c.id}">Recusar</button><button class="btn" data-act="aceitar" data-id="${c.id}" ${casos1()>=maxCasos()?'disabled title="Limite de casos ativos"':''}>Aceitar</button></div>`;
   }
   return `<article class="folder" data-area="${A.nome}">
     <span class="stamp" style="color:var(--r-${c.rar})">${R.nome}</span>

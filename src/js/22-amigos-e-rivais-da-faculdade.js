@@ -29,7 +29,7 @@ async function eticaAmigoJuiz(c){ const n=npcPor(c.npcJuiz);
   c.etica=true;
   if(v==='declarar'){ c.npcJuiz=null; c.juizNome=pick(JNOMES); S.integ=clamp(S.integ+2,0,100); }
   else { c.amizadeOculta=true; S.integ=clamp(S.integ-8,0,100); if(Math.random()<.15){ S.prest=clamp(S.prest-5,0,100); addLog('A imprensa revelou a sua amizade com o juiz do caso. −5 de prestígio.','r'); } }
-  if(S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==c.id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`); }
+  if(casos1()<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==c.id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`); }
   salvar(); render(); }
 async function semanaAmigos(){ const N=S.npcs||[]; if(!N.length) return;
   for(const n of N){ n.rel+= n.rel>0?-.4:n.rel<-20?.2:0; n.rel=clamp(n.rel,-100,100);
