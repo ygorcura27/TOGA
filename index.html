@@ -915,7 +915,7 @@ function renderInicio(){
     <div class="field"><label class="label" for="nome">Nome</label><input id="nome" value="${esc(escolha.nome)}" maxlength="30"></div>
     <div class="field"><label class="label" for="inicio">Ponto de partida</label><select id="inicio"><option value="faculdade">Faculdade de Direito, aos 18 anos (recomendado)</option><option value="formado" ${escolha.inicio==='formado'?'selected':''}>Já formado e aprovado, aos 25 anos</option></select></div>
     <div class="field"><label class="label" for="facul">Faculdade (se começar na faculdade)</label><select id="facul">${Object.entries(FACS).map(([k,f])=>`<option value="${k}" ${escolha.facul===k?'selected':''}>${f.nome} · ${f.mensal?brl(f.mensal)+'/sem':'gratuita, exige vestibular'}</option>`).join('')}</select></div>
-    <div class="field"><label class="label" for="carreira">Carreira (se já formado)</label><select id="carreira"><option value="adv">Advocacia · abrir o próprio escritório</option><option value="juiz" ${escolha.carreira==='juiz'?'selected':''}>Magistratura · já aprovado no concurso, começa como juiz substituto</option><option value="promotor" ${escolha.carreira==='promotor'?'selected':''}>Ministério Público · já aprovado no concurso, começa como promotor substituto</option><option value="defensor" ${escolha.carreira==='defensor'?'selected':''}>Defensoria Pública · já aprovado no concurso, começa como defensor substituto</option></select></div>
+    <div class="field"><label class="label" for="carreira">Carreira <span id="car-nota" style="text-transform:none;letter-spacing:0;font-weight:400">${escolha.inicio==='formado'?'':'· na faculdade, você escolhe na formatura; mude para "Já formado" para começar direto na carreira'}</span></label><select id="carreira"><option value="adv">Advocacia · abrir o próprio escritório</option><option value="juiz" ${escolha.carreira==='juiz'?'selected':''}>Magistratura · já aprovado no concurso, começa como juiz substituto</option><option value="promotor" ${escolha.carreira==='promotor'?'selected':''}>Ministério Público · já aprovado no concurso, começa como promotor substituto</option><option value="defensor" ${escolha.carreira==='defensor'?'selected':''}>Defensoria Pública · já aprovado no concurso, começa como defensor substituto</option></select></div>
     <div class="field"><label class="label" for="espec">Área de especialização (+15) · no escritório, é a área de atuação inicial; para juízes, é a vara</label>
       <select id="espec">${Object.entries(AREAS).map(([k,a])=>`<option value="${k}" ${escolha.espec===k?'selected':''}>${a.nome}</option>`).join('')}</select></div>
     <div class="field"><label class="label" for="sede">Cidade da sede ou comarca</label>
@@ -3684,7 +3684,13 @@ app.addEventListener('click',e=>{
 app.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ') && e.target.matches && e.target.matches('g[data-act]')){ e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
 app.addEventListener('input',e=>{ if(e.target.id==='ret-valor') atualizarRetirada(); });
-app.addEventListener('change',e=>{ if(e.target.id==='genero'&&!S){ const n=document.getElementById('nome'); if(n&&['Ana Ribeiro','André Ribeiro'].includes(n.value)) n.value=e.target.value==='m'?'André Ribeiro':'Ana Ribeiro'; return; }
+app.addEventListener('change',e=>{
+  // tela inicial: escolher carreira pública muda o ponto de partida para "Já formado"; a nota explica a regra
+  if(!S&&(e.target.id==='carreira'||e.target.id==='inicio')){ const ini=document.getElementById('inicio'), car=document.getElementById('carreira'), nota=document.getElementById('car-nota');
+    if(e.target.id==='carreira'&&car.value!=='adv') ini.value='formado';
+    escolha.inicio=ini.value; escolha.carreira=car.value;
+    if(nota) nota.textContent=ini.value==='formado'?'':'· na faculdade, você escolhe na formatura; mude para "Já formado" para começar direto na carreira'; return; }
+  if(e.target.id==='genero'&&!S){ const n=document.getElementById('nome'); if(n&&['Ana Ribeiro','André Ribeiro'].includes(n.value)) n.value=e.target.value==='m'?'André Ribeiro':'Ana Ribeiro'; return; }
   if(e.target.dataset.act==='autoDist'&&S){ S.u.auto=e.target.checked; salvar(); return; }
   if(e.target.dataset.act==='estudoSkill'&&S){ S.agenda.estudoSkill=e.target.value; salvar(); } });
 
