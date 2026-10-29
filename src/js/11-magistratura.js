@@ -8,12 +8,19 @@ const CARGOS=[
 ];
 const CUSTO_VIDA_MP=7000, CUSTO_VIDA_DP=6000; // padrão de vida das carreiras públicas
 const CUSTO_VIDA_MAG=7000; // magistratura: padrão de vida mais alto
-// requisitos para prestar o concurso da magistratura (muito difícil: perto dos 28 a 30 anos para quem se dedica)
-const REQ_MAG={area:82,oratoria:92,escrita:82,analise:82,pratica:36};
-function reqMagistratura(){ const L=Object.keys(AREAS).map(k=>({l:`${AREAS[k].nome} 4★`,ok:S.skills[k]>=REQ_MAG.area,v:Math.floor(S.skills[k])}));
-  L.push({l:'Oratória 5★',ok:S.skills.oratoria>=REQ_MAG.oratoria,v:Math.floor(S.skills.oratoria)},{l:'Escrita 4★',ok:S.skills.escrita>=REQ_MAG.escrita,v:Math.floor(S.skills.escrita)},{l:'Análise 4★',ok:S.skills.analise>=REQ_MAG.analise,v:Math.floor(S.skills.analise)});
-  const m=S.semana-(S.semanaFormatura||0); L.push({l:'3 anos de prática jurídica após a OAB',ok:m>=REQ_MAG.pratica,v:tempoTxt(Math.max(0,m))}); return L; }
-const aptoMag=()=>reqMagistratura().every(x=>x.ok);
+// requisitos para se inscrever nos concursos públicos (estrelas: 3★ = 70, 4★ = 82, 5★ = 92)
+const EST={3:70,4:82,5:92};
+const REQ_CONC={
+  juiz:{nome:'magistratura',pratica:36,areas:{todas:4},skills:{oratoria:5,escrita:4,analise:4},dica:'o <b>curso preparatório para a magistratura</b> (na academia) libera a 4ª estrela em todas as áreas de uma vez.'},
+  promotor:{nome:'Ministério Público',pratica:36,areas:{todas:3,penal:4},skills:{oratoria:4,analise:4,escrita:3},dica:'para a 4★ em Penal, faça uma <b>especialização em Penal</b> ou o preparatório (na academia).'},
+  defensor:{nome:'Defensoria Pública',pratica:24,areas:{todas:3,penal:4,familia:4},skills:{negociacao:4,oratoria:3,escrita:3},dica:'para a 4★ em Penal e Família, faça <b>especializações</b> nessas áreas ou o preparatório (na academia).'},
+};
+function reqConcurso(tipo){ const R=REQ_CONC[tipo], L=[];
+  for(const k in AREAS){ const n=R.areas[k]||R.areas.todas; L.push({l:`${AREAS[k].nome} ${n}★`,ok:S.skills[k]>=EST[n],v:Math.floor(S.skills[k])}); }
+  for(const [k,n] of Object.entries(R.skills)) L.push({l:`${SKILLS[k]} ${n}★`,ok:S.skills[k]>=EST[n],v:Math.floor(S.skills[k])});
+  const m=S.semana-(S.semanaFormatura||0); L.push({l:`${tempoTxt(R.pratica)} de prática jurídica após a OAB`,ok:m>=R.pratica,v:tempoTxt(Math.max(0,m))}); return L; }
+const aptoConc=tipo=>reqConcurso(tipo).every(x=>x.ok);
+const reqMagistratura=()=>reqConcurso('juiz'), aptoMag=()=>aptoConc('juiz');
 const VARAS={penal:'Vara Criminal',civel:'Vara Cível',familia:'Vara de Família',empresarial:'Vara Empresarial',trabalho:'Vara do Trabalho',tributario:'Vara Federal Tributária'};
 const NOMES_CARGO={
   trabalho:['Juiz do Trabalho Substituto','Juiz Titular de Vara do Trabalho','Desembargador do TRT','Ministro do TST','Ministro do STF'],
@@ -84,15 +91,15 @@ const promoOk=()=>{const r=promoReq(); return !!r&&r.every(x=>x.ok)&&!((S.j.stfE
 function xpJuiz(p,mult){ for(const [k,w] of [[p.area,.5],['escrita',.3],['analise',.2]]) S.skills[k]=clamp(S.skills[k]+w*3*RAR[p.rar].xp*mult*(1-S.skills[k]/110),0,100); }
 
 function painelCarreiraAdv(){
-  const cedo=S.semana-(S.semanaFormatura||0)<24, espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000, dis=cedo||espera||semDin, rm=reqMagistratura(), faltam=rm.filter(x=>!x.ok).length;
-  const txt=t=>cedo?`${t} · disponível no mês ${(S.semanaFormatura||0)+24}`:espera?`${t} · nova tentativa no mês ${S.concursoEm}`:semDin?`${t} · inscrição de ${brl(3000)}: falta dinheiro pessoal (faça uma retirada)`:t;
+  const espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000;
+  const bloco=(tipo,rot)=>{ const rm=reqConcurso(tipo), faltam=rm.filter(x=>!x.ok).length, R=REQ_CONC[tipo];
+    const txt=faltam?`${rot} · faltam ${faltam} requisito${faltam>1?'s':''}`:espera?`${rot} · nova tentativa no mês ${S.concursoEm}`:semDin?`${rot} · inscrição de ${brl(3000)}: falta dinheiro pessoal (faça uma retirada)`:rot;
+    return `<button class="btn ghost" data-act="concurso" data-v="${tipo}" ${faltam||espera||semDin?'disabled':''}>${txt}</button>
+      <details><summary class="label">Requisitos · ${R.nome}</summary><ul class="break">${rm.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
+        <p style="margin:0;font-size:12px;color:var(--muted)">Estudando sozinho, cada área para em 3★: ${R.dica}</p></details>`; };
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">Advocacia</span></div>
-    <p style="margin:0;font-size:12.5px">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria têm três fases eliminatórias: objetiva, discursiva e oral. Exigem prática jurídica (no protótipo, 20 meses) e inscrição de ${brl(3000)}. Blocos de estudo acumulados dão bônus nas provas.</p>
-    <button class="btn ghost" data-act="concurso" data-v="juiz" ${dis||faltam?'disabled':''}>${faltam?`Concurso para juiz · faltam ${faltam} requisito${faltam>1?'s':''}`:txt('Concurso para juiz')}</button>
-    <details><summary class="label">Requisitos da magistratura</summary><ul class="break">${rm.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
-      <p style="margin:0;font-size:12px;color:var(--muted)">Estudando sozinho, cada área para em 3★: o <b>curso preparatório para a magistratura</b> (na academia) libera a 4ª estrela em todas as áreas de uma vez.</p></details>
-    <button class="btn ghost" data-act="concurso" data-v="promotor" ${dis?'disabled':''}>${txt('Concurso para promotor')}</button>
-    <button class="btn ghost" data-act="concurso" data-v="defensor" ${dis?'disabled':''}>${txt('Concurso para defensor')}</button>
+    <p style="margin:0;font-size:12.5px">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria exigem estrelas nas skills, anos de prática jurídica e inscrição de ${brl(3000)}. Depois vêm três fases eliminatórias: objetiva, discursiva e oral. Blocos de estudo acumulados dão bônus nas provas.</p>
+    ${bloco('juiz','Concurso para juiz')}${bloco('promotor','Concurso para promotor')}${bloco('defensor','Concurso para defensor')}
     <button class="btn ghost" data-act="virarAcademico">Largar a advocacia pela carreira acadêmica</button>
   </section>`;
 }
@@ -312,10 +319,10 @@ async function promocao(){
 function fasesConcurso(tipo){ const b=Math.min(15,(S.estudoTotal||0)*.5)+bonusTitulos()+Math.min(5,((S.formacao&&S.formacao.contatos[tipo])||0)/10);
   const areas=Object.keys(AREAS).reduce((a,k)=>a+S.skills[k],0)/Object.keys(AREAS).length;
   const f=(n,sk,d)=>({n,sk:Math.round(sk),d,ch:clamp(sig((sk+b-d)/8),.05,.95)});
-  const D=tipo==='juiz'?[75,76,80]:[32,38,38];
-  return {b,fs:[f('Prova objetiva',areas,D[0]),f('Prova discursiva',S.skills.escrita,D[1]),f('Prova oral',(S.skills.oratoria+S.skills.analise)/2,D[2])]}; }
+  const D={juiz:[75,76,80],promotor:[66,68,74],defensor:[60,64,66]}[tipo];
+  return {b,fs:[f('Prova objetiva',areas,D[0]),f('Prova discursiva',S.skills.escrita,D[1]),f('Prova oral',(S.skills.oratoria+(tipo==='defensor'?S.skills.negociacao:S.skills.analise))/2,D[2])]}; }
 async function concurso(tipo='juiz'){
-  if(ocupado||(tipo==='juiz'&&!aptoMag())) return; const MP=tipo==='promotor', {b,fs}=fasesConcurso(tipo);
+  if(ocupado||!aptoConc(tipo)) return; const MP=tipo==='promotor', {b,fs}=fasesConcurso(tipo);
   const NOME_CONC={juiz:'Concurso da magistratura',promotor:'Concurso do Ministério Público',defensor:'Concurso da Defensoria Pública'}, POSSE={juiz:'Juiz Substituto',promotor:'Promotor Substituto',defensor:'Defensor Público Substituto'};
   const v=await modal(`<h2>${NOME_CONC[tipo]}</h2><p>Três fases eliminatórias. Cada bloco de estudo acumulado vale +0,5 nas provas (máximo +15). Seu bônus atual: <b class="num">+${b.toLocaleString('pt-BR')}</b>.</p>
     <dl class="meta">${fs.map(x=>`<dt>${x.n} · skill ${x.sk} vs ${x.d}</dt><dd class="num ${cls(x.ch)}">${pct(x.ch)}</dd>`).join('')}

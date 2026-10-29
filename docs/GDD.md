@@ -266,6 +266,17 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
   - **Provas:** mais difíceis que as de promotor e defensor (dificuldade 75, 76 e 80).
   - **Idade:** quem se dedica chega perto dos 28 a 30 anos. Começar direto como juiz na tela inicial põe o personagem com 30 anos.
 - **Custo de vida:** R$ 7.000 por mês na magistratura e no Ministério Público, R$ 6.000 na Defensoria.
+- **Concursos do Ministério Público e da Defensoria (exigentes, um degrau abaixo da magistratura):**
+
+| Requisito | Promotor | Defensor |
+|---|---|---|
+| Áreas | 4★ em Penal, 3★ nas demais | 4★ em Penal e Família, 3★ nas demais |
+| Outras skills | 4★ em Oratória e Análise, 3★ em Escrita | 4★ em Negociação, 3★ em Oratória e Escrita |
+| Prática após a OAB | 3 anos | 2 anos |
+| Dificuldade das provas | 66 · 68 · 74 | 60 · 64 · 66 |
+
+  - A prova oral do defensor usa Oratória e Negociação; a do juiz e a do promotor usam Oratória e Análise.
+  - Para a 4★ nas áreas exigidas, é preciso especialização na área ou o curso preparatório.
 - **Carga de trabalho:**
   - **Estudo mínimo:** o processo só vai a sentença quando o estudo acumulado chega ao mínimo da complexidade dele (comum 2, incomum 3, raro 4, épico 6, lendário 9 blocos).
   - **Chance de acerto:** usa a mesma curva de preparação dos casos da advocacia.
