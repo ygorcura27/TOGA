@@ -44,7 +44,7 @@ function novoCaso(cid=S.sede,extra={},area=null){
   if(!pool.length){ pool=TEMPLATES.filter(t=>t.area===area); }
   const t=pickW(pool,x=>(C.areas[x.area]||1)*pesoArea(x.area)*demEpoca(x.area)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];
   const d=rint(R.d[0],R.d[1]);
-  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator*valorEpoca()*(PE?PE.valor:1)/100)*100;
+  const valor=Math.round(5000*Math.pow(1.06,d)*rnd(.8,1.2)*C.fator*valorEpoca()*(PE?PE.valor:1)/100)*100;
   const cliente = t.area==='empresarial' ? pick(EMPRESAS) : pick(NOMES);
   return {id:++uid,...t,rar,d,valor,hon:Math.round(valor*.2),cliente,cidade:cid,
     prazo:rint(R.prazo[0],R.prazo[1]),juiz:pick(Object.keys(JUIZES)),juizNome:pick(JNOMES),
