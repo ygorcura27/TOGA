@@ -3,7 +3,7 @@ const CURSOS={
   esp:{nome:'Especialização (pós lato sensu)',meta:40,minSem:12,mensal:600},
   mestrado:{nome:'Mestrado',meta:120,minSem:24,mensal:0,bolsa:750,selecao:true},
   doutorado:{nome:'Doutorado',meta:240,minSem:48,mensal:0,bolsa:1050,selecao:true},
-  prep:{nome:'Preparatório para a magistratura',meta:60,minSem:18,mensal:1500,todas:true},
+  prep:{nome:'Preparatório para a magistratura',meta:60,minSem:18,mensal:1500,todas:true,req3:true},
 };
 const PROJ={artigo:{nome:'Artigo científico',meta:12},livro:{nome:'Livro acadêmico',meta:60},manual:{nome:'Manual para OAB e concursos',meta:45}};
 const NIVEIS_DOC=['Professor Adjunto','Professor Associado','Professor Titular'];
@@ -18,6 +18,7 @@ const TEMAS={
 const tituloPesquisa=a=>pick(TEMAS[a]||TEMAS.civel);
 const acadInicial=()=>({curso:null,proj:null,pubs:[],titulos:{esp:0,mestrado:false,doutorado:false,areas:{}},doc:null,indice:0,selEm:0,roySemana:0});
 const acadBlocos=()=>{ const A=S.ac, G=S.agenda; if(!A) return 0; return (A.curso?G.curso||0:0)+(A.proj?G.pesquisa||0:0)+(A.doc?G.docencia||0:0); };
+const base3=()=>Object.keys(AREAS).every(a=>estrelas(a)>=3); // preparatório da magistratura pede 3★ em todas as áreas
 const bonusTitulos=()=>{ const T=S.ac&&S.ac.titulos; if(!T) return 0; return Math.min(4,T.esp*2)+(T.mestrado?3:0)+(T.doutorado?5:0); };
 function rowsAcad(free){ const A=S.ac; if(!A) return '';
   return (A.curso?`<div class="row"><span class="name">${CURSOS[A.curso.tipo].nome}</span>${stepper('curso',0,S.agenda.curso||0,free)}</div>`:'')
@@ -64,7 +65,7 @@ async function semanaAcademia(){ const A=S.ac, G=S.agenda; if(!A) return [];
   return L; }
 async function escolherArea(titulo){ return await modal(`<h2>${titulo}</h2><div class="opts">${Object.entries(AREAS).map(([k,a])=>`<button class="opt" data-mv="${k}"><span>${a.nome}</span><b class="num">${Math.floor(S.skills[k])}</b><small>Sua skill na área</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]); }
 async function acMatricular(tipo){ const A=S.ac, C=CURSOS[tipo]; if(ocupado||A.curso) return;
-  if(tipo==='doutorado'&&!A.titulos.mestrado) return; if(C.selecao&&A.selEm>S.semana) return;
+  if(tipo==='doutorado'&&!A.titulos.mestrado) return; if(C.req3&&!base3()) return; if(C.selecao&&A.selEm>S.semana) return;
   const area=C.todas?null:await escolherArea(`${C.nome}: em qual área? ${tipo==='esp'?'Libera a 4ª estrela nela.':'Libera a 5ª estrela nela.'}`); if(!area&&!C.todas) return;
   if(C.selecao){ ocupado=true; let ok;
     try{ ok=await rolar(`Seleção do ${C.nome.toLowerCase()}`,`Projeto de pesquisa, prova e entrevista. Pesquisa, ${tipo==='mestrado'?'CR da graduação':'experiência'} e publicações contam.`,chanceSelecao(tipo),'Aprovado','Não foi desta vez'); }
@@ -95,7 +96,8 @@ function painelFormacao(){ const A=S.ac, T=A.titulos, c=A.curso;
         <span>Tempo</span><div class="bar"><i style="width:${Math.min(100,(S.semana-c.inicio)/c.minSem*100)}%;background:var(--brass)"></i></div><span class="num">${S.semana-c.inicio}/${c.minSem}</span></div>
       <p style="margin:0;font-size:12px;color:var(--muted)">${c.prog}/${c.meta} blocos e ${c.minSem} meses no mínimo${c.mensal?` · mensalidade ${brl(c.mensal)}/mês`:''}${c.bolsa?` · bolsa de ${brl(c.bolsa)}/mês só em dedicação exclusiva`:''}.</p>`
     :`<div class="opts">${Object.entries(CURSOS).map(([k,C])=>{ const bloq=k==='doutorado'&&!T.mestrado, espera=C.selecao&&A.selEm>S.semana;
-        return `<button class="opt" data-act="acMatricular" data-v="${k}" ${bloq||espera?'disabled':''}><span>${C.nome}</span><b class="num">${C.selecao?pct(chanceSelecao(k)):brl(C.mensal)+'/mês'}</b><small>${C.meta} blocos e pelo menos ${C.minSem} meses (${tempoTxt(C.minSem)})${C.selecao?' · chance na seleção':''}${bloq?' · exige mestrado':''}${espera?` · nova seleção no mês ${A.selEm}`:''}</small></button>`; }).join('')}</div>`}
+        const sem3=C.req3&&!base3();
+        return `<button class="opt" data-act="acMatricular" data-v="${k}" ${bloq||espera||sem3?'disabled':''}><span>${C.nome}</span><b class="num">${C.selecao?pct(chanceSelecao(k)):brl(C.mensal)+'/mês'}</b><small>${C.meta} blocos e pelo menos ${C.minSem} meses (${tempoTxt(C.minSem)})${C.selecao?' · chance na seleção':''}${bloq?' · exige mestrado':''}${C.req3?(sem3?` · exige 3★ em todas as áreas (faltam ${Object.keys(AREAS).filter(a=>estrelas(a)<3).map(a=>AREAS[a].nome).join(', ')})`:' · libera a 4ª estrela em todas as áreas'):''}${espera?` · nova seleção no mês ${A.selEm}`:''}</small></button>`; }).join('')}</div>`}
   </section>`; }
 function painelPesquisa(){ const A=S.ac, pj=A.proj;
   return `<section class="panel"><div class="panel-head"><h2>Pesquisa e publicações</h2><span class="label">índice ${A.indice}</span></div>

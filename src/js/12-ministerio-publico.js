@@ -1,9 +1,9 @@
 // ===================== MINISTÉRIO PÚBLICO =====================
 const CARGOS_MP=[
-  {nome:'Promotor Substituto',gab:2,salario:7300},
-  {nome:'Promotor de Justiça',gab:4,salario:8300,req:{prest:35,cond:15,taxa:.55}},
-  {nome:'Procurador de Justiça',gab:7,salario:9800,req:{prest:60,cond:50,taxa:.60}},
-  {nome:'Procurador-Geral de Justiça',gab:10,salario:11200,req:{prest:85,cond:100,taxa:.65}},
+  {nome:'Promotor Substituto',gab:2,salario:32000},
+  {nome:'Promotor de Justiça',gab:4,salario:35000,req:{prest:35,cond:15,taxa:.55}},
+  {nome:'Procurador de Justiça',gab:7,salario:41800,req:{prest:60,cond:50,taxa:.60}},
+  {nome:'Procurador-Geral de Justiça',gab:10,salario:44000,req:{prest:85,cond:100,taxa:.65}},
 ];
 const INVEST={pf:'Pessoa física',empresa:'Empresa',estado:'Agente público'};
 const TM=(titulo,area,adv,rars,juri=false,acordo=false)=>({titulo,area,adv,rars,juri,acordo});
@@ -252,7 +252,7 @@ async function fimSemanaMP(){
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
     S.energia=clamp(S.energia-3.2*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*S.agenda.lazer,0,100);
     S.estresse=clamp(S.estresse+2.2*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*S.agenda.lazer,0,100);
-    S.caixa+=C.salario-CUSTO_VIDA_JUIZ;
+    S.caixa+=C.salario-CUSTO_VIDA_MP;
     const notas=[];
     // diligências e preparo
     for(const c of P.casos){ const n=c.semana||0;
@@ -296,7 +296,7 @@ async function fimSemanaMP(){
       ${notas.length?`<ul class="break">${notas.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Mês sem novidades nos processos.</p>'}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
       <dl class="meta"><dt>Inquéritos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
-        <dt>Inquéritos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_JUIZ)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
+        <dt>Inquéritos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_MP)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
     await semanaAcademia(); if(await semanaVida()) return;
     S.semana++; S.agenda.estudo=0; S.agenda.lazer=0; S.disp=BLOCOS-blocosPerdidos();
     if(S.estresse>=100){ S.disp=10; S.estresse=70; addLog('Burnout: você só terá 10 blocos no próximo mês.','r'); }

@@ -6,7 +6,7 @@ const CARGOS=[
   {nome:'Ministro do STJ',gab:14,salario:44000,req:{prest:85,sent:250,reforma:.20}},
   {nome:'Ministro do STF',gab:18,salario:46400,req:{prest:95,sent:400,reforma:.15}},
 ];
-const CUSTO_VIDA_JUIZ=2500; // promotor e defensor
+const CUSTO_VIDA_MP=7000, CUSTO_VIDA_DP=6000; // padrão de vida das carreiras públicas
 const CUSTO_VIDA_MAG=7000; // magistratura: padrão de vida mais alto
 // requisitos para prestar o concurso da magistratura (muito difícil: perto dos 28 a 30 anos para quem se dedica)
 const REQ_MAG={area:82,oratoria:92,escrita:82,analise:82,pratica:36};

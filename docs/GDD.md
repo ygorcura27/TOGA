@@ -262,10 +262,10 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
     - **5★ em Oratória** (92 ou mais);
     - 4★ em Escrita e em Análise;
     - **3 anos de prática jurídica** depois da OAB.
-  - **Curso preparatório para a magistratura:** como estudar sozinho para em 3★, este curso da academia (18 meses, R$ 1.500 por mês) libera a 4ª estrela em todas as áreas de uma vez.
+  - **Curso preparatório para a magistratura:** como estudar sozinho para em 3★, este curso da academia (18 meses, R$ 1.500 por mês) libera a 4ª estrela em todas as áreas de uma vez. Para se inscrever, é preciso ter **3★ em todas as áreas**. O curso não dá estrelas: ele sobe o teto de 81 para 91, e as estrelas continuam vindo dos pontos de skill.
   - **Provas:** mais difíceis que as de promotor e defensor (dificuldade 75, 76 e 80).
   - **Idade:** quem se dedica chega perto dos 28 a 30 anos. Começar direto como juiz na tela inicial põe o personagem com 30 anos.
-- **Custo de vida da magistratura:** R$ 7.000 por mês.
+- **Custo de vida:** R$ 7.000 por mês na magistratura e no Ministério Público, R$ 6.000 na Defensoria.
 - **Carga de trabalho:**
   - **Estudo mínimo:** o processo só vai a sentença quando o estudo acumulado chega ao mínimo da complexidade dele (comum 2, incomum 3, raro 4, épico 6, lendário 9 blocos).
   - **Chance de acerto:** usa a mesma curva de preparação dos casos da advocacia.
@@ -275,10 +275,10 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ### 5.3 Ministério Público
 | Cargo | Gabinete | Salário/sem | Requisitos |
 |---|---|---|---|
-| Promotor Substituto | 2 | R$ 7.300 | concurso |
-| Promotor de Justiça | 4 | R$ 8.300 | prestígio 35, 15 condenações, taxa 55% |
-| Procurador de Justiça | 7 | R$ 9.800 | prestígio 60, 50 condenações, taxa 60% |
-| Procurador-Geral de Justiça | 10 | R$ 11.200 | prestígio 85, 100 condenações, taxa 65% |
+| Promotor Substituto | 2 | R$ 32.000 | concurso |
+| Promotor de Justiça | 4 | R$ 35.000 | prestígio 35, 15 condenações, taxa 55% |
+| Procurador de Justiça | 7 | R$ 41.800 | prestígio 60, 50 condenações, taxa 60% |
+| Procurador-Geral de Justiça | 10 | R$ 44.000 | prestígio 85, 100 condenações, taxa 65% |
 
 - **Carga de trabalho:**
   - **Inquéritos novos por semana:** 2 + porte da comarca + 2 por nível do cargo.
@@ -287,10 +287,10 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ### 5.4 Defensoria Pública
 | Cargo | Gabinete | Salário/sem | Requisitos |
 |---|---|---|---|
-| Defensor Público Substituto | 3 | R$ 7.000 | concurso |
-| Defensor Público | 5 | R$ 8.000 | prestígio 35, 60 atendimentos, taxa 50% |
-| Defensor de Classe Especial | 8 | R$ 9.500 | prestígio 60, 200 atendimentos, taxa 55% |
-| Defensor Público-Geral | 10 | R$ 11.000 | prestígio 85, 400 atendimentos, taxa 60% |
+| Defensor Público Substituto | 3 | R$ 26.000 | concurso |
+| Defensor Público | 5 | R$ 30.000 | prestígio 35, 60 atendimentos, taxa 50% |
+| Defensor de Classe Especial | 8 | R$ 35.000 | prestígio 60, 200 atendimentos, taxa 55% |
+| Defensor Público-Geral | 10 | R$ 39.000 | prestígio 85, 400 atendimentos, taxa 60% |
 
 - **Carga de trabalho:**
   - **Assistidos novos por semana:** 7 + porte da comarca + 3 por nível do cargo.
