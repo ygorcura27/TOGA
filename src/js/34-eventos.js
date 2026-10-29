@@ -84,6 +84,8 @@ app.addEventListener('click',e=>{
   if(a==='antecipar'){ antecipar(id); return; }
   if(a==='tutOk'){ const e=tutEstado(); if(e){ e.t.i++; e.t.ini=S.semana; } salvar(); render(); return; }
   if(a==='tutSair'){ if(S){ S.tut=S.tut||{t:{}}; S.tut.off=true; } salvar(); render(); return; }
+  if(a==='estilo'){ const [c,i]=v.split(':'); comprarEstilo(c,+i); return; }
+  if(a==='toggleSom'){ try{ localStorage.setItem('toga-som',somLigado()?'off':'on'); }catch(e){} render(); return; }
   if(a==='toggleResumo'){ S.semResumo=!S.semResumo; salvar(); render(); return; }
   if(a==='articular'){ articular(); return; }
   if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }

@@ -6,8 +6,28 @@ const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
 // porte do escritório: imóvel e filiais definem até que raridade de caso chega e quanto valem as causas
-const PORTE_ESC=[{nome:'Escritório pequeno',rarMax:2,valor:.6},{nome:'Escritório médio',rarMax:3,valor:.8},{nome:'Escritório grande',rarMax:4,valor:1},{nome:'Escritório nacional',rarMax:4,valor:1.25},{nome:'Banca internacional',rarMax:4,valor:1.6}];
-function porteEscritorio(){ if(!S.u) return 0; let n=S.u.imovel||0; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='nacional')) n++; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='global')) n++; return Math.min(4,n); }
+// nível do escritório: uma escada de anos. Só o High Tier, com carteira grande, filiais em vários estados e full service, rende mais que um juiz.
+const TIERS=[
+  {nome:'Escritório iniciante',rarMax:2,valor:.6,partido:1},
+  {nome:'Escritório local',rarMax:3,valor:.8,partido:1,req:{imovel:1,advs:2}},
+  {nome:'Escritório regional',rarMax:4,valor:1,partido:1.2,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:3}},
+  {nome:'Escritório nacional',rarMax:4,valor:1.35,partido:1.5,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:6}},
+  {nome:'Escritório High Tier',rarMax:4,valor:2.2,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
+];
+const anosEscritorio=()=>S.u?Math.floor((S.semana-(S.u.fundado||S.semanaFormatura||1))/ANO):0;
+function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].nivel==='nacional'||LOC[f].nivel==='global')).length;
+  const it=[];
+  if(r.imovel!=null) it.push({l:`Imóvel: ${IMOVEIS.adv[r.imovel].nome} ou maior`,ok:(U.imovel||0)>=r.imovel,v:IMOVEIS.adv[U.imovel||0].nome});
+  if(r.advs) it.push({l:`${r.advs} advogados na equipe`,ok:advsEquipe()>=r.advs,v:advsEquipe()});
+  if(r.filiais) it.push({l:`${r.filiais} filial em bairro ou cidade`,ok:S.filiais.length>=r.filiais,v:S.filiais.length});
+  if(r.estados) it.push({l:`Filiais em ${r.estados} estado${r.estados>1?'s':''} fora da sede`,ok:est>=r.estados,v:est});
+  if(r.clientes) it.push({l:`${r.clientes} clientes fixos`,ok:(S.clientes||[]).length>=r.clientes,v:(S.clientes||[]).length});
+  if(r.areas) it.push({l:`${r.areas} áreas de atuação`,ok:areasAtivas().length>=r.areas,v:areasAtivas().length});
+  if(r.full) it.push({l:'Full service (todas as áreas)',ok:!!U.full,v:U.full?'sim':'não'});
+  if(r.prest) it.push({l:`Prestígio ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)});
+  if(r.anos) it.push({l:`${r.anos} anos de escritório`,ok:anosEscritorio()>=r.anos,v:anosEscritorio()});
+  return it; }
+function tierEscritorio(){ if(!S.u||S.carreira!=='adv') return 0; let t=0; for(let i=1;i<TIERS.length;i++){ if(checarTier(TIERS[i].req).every(x=>x.ok)) t=i; else break; } return t; }
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
     epico:(p>=35?(p-30)*.4:0)+(p>=25?f:0),lendario:p>=65?(p-60)*.15:0};}
@@ -16,7 +36,7 @@ function sortearRaridade(C,extra={}){const w=pesosRaridade(C); for(const k in ex
 function novoCaso(cid=S.sede,extra={},area=null){
   const C=LOC[cid];
   let rar=sortearRaridade(C,extra);
-  const PE=S.carreira==='adv'?PORTE_ESC[porteEscritorio()]:null; if(PE&&RORD.indexOf(rar)>PE.rarMax) rar=RORD[PE.rarMax];
+  const PE=S.carreira==='adv'?TIERS[tierEscritorio()]:null; if(PE&&RORD.indexOf(rar)>PE.rarMax) rar=RORD[PE.rarMax];
   let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
   if(!pool.length){ pool=TEMPLATES.filter(t=>t.area===area); }
   const t=pickW(pool,x=>(C.areas[x.area]||1)*pesoArea(x.area)*demEpoca(x.area)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];

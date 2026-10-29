@@ -67,7 +67,7 @@ function gerarCandidato(funcao,area){ const F=FX()[funcao], q=Math.min(95,rint(F
   if(!pubCar()&&AE_FAIXA[funcao]){ c.area=area||S.espec; const [a,b]=AE_FAIXA[funcao]; c.ae=rint(a,b); }
   return c; }
 function estruturaInicial(pub){ const im=(pub?IMOVEIS.pub:IMOVEIS.adv)[0], salas=Array(im.cols*im.rows).fill(null); salas[0]='titular'; salas[1]='trabalho';
-  return {imovel:0,salas,equipe:[],gestorId:null,auto:true,retirada:pub?0:1500,honSemana:0,orc:pub?8000:0,efet:60,lastConcl:0,hist:[],sel:null,pedidoSoc:null}; }
+  return {imovel:0,fundado:S?S.semana:1,salas,equipe:[],gestorId:null,auto:true,retirada:pub?0:1500,honSemana:0,orc:pub?8000:0,efet:60,lastConcl:0,hist:[],sel:null,pedidoSoc:null}; }
 function estruturaPub(){ const U=estruturaInicial(true); S.u=U; U.equipe.push(gerarCandidato('servidor'),gerarCandidato('estagiario')); return U; }
 function despesasEscritorio(){ const U=S.u, im=IMOVEIS.adv[U.imovel];
   const sal=U.equipe.reduce((a,f)=>a+f.sal,0), mant=U.salas.reduce((a,k)=>a+(k?COMODOS[k].mant:0),0), fil=S.filiais.reduce((a,f)=>a+aluguel(LOC[f]),0);
@@ -300,6 +300,11 @@ function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gest
       ${f.sal?`<button class="chip" data-act="aumento" data-id="${f.id}">Aumento de 15%</button>`:''}
       ${f.funcao==='socio'?'':`<button class="chip bad" data-act="demitir" data-id="${f.id}">${pub?(f.funcao==='servidor'?'Devolver':'Exonerar'):'Demitir'}</button>`}
     </div></article>`; }
+function painelTier(){ const t=tierEscritorio(), T=TIERS[t], prox=TIERS[t+1];
+  return `<section class="panel"><div class="panel-head"><h2>Nível do escritório</h2><span class="label">${t+1} de ${TIERS.length}</span></div>
+    <dl class="meta"><dt>Nível atual</dt><dd><b>${T.nome}</b></dd><dt>Casos até</dt><dd>${RAR[RORD[T.rarMax]].nome}</dd><dt>Valor das causas</dt><dd class="num">×${T.valor.toLocaleString('pt-BR')}</dd><dt>Partido dos clientes</dt><dd class="num">×${T.partido.toLocaleString('pt-BR')}</dd><dt>Tempo de escritório</dt><dd class="num">${anosEscritorio()} ano${anosEscritorio()===1?'':'s'}</dd></dl>
+    ${prox?`<span class="label">Para virar ${prox.nome}</span><ul class="break">${checarTier(prox.req).map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>`:'<p class="hi" style="margin:0">Topo do mercado: o escritório disputa os maiores casos do país.</p>'}
+    <p style="margin:0;font-size:12px;color:var(--muted)">Só o High Tier rende mais que a magistratura, e chegar lá leva anos: carteira de clientes fixos, filiais pelos bairros e estados, equipe grande e todas as áreas.</p></section>`; }
 function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX()).filter(([k])=>k!=='socio');
   app.innerHTML=`${header()}
   <div class="mapgrid">
@@ -308,7 +313,7 @@ function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX(
       <svg viewBox="0 0 ${P.W} ${P.H}" role="img" aria-label="Planta da estrutura" style="border-radius:4px">${P.s}</svg>
       <div class="legend"><span><i style="background:#8FE3FF"></i>Equipe</span><span><i style="background:#FFC857"></i>Gestor</span><span><i style="background:#F4F8FF;border:1px solid var(--line)"></i>Você</span><span>Clique num espaço para construir ou trocar o cômodo</span></div>
     </section>
-    <div class="col">${painelSala()}${S.carreira==='adv'?painelAreas():''}${painelFinancas()}${painelOrganizacao()}</div>
+    <div class="col">${painelSala()}${S.carreira==='adv'?painelTier()+painelAreas():''}${painelFinancas()}${painelOrganizacao()}</div>
   </div>
   <section class="panel" style="margin-top:20px;background:transparent;border:0;padding:0">
     <div class="panel-head"><h2>Equipe</h2><span class="num">${U.equipe.length} pessoa${U.equipe.length===1?'':'s'}</span></div>

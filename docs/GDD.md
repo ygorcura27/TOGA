@@ -114,12 +114,16 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 
 ### 3.3 Fluxo do caso
 1. **Oferta:** 3 casos novos por semana, +1 por filial, +1 com recepção, +1 a cada 2 advogados da equipe, além de indicações de amigos.
-   - **Porte do escritório:** limita a raridade e o valor das causas, para evitar enriquecer rápido demais.
-     - pequeno (sala comercial): até raro, causas ×0,6;
-     - médio (conjunto): até épico, ×0,8;
-     - grande (andar corporativo): tudo, ×1;
-     - com filial nacional: ×1,25;
-     - com filial internacional: ×1,6.
+   - **Nível do escritório:** uma escada de anos que limita a raridade dos casos, o valor das causas e o partido dos clientes. Só o High Tier rende mais que a magistratura.
+
+| Nível | Requisitos (acumulados) | Casos até | Causas | Partido |
+|---|---|---|---|---|
+| Iniciante | — | raro | ×0,6 | ×1 |
+| Local | conjunto comercial, 2 advogados | épico | ×0,8 | ×1 |
+| Regional | 4 advogados, 1 filial, 2 clientes fixos, prestígio 45, 3 anos | lendário | ×1 | ×1,2 |
+| Nacional | andar corporativo, 8 advogados, filial em outro estado, 4 clientes, 3 áreas, prestígio 65, 6 anos | lendário | ×1,35 | ×1,5 |
+| High Tier | 15 advogados, filiais em 3 estados, 6 clientes, full service, prestígio 80, 10 anos | lendário | ×2,2 | ×2,5 |
+
    - **Limite de casos ativos:** 3 sozinho, +1 por advogado (júnior, pleno, sênior ou sócio), +1 a cada 2 estagiários e +1 por filial.
    - **Manutenção semanal de cada caso** (prazos, petições, cliente): comum e incomum 1 bloco, raro 2, épico 3, lendário 4, recurso 1. A manutenção é paga primeiro; os blocos seguintes quitam o atraso e só o resto vira preparação.
 2. **Preparação** ao longo das semanas, com os blocos da agenda e da equipe.
@@ -444,6 +448,18 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 - **Aprovação:** o banco aprova parcelas até **35% da renda**.
 - **Troca:** o bem atual entra no negócio por 80% do valor (imóvel) ou 70% (carro), descontada a dívida.
 - **Inadimplência:** com 3 semanas seguidas de dinheiro pessoal negativo, o banco **retoma o bem**.
+
+### 8.4A Estilo, mais bens e eventos
+- **Mais bens:** 8 moradias, do apartamento alugado à mansão de R$ 8 milhões, e 10 carros, do hatch usado ao superesportivo de R$ 3,5 milhões.
+- **Estilo:** ternos, guarda-roupa e relógio somam até 7 pontos de **imagem pessoal**.
+  - Cada ponto dá +0,5 de chance em casos contra empresas e com júri, e um pouco de felicidade por mês.
+  - Itens melhores dão prestígio na compra.
+- **Eventos novos:**
+  - **casal:** jantar surpresa, fim de semana romântico, adoção de cachorro (com custo mensal), ciúme, pós do parceiro, reforma da casa;
+  - **filhos, por idade:** febre do bebê, boletim, final do campeonato, adolescência, intercâmbio, formatura;
+  - **amigos:** casamento com convite para padrinho, futebol, empréstimo (que pode não ser devolvido), aniversário.
+- **Som e animação:** som sintetizado no veredito e nas conquistas, que pode ser desligado no Diário, e animação de carimbo no veredito.
+- **Casos:** 74 tipos (27 novos), em todas as áreas.
 
 ### 8.5 Investimentos e imóveis para alugar
 - **Renda fixa:** 10% ao ano, sem oscilação.

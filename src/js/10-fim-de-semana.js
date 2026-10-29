@@ -59,6 +59,7 @@ function painelSkills(){ return `<section class="panel">
 function painelDiario(){ return `<section class="panel">
         <div class="panel-head"><h2>Diário</h2><span class="label">${S.carreira==='juiz'?S.j.sentencas+' sentenças':S.carreira==='promotor'?S.p.condenacoes+' condenações':S.carreira==='defensor'?S.d.atendimentos+' atendimentos':S.carreira==='academico'||S.carreira==='estudante'?S.ac.pubs.length+' publicações':S.vitorias+'V · '+S.derrotas+'D'}</span></div>
         <ul class="log">${S.log.map(l=>`<li><span class="w">M${l.w}</span><span class="${l.k}">${l.t}</span></li>`).join('')}</ul>
+        <button class="btn ghost" data-act="toggleSom">${somLigado()?'Desligar o som':'Ligar o som'}</button>
         <button class="btn ghost" data-act="toggleResumo">${S.semResumo?'Religar o resumo do mês':'Desligar o resumo do mês'}</button>
         <button class="btn ghost" data-act="reiniciar">Recomeçar carreira</button>
       </section>`; }

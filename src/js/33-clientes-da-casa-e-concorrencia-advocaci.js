@@ -13,7 +13,7 @@ function clienteDerrota(c){ if(S.carreira!=='adv'||!c.clienteFixo) return; const
 function ofertasClientes(){ if(S.carreira!=='adv') return; for(const f of S.clientes||[]) if(Math.random()<.3){
   const a=areasAtivas().includes(f.area)?f.area:areaOferta(S.sede), c=novoCaso(S.sede,{},a); c.cliente=f.nome; c.clienteFixo=f.id; S.ofertas.push(c); } }
 async function semanaClientes(){ if(S.carreira!=='adv') return; const U=S.u, L=S.clientes||[], R=rivais();
-  let tot=0; for(const f of L){ S.caixa+=f.partido; U.honSemana+=f.partido; tot+=f.partido; }
+  let tot=0; const mt=TIERS[tierEscritorio()].partido; for(const f of L){ const v=Math.round(f.partido*mt/100)*100; S.caixa+=v; U.honSemana+=v; tot+=v; }
   if(tot) addLog(`Partido mensal de ${L.length} cliente${L.length>1?'s':''} fixo${L.length>1?'s':''}: ${brl(tot)}.`);
   for(const f of [...L]){ const rv=pick(R);
     if(f.satisf<=20){ S.clientes=S.clientes.filter(x=>x!==f); addLog(`${f.nome} se cansou dos resultados e deixou o escritório.`,'r'); }

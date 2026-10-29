@@ -139,6 +139,8 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .scale-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
 .verdict{font-family:var(--f-display);font-size:30px;text-align:center;letter-spacing:.06em;transform:rotate(-2deg);border:3px solid currentColor;border-radius:6px;padding:4px 10px;align-self:center}
 .verdict[hidden]{display:none!important}
+.verdict:not([hidden]){animation:carimbo .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes carimbo{0%{transform:rotate(-12deg) scale(2.2);opacity:0}60%{opacity:1}100%{transform:rotate(-2deg) scale(1)}}
 .res{display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .start-traits{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .start-traits .chip{border-radius:5px;padding:7px 9px;text-align:left;font-size:12.5px;border-color:var(--line)}
@@ -308,6 +310,34 @@ const TEMPLATES = [
   T('tributario','Execução fiscal milionária','estado',['raro','epico']),
   T('tributario','Imposto sobre herança bilionária','estado',['epico']),
   T('tributario','Tese do século: ICMS na base do PIS/Cofins','estado',['lendario']),
+  // casos extras para variar as ofertas
+  T('penal','Estelionato em aplicativo de namoro','estado',['comum','incomum']),
+  T('penal','Direção sob efeito de álcool','estado',['comum']),
+  T('penal','Receptação de carga roubada','estado',['incomum','raro']),
+  T('penal','Crime cibernético contra banco','estado',['raro','epico']),
+  T('penal','Homicídio com grande repercussão','estado',['epico','lendario'],true),
+  T('civel','Vizinho barulhento e perturbação do sossego','pf',['comum']),
+  T('civel','Plano de saúde negou cirurgia','empresa',['comum','incomum']),
+  T('civel','Vício oculto em carro usado','pf',['comum','incomum']),
+  T('civel','Erro médico em hospital particular','empresa',['raro','epico']),
+  T('civel','Vazamento de dados de clientes','empresa',['raro','epico']),
+  T('trabalho','Horas extras de bancária','empresa',['comum','incomum']),
+  T('trabalho','Acidente de trabalho em obra','empresa',['incomum','raro']),
+  T('trabalho','Demissão durante a gravidez','empresa',['incomum','raro']),
+  T('trabalho','Trabalho análogo à escravidão em fazenda','empresa',['epico','lendario']),
+  T('familia','Pensão alimentícia atrasada','pf',['comum']),
+  T('familia','Inventário com herdeiros brigados','pf',['incomum','raro']),
+  T('familia','União estável não reconhecida','pf',['incomum']),
+  T('familia','Disputa por herança de empresário','pf',['raro','epico']),
+  T('familia','Guarda internacional de criança','pf',['epico']),
+  T('empresarial','Briga entre sócios de restaurante','pf',['comum','incomum']),
+  T('empresarial','Quebra de contrato de franquia','empresa',['incomum','raro']),
+  T('empresarial','Recuperação judicial de varejista','empresa',['raro','epico']),
+  T('empresarial','Patente farmacêutica em disputa','empresa',['epico','lendario']),
+  T('tributario','Multa da Receita sobre MEI','estado',['comum']),
+  T('tributario','ICMS na conta de luz','estado',['incomum','raro']),
+  T('tributario','Planejamento tributário de holding familiar','estado',['raro','epico']),
+  T('tributario','Guerra fiscal entre estados','estado',['epico','lendario']),
 ];
 const NOMES = ['Marcos Duarte','Luíza Fontes','Rafael Brandão','Helena Cardoso','Tiago Moreira','Camila Rezende','Jorge Paiva','Beatriz Lacerda','André Sampaio','Patrícia Viana','Otávio Nunes','Renata Coelho','Sérgio Bastos','Aline Prado','Fábio Teixeira','Marta Albuquerque'];
 const EMPRESAS = ['Construtora Atlas','Grupo Meridiano','Varejo Bom Preço','Logística Rota Sul','Tecnologia Alvorada','Indústrias Cobalto','Farmácia Vitalis','Agro Horizonte'];
@@ -449,8 +479,28 @@ const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
 // porte do escritório: imóvel e filiais definem até que raridade de caso chega e quanto valem as causas
-const PORTE_ESC=[{nome:'Escritório pequeno',rarMax:2,valor:.6},{nome:'Escritório médio',rarMax:3,valor:.8},{nome:'Escritório grande',rarMax:4,valor:1},{nome:'Escritório nacional',rarMax:4,valor:1.25},{nome:'Banca internacional',rarMax:4,valor:1.6}];
-function porteEscritorio(){ if(!S.u) return 0; let n=S.u.imovel||0; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='nacional')) n++; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='global')) n++; return Math.min(4,n); }
+// nível do escritório: uma escada de anos. Só o High Tier, com carteira grande, filiais em vários estados e full service, rende mais que um juiz.
+const TIERS=[
+  {nome:'Escritório iniciante',rarMax:2,valor:.6,partido:1},
+  {nome:'Escritório local',rarMax:3,valor:.8,partido:1,req:{imovel:1,advs:2}},
+  {nome:'Escritório regional',rarMax:4,valor:1,partido:1.2,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:3}},
+  {nome:'Escritório nacional',rarMax:4,valor:1.35,partido:1.5,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:6}},
+  {nome:'Escritório High Tier',rarMax:4,valor:2.2,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
+];
+const anosEscritorio=()=>S.u?Math.floor((S.semana-(S.u.fundado||S.semanaFormatura||1))/ANO):0;
+function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].nivel==='nacional'||LOC[f].nivel==='global')).length;
+  const it=[];
+  if(r.imovel!=null) it.push({l:`Imóvel: ${IMOVEIS.adv[r.imovel].nome} ou maior`,ok:(U.imovel||0)>=r.imovel,v:IMOVEIS.adv[U.imovel||0].nome});
+  if(r.advs) it.push({l:`${r.advs} advogados na equipe`,ok:advsEquipe()>=r.advs,v:advsEquipe()});
+  if(r.filiais) it.push({l:`${r.filiais} filial em bairro ou cidade`,ok:S.filiais.length>=r.filiais,v:S.filiais.length});
+  if(r.estados) it.push({l:`Filiais em ${r.estados} estado${r.estados>1?'s':''} fora da sede`,ok:est>=r.estados,v:est});
+  if(r.clientes) it.push({l:`${r.clientes} clientes fixos`,ok:(S.clientes||[]).length>=r.clientes,v:(S.clientes||[]).length});
+  if(r.areas) it.push({l:`${r.areas} áreas de atuação`,ok:areasAtivas().length>=r.areas,v:areasAtivas().length});
+  if(r.full) it.push({l:'Full service (todas as áreas)',ok:!!U.full,v:U.full?'sim':'não'});
+  if(r.prest) it.push({l:`Prestígio ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)});
+  if(r.anos) it.push({l:`${r.anos} anos de escritório`,ok:anosEscritorio()>=r.anos,v:anosEscritorio()});
+  return it; }
+function tierEscritorio(){ if(!S.u||S.carreira!=='adv') return 0; let t=0; for(let i=1;i<TIERS.length;i++){ if(checarTier(TIERS[i].req).every(x=>x.ok)) t=i; else break; } return t; }
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
     epico:(p>=35?(p-30)*.4:0)+(p>=25?f:0),lendario:p>=65?(p-60)*.15:0};}
@@ -459,7 +509,7 @@ function sortearRaridade(C,extra={}){const w=pesosRaridade(C); for(const k in ex
 function novoCaso(cid=S.sede,extra={},area=null){
   const C=LOC[cid];
   let rar=sortearRaridade(C,extra);
-  const PE=S.carreira==='adv'?PORTE_ESC[porteEscritorio()]:null; if(PE&&RORD.indexOf(rar)>PE.rarMax) rar=RORD[PE.rarMax];
+  const PE=S.carreira==='adv'?TIERS[tierEscritorio()]:null; if(PE&&RORD.indexOf(rar)>PE.rarMax) rar=RORD[PE.rarMax];
   let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
   if(!pool.length){ pool=TEMPLATES.filter(t=>t.area===area); }
   const t=pickW(pool,x=>(C.areas[x.area]||1)*pesoArea(x.area)*demEpoca(x.area)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];
@@ -1174,6 +1224,7 @@ function painelSkills(){ return `<section class="panel">
 function painelDiario(){ return `<section class="panel">
         <div class="panel-head"><h2>Diário</h2><span class="label">${S.carreira==='juiz'?S.j.sentencas+' sentenças':S.carreira==='promotor'?S.p.condenacoes+' condenações':S.carreira==='defensor'?S.d.atendimentos+' atendimentos':S.carreira==='academico'||S.carreira==='estudante'?S.ac.pubs.length+' publicações':S.vitorias+'V · '+S.derrotas+'D'}</span></div>
         <ul class="log">${S.log.map(l=>`<li><span class="w">M${l.w}</span><span class="${l.k}">${l.t}</span></li>`).join('')}</ul>
+        <button class="btn ghost" data-act="toggleSom">${somLigado()?'Desligar o som':'Ligar o som'}</button>
         <button class="btn ghost" data-act="toggleResumo">${S.semResumo?'Religar o resumo do mês':'Desligar o resumo do mês'}</button>
         <button class="btn ghost" data-act="reiniciar">Recomeçar carreira</button>
       </section>`; }
@@ -2268,7 +2319,7 @@ function gerarCandidato(funcao,area){ const F=FX()[funcao], q=Math.min(95,rint(F
   if(!pubCar()&&AE_FAIXA[funcao]){ c.area=area||S.espec; const [a,b]=AE_FAIXA[funcao]; c.ae=rint(a,b); }
   return c; }
 function estruturaInicial(pub){ const im=(pub?IMOVEIS.pub:IMOVEIS.adv)[0], salas=Array(im.cols*im.rows).fill(null); salas[0]='titular'; salas[1]='trabalho';
-  return {imovel:0,salas,equipe:[],gestorId:null,auto:true,retirada:pub?0:1500,honSemana:0,orc:pub?8000:0,efet:60,lastConcl:0,hist:[],sel:null,pedidoSoc:null}; }
+  return {imovel:0,fundado:S?S.semana:1,salas,equipe:[],gestorId:null,auto:true,retirada:pub?0:1500,honSemana:0,orc:pub?8000:0,efet:60,lastConcl:0,hist:[],sel:null,pedidoSoc:null}; }
 function estruturaPub(){ const U=estruturaInicial(true); S.u=U; U.equipe.push(gerarCandidato('servidor'),gerarCandidato('estagiario')); return U; }
 function despesasEscritorio(){ const U=S.u, im=IMOVEIS.adv[U.imovel];
   const sal=U.equipe.reduce((a,f)=>a+f.sal,0), mant=U.salas.reduce((a,k)=>a+(k?COMODOS[k].mant:0),0), fil=S.filiais.reduce((a,f)=>a+aluguel(LOC[f]),0);
@@ -2501,6 +2552,11 @@ function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gest
       ${f.sal?`<button class="chip" data-act="aumento" data-id="${f.id}">Aumento de 15%</button>`:''}
       ${f.funcao==='socio'?'':`<button class="chip bad" data-act="demitir" data-id="${f.id}">${pub?(f.funcao==='servidor'?'Devolver':'Exonerar'):'Demitir'}</button>`}
     </div></article>`; }
+function painelTier(){ const t=tierEscritorio(), T=TIERS[t], prox=TIERS[t+1];
+  return `<section class="panel"><div class="panel-head"><h2>Nível do escritório</h2><span class="label">${t+1} de ${TIERS.length}</span></div>
+    <dl class="meta"><dt>Nível atual</dt><dd><b>${T.nome}</b></dd><dt>Casos até</dt><dd>${RAR[RORD[T.rarMax]].nome}</dd><dt>Valor das causas</dt><dd class="num">×${T.valor.toLocaleString('pt-BR')}</dd><dt>Partido dos clientes</dt><dd class="num">×${T.partido.toLocaleString('pt-BR')}</dd><dt>Tempo de escritório</dt><dd class="num">${anosEscritorio()} ano${anosEscritorio()===1?'':'s'}</dd></dl>
+    ${prox?`<span class="label">Para virar ${prox.nome}</span><ul class="break">${checarTier(prox.req).map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>`:'<p class="hi" style="margin:0">Topo do mercado: o escritório disputa os maiores casos do país.</p>'}
+    <p style="margin:0;font-size:12px;color:var(--muted)">Só o High Tier rende mais que a magistratura, e chegar lá leva anos: carteira de clientes fixos, filiais pelos bairros e estados, equipe grande e todas as áreas.</p></section>`; }
 function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX()).filter(([k])=>k!=='socio');
   app.innerHTML=`${header()}
   <div class="mapgrid">
@@ -2509,7 +2565,7 @@ function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX(
       <svg viewBox="0 0 ${P.W} ${P.H}" role="img" aria-label="Planta da estrutura" style="border-radius:4px">${P.s}</svg>
       <div class="legend"><span><i style="background:#8FE3FF"></i>Equipe</span><span><i style="background:#FFC857"></i>Gestor</span><span><i style="background:#F4F8FF;border:1px solid var(--line)"></i>Você</span><span>Clique num espaço para construir ou trocar o cômodo</span></div>
     </section>
-    <div class="col">${painelSala()}${S.carreira==='adv'?painelAreas():''}${painelFinancas()}${painelOrganizacao()}</div>
+    <div class="col">${painelSala()}${S.carreira==='adv'?painelTier()+painelAreas():''}${painelFinancas()}${painelOrganizacao()}</div>
   </div>
   <section class="panel" style="margin-top:20px;background:transparent;border:0;padding:0">
     <div class="panel-head"><h2>Equipe</h2><span class="num">${U.equipe.length} pessoa${U.equipe.length===1?'':'s'}</span></div>
@@ -2713,9 +2769,9 @@ function painelBens(){ const V=S.vida;
     return `<button class="opt" data-act="${tipo}" data-v="${i}" ${meu?'disabled':''}><span>${it.nome}${meu?' · atual':''}</span><b class="num">${meu?'—':c>=0?brl(c):'+'+brl(-c)}</b><small>${extra}</small></button>`; };
   return `<section class="panel"><div class="panel-head"><h2>Casa e carro</h2><span class="label">à vista ou financiado</span></div>
     <span class="label">Moradia · o imóvel atual entra por 80% do valor, menos o que ainda deve</span>
-    <div class="opts">${MORADIAS.map((_,i)=>item('moradia',i)).join('')}</div>
+    <div class="opts">${MORADIAS.map((x,i)=>[x.preco,i]).sort((a,b)=>a[0]-b[0]).map(([,i])=>item('moradia',i)).join('')}</div>
     <span class="label">Carro · o atual entra por 70% do valor, menos o que ainda deve</span>
-    <div class="opts">${CARROS.map((_,i)=>item('carro',i)).join('')}</div>
+    <div class="opts">${CARROS.map((x,i)=>[x.preco,i]).sort((a,b)=>a[0]-b[0]).map(([,i])=>item('carro',i)).join('')}</div>
   </section>`; }
 
 async function aposentar(){ if(idade()<60||ocupado) return;
@@ -2735,7 +2791,7 @@ function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro;
         <button class="btn ghost" data-act="aposentar" ${id<60?'disabled':''}>${id<60?`Aposentadoria a partir dos 60 (faltam ${60-id} anos)`:'Aposentar-se'}</button>
         <p style="margin:0;font-size:12px;color:var(--muted)">A vida corre mais rápido que a agenda: cada ${ANO} meses jogados são 1 ano de idade. Saúde cai com a idade e o estresse; academia recupera. Felicidade acima de 80 dá +3 nos casos; saúde abaixo de 40 tira 4.</p>
       </section>
-      ${painelBens()}${painelDividas()}
+      ${painelBens()}${painelEstilo()}${painelDividas()}
       <section class="panel"><div class="panel-head"><h2>Rotina</h2></div>
         <ul class="break">
           <li><span>${temFamilia()?'Família':'Vida social'}</span><span class="num">${S.agenda.familia||0} bloco(s)/mês</span></li>
@@ -3316,8 +3372,8 @@ const CONQUISTAS=[
   {id:'filho',cat:'vida',tier:'comum',nome:'Família',desc:'Tenha o primeiro filho.',ok:()=>S.vida.filhos.length>=1},
   {id:'filhos3',cat:'vida',tier:'raro',nome:'Casa cheia',desc:'Tenha 3 filhos.',ok:()=>S.vida.filhos.length>=3,prog:()=>[S.vida.filhos.length,3]},
   {id:'casa',cat:'vida',tier:'comum',nome:'Casa própria',desc:'Saia do aluguel.',ok:()=>S.vida.moradia>0},
-  {id:'cobertura',cat:'vida',tier:'epico',nome:'Vista do alto',desc:'More numa cobertura.',ok:()=>S.vida.moradia===MORADIAS.length-1},
-  {id:'esportivo',cat:'vida',tier:'raro',nome:'Esportivo na garagem',desc:'Compre o esportivo importado.',ok:()=>(S.vida.carro||0)===CARROS.length-1},
+  {id:'cobertura',cat:'vida',tier:'epico',nome:'Vista do alto',desc:'More numa cobertura ou numa mansão.',ok:()=>MORADIAS[S.vida.moradia].preco>=3000000},
+  {id:'esportivo',cat:'vida',tier:'raro',nome:'Esportivo na garagem',desc:'Tenha na garagem um carro de R$ 1,2 milhão ou mais.',ok:()=>CARROS[S.vida.carro||0].preco>=1200000},
   {id:'quitado',cat:'vida',tier:'raro',nome:'Nada a dever',desc:'Quite todos os financiamentos.',ok:()=>S.cq.cont.divida>0&&!(S.vida.dividas||[]).length},
   {id:'senhorio',cat:'vida',tier:'raro',nome:'Senhorio',desc:'Tenha 3 imóveis alugados.',ok:()=>(S.vida.alugueis||[]).length>=3,prog:()=>[(S.vida.alugueis||[]).length,3]},
   {id:'investidor',cat:'vida',tier:'raro',nome:'Investidor',desc:'Tenha R$ 500 mil aplicados.',ok:()=>invTotal()>=5e5},
@@ -3495,7 +3551,7 @@ function painelCasosAtivos(){
   const grupos={}; for(const c of rec.sort((a,b)=>a.inst-b.inst)) (grupos[nomeTribunal(c)]=grupos[nomeTribunal(c)]||[]).push(c);
   return `<section class="panel" style="background:transparent;border:0;padding:0">
       <div class="panel-head"><h2>Casos ativos</h2><span class="num">${S.casos.length}/${maxCasos()}</span></div>
-      <p class="label" style="margin:0">${PORTE_ESC[porteEscritorio()].nome}: casos até ${RAR[RORD[PORTE_ESC[porteEscritorio()].rarMax]].nome.toLowerCase()}, causas ×${PORTE_ESC[porteEscritorio()].valor.toLocaleString('pt-BR')}${porteEscritorio()<2?' (um imóvel maior abre casos maiores)':''} · Limite: 3 sozinho + 1 por advogado (${advsEquipe()}) + 1 a cada 2 estagiários (${estagEquipe()})${S.filiais.length?` + ${S.filiais.length} pelas filiais`:''} · manutenção deste mês: ${S.casos.reduce((a,c)=>a+manut(c),0)} blocos</p>
+      <p class="label" style="margin:0">${TIERS[tierEscritorio()].nome}: casos até ${RAR[RORD[TIERS[tierEscritorio()].rarMax]].nome.toLowerCase()}, causas ×${TIERS[tierEscritorio()].valor.toLocaleString('pt-BR')} (o nível sobe em Estrutura e equipe) · Limite: 3 sozinho + 1 por advogado (${advsEquipe()}) + 1 a cada 2 estagiários (${estagEquipe()})${S.filiais.length?` + ${S.filiais.length} pelas filiais`:''} · manutenção deste mês: ${S.casos.reduce((a,c)=>a+manut(c),0)} blocos</p>
       ${rec.length?`<span class="label">1ª instância · ${prim.length}</span>`:''}
       <div class="cases">${prim.length?prim.map(c=>pasta(c,true)).join(''):`<p class="empty">${rec.length?'Nenhum caso em 1ª instância.':'Nenhum caso ativo. Aceite uma das ofertas abaixo.'}</p>`}</div>
     </section>
@@ -3685,7 +3741,7 @@ function clienteDerrota(c){ if(S.carreira!=='adv'||!c.clienteFixo) return; const
 function ofertasClientes(){ if(S.carreira!=='adv') return; for(const f of S.clientes||[]) if(Math.random()<.3){
   const a=areasAtivas().includes(f.area)?f.area:areaOferta(S.sede), c=novoCaso(S.sede,{},a); c.cliente=f.nome; c.clienteFixo=f.id; S.ofertas.push(c); } }
 async function semanaClientes(){ if(S.carreira!=='adv') return; const U=S.u, L=S.clientes||[], R=rivais();
-  let tot=0; for(const f of L){ S.caixa+=f.partido; U.honSemana+=f.partido; tot+=f.partido; }
+  let tot=0; const mt=TIERS[tierEscritorio()].partido; for(const f of L){ const v=Math.round(f.partido*mt/100)*100; S.caixa+=v; U.honSemana+=v; tot+=v; }
   if(tot) addLog(`Partido mensal de ${L.length} cliente${L.length>1?'s':''} fixo${L.length>1?'s':''}: ${brl(tot)}.`);
   for(const f of [...L]){ const rv=pick(R);
     if(f.satisf<=20){ S.clientes=S.clientes.filter(x=>x!==f); addLog(`${f.nome} se cansou dos resultados e deixou o escritório.`,'r'); }
@@ -3793,6 +3849,8 @@ app.addEventListener('click',e=>{
   if(a==='antecipar'){ antecipar(id); return; }
   if(a==='tutOk'){ const e=tutEstado(); if(e){ e.t.i++; e.t.ini=S.semana; } salvar(); render(); return; }
   if(a==='tutSair'){ if(S){ S.tut=S.tut||{t:{}}; S.tut.off=true; } salvar(); render(); return; }
+  if(a==='estilo'){ const [c,i]=v.split(':'); comprarEstilo(c,+i); return; }
+  if(a==='toggleSom'){ try{ localStorage.setItem('toga-som',somLigado()?'off':'on'); }catch(e){} render(); return; }
   if(a==='toggleResumo'){ S.semResumo=!S.semResumo; salvar(); render(); return; }
   if(a==='articular'){ articular(); return; }
   if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }
@@ -3852,11 +3910,107 @@ window.TOGA_JOGO={
       <button class="opt" data-mv="local"><span>Save deste navegador</span><small>${q(l)}</small></button></div>`,[])||'local'; },
 };
 
+// ===================== MAIS VIDA: EVENTOS, BENS, ESTILO E SOM =====================
+// mais imóveis e carros (acrescentados ao fim das listas para não mexer nos saves; a tela mostra em ordem de preço)
+MORADIAS.push({nome:'Studio no centro',preco:180000,fel:.5},{nome:'Apartamento de 3 quartos',preco:550000,fel:1.5},{nome:'Casa em condomínio fechado',preco:1600000,fel:2.5},{nome:'Mansão',preco:8000000,fel:4});
+CARROS.push({nome:'Hatch usado',preco:35000,fel:.3,prest:0},{nome:'Picape cabine dupla',preco:280000,fel:1.2,prest:1},{nome:'Elétrico premium',preco:650000,fel:2,prest:3},{nome:'Sedã blindado com motorista',preco:900000,fel:2,prest:3},{nome:'Superesportivo',preco:3500000,fel:3.5,prest:6});
+
+// estilo: ternos, roupas e relógios dão imagem pessoal (chance nos casos com empresas e júris, felicidade e prestígio na compra)
+const ESTILO={
+  terno:{nome:'Ternos',itens:[{n:'Ternos de loja',p:0,img:0},{n:'Ternos sob medida',p:8000,img:1},{n:'Alfaiataria italiana',p:30000,img:2}]},
+  roupa:{nome:'Guarda-roupa',itens:[{n:'Básico',p:0,img:0},{n:'Executivo',p:15000,img:1},{n:'Grifes',p:60000,img:2}]},
+  relogio:{nome:'Relógio',itens:[{n:'Relógio comum',p:0,img:0},{n:'Suíço de entrada',p:25000,img:1},{n:'Relógio de luxo',p:120000,img:2},{n:'Peça de colecionador',p:600000,img:3}]},
+};
+const estiloAtual=()=>S.vida.estilo||(S.vida.estilo={terno:0,roupa:0,relogio:0});
+const imagem=()=>{ const E=estiloAtual(); return Object.keys(ESTILO).reduce((a,k)=>a+ESTILO[k].itens[E[k]||0].img,0); };
+function comprarEstilo(cat,i){ const E=estiloAtual(), it=ESTILO[cat].itens[i], at=ESTILO[cat].itens[E[cat]||0]; if(!it||i===(E[cat]||0)||ocupado) return;
+  if(dinheiroPessoal()<it.p) return; pagarPessoal(it.p); E[cat]=i; if(it.img>at.img) S.prest=clamp(S.prest+(it.img-at.img),0,100);
+  S.vida.felicidade=clamp(S.vida.felicidade+3,0,100); addLog(`Compra: ${it.n} (${ESTILO[cat].nome.toLowerCase()}) por ${brl(it.p)}.`,'g'); salvar(); render(); }
+function painelEstilo(){ const E=estiloAtual();
+  return `<section class="panel"><div class="panel-head"><h2>Estilo</h2><span class="label">imagem pessoal ${imagem()} de 7</span></div>
+    ${Object.entries(ESTILO).map(([k,C])=>`<span class="label">${C.nome}</span><div class="chips">${C.itens.map((it,i)=>`<button class="chip ${i===(E[k]||0)?'on':''}" data-act="estilo" data-v="${k}:${i}" ${i===(E[k]||0)||dinheiroPessoal()<it.p?'disabled':''}>${it.n}${it.p?' · '+brl(it.p):''}</button>`).join('')}</div>`).join('')}
+    <p style="margin:0;font-size:12px;color:var(--muted)">Cada ponto de imagem dá +0,5 de chance em casos contra empresas e com júri, e um pouco de felicidade por mês. Itens melhores dão prestígio na compra.</p></section>`; }
+
+// eventos novos: namoro e casamento, filhos por idade e amigos
+async function eventoParceiroExtra(P){ const V=S.vida, pn=esc(P.nome.split(' ')[0]), evs=['jantar','fds','pet'];
+  if(P.pers==='ciume') evs.push('ciume'); if(P.pers==='ambicao'||P.pers==='independencia') evs.push('curso'); if(V.moradia>0) evs.push('reforma');
+  const e=pick(evs);
+  if(e==='jantar'){ const v=await modal(`<h2>Jantar surpresa</h2><p>${pn} preparou um jantar surpresa num dia de muito trabalho.</p>`,[{t:'Ficar no escritório',v:0,cls:'ghost'},{t:'Ir para casa (−1 bloco)',v:1,cls:'brass'}]);
+    if(v){ P.rel=clamp(P.rel+8,0,100); V.falta=(V.falta||0)+1; V.felicidade=clamp(V.felicidade+4,0,100); addLog(`Jantar surpresa com ${P.nome}.`,'g'); } else P.rel=clamp(P.rel-8,0,100); }
+  if(e==='fds'){ const v=await modal(`<h2>Fim de semana romântico</h2><p>${pn} achou uma pousada na serra com preço bom.</p>`,[{t:'Não dá agora',v:0,cls:'ghost'},{t:`Ir · ${brl(2500)} e −2 blocos`,v:1,cls:'brass',dis:dinheiroPessoal()<2500}]);
+    if(v){ pagarPessoal(2500); V.falta=(V.falta||0)+2; P.rel=clamp(P.rel+12,0,100); S.estresse=clamp(S.estresse-12,0,100); addLog(`Fim de semana na serra com ${P.nome}.`,'g'); } else P.rel=clamp(P.rel-3,0,100); }
+  if(e==='pet'&&!V.pet){ const v=await modal(`<h2>Adotar um cachorro?</h2><p>${pn} se apaixonou por um cachorro numa feira de adoção.</p>`,[{t:'Melhor não',v:0,cls:'ghost'},{t:`Adotar · ${brl(1500)} e ${brl(300)}/mês`,v:1,cls:'brass'}]);
+    if(v){ pagarPessoal(1500); V.pet={nome:pick(['Thor','Mel','Bob','Luna','Pipoca','Fred','Nina']),desde:S.semana}; P.rel=clamp(P.rel+10,0,100); V.felicidade=clamp(V.felicidade+8,0,100); addLog(`Vocês adotaram o ${V.pet.nome}.`,'g'); } else P.rel=clamp(P.rel-4,0,100); }
+  if(e==='ciume'){ const ch=chanceConversa(); const v=await modal(`<h2>Crise de ciúme</h2><p>${pn} viu mensagens de trabalho tarde da noite e desconfiou.</p><div class="opts">
+      <button class="opt" data-mv="mostrar"><span>Mostrar as mensagens e conversar</span><b class="num">${pct(ch)}</b><small>Se der certo, relação +5; se não, −8.</small></button>
+      <button class="opt" data-mv="ignorar"><span>Dizer que é paranoia</span><b class="num">−12</b><small>Relação −12.</small></button></div>`,[]);
+    if(v==='mostrar'){ if(Math.random()<ch){ P.rel=clamp(P.rel+5,0,100); addLog(`A conversa com ${P.nome} resolveu a crise de ciúme.`,'g'); } else P.rel=clamp(P.rel-8,0,100); } else P.rel=clamp(P.rel-12,0,100); }
+  if(e==='curso'){ const v=await modal(`<h2>${pn} quer voltar a estudar</h2><p>Uma pós na área de ${esc(P.prof)}. ${pn} pede ajuda para pagar.</p>`,[{t:'Não dá agora',v:0,cls:'ghost'},{t:`Pagar · ${brl(12000)}`,v:1,cls:'brass',dis:dinheiroPessoal()<12000}]);
+    if(v){ pagarPessoal(12000); P.rel=clamp(P.rel+12,0,100); addLog(`Você pagou a pós de ${P.nome}.`,'g'); } else P.rel=clamp(P.rel-5,0,100); }
+  if(e==='reforma'){ const v=await modal(`<h2>Reformar a casa?</h2><p>${pn} quer reformar a cozinha e a sala.</p>`,[{t:'Deixar como está',v:0,cls:'ghost'},{t:`Reformar · ${brl(25000)}`,v:1,cls:'brass',dis:dinheiroPessoal()<25000}]);
+    if(v){ pagarPessoal(25000); P.rel=clamp(P.rel+6,0,100); V.felicidade=clamp(V.felicidade+8,0,100); addLog('A casa foi reformada.','g'); } else P.rel=clamp(P.rel-3,0,100); }
+}
+async function eventoFilhoExtra(){ const V=S.vida; if(!V.filhos.length) return; const f=pick(V.filhos), a=idadeFilho(f), pn=esc(f.nome.split(' ')[0]);
+  if(a<5){ const v=await modal(`<h2>${pn} está com febre</h2><p>${pn}, ${a} ano${a===1?'':'s'}, passou a noite com febre e precisa ir ao pediatra.</p>`,[{t:'Pedir para outra pessoa levar',v:0,cls:'ghost'},{t:`Levar · ${brl(800)} e −1 bloco`,v:1,cls:'brass'}]);
+    if(v){ pagarPessoal(800); V.falta=(V.falta||0)+1; f.rel=clamp(f.rel+8,0,100); } else f.rel=clamp(f.rel-6,0,100); return; }
+  if(a<13){ const e=pick(['boletim','esporte']);
+    if(e==='boletim'){ const v=await modal(`<h2>Boletim de ${pn}</h2><p>As notas de ${pn} caíram neste bimestre.</p>`,[{t:'Pagar aulas de reforço · '+brl(1200),v:'pagar',cls:'ghost'},{t:'Ajudar nas tarefas (−2 blocos)',v:'ajudar',cls:'brass'}]);
+      if(v==='ajudar'){ V.falta=(V.falta||0)+2; f.rel=clamp(f.rel+12,0,100); addLog(`Você ajudou ${pn} nas tarefas da escola.`,'g'); } else { pagarPessoal(1200); f.rel=clamp(f.rel+2,0,100); } }
+    else { const v=await modal(`<h2>Final do campeonato</h2><p>O time de ${pn} chegou à final do campeonato da escola.</p>`,[{t:'Não posso ir',v:0,cls:'ghost'},{t:'Ir torcer (−1 bloco)',v:1,cls:'brass'}]);
+      if(v){ V.falta=(V.falta||0)+1; f.rel=clamp(f.rel+10,0,100); V.felicidade=clamp(V.felicidade+4,0,100); addLog(`Você foi à final do campeonato de ${pn}.`,'g'); } else f.rel=clamp(f.rel-8,0,100); }
+    return; }
+  if(a<18){ const e=pick(['briga','intercambio']);
+    if(e==='briga'){ const ch=clamp(f.rel/100+S.skills.negociacao/300,.05,.95); const v=await modal(`<h2>Adolescência</h2><p>${pn} chegou tarde em casa e não quer conversa.</p><div class="opts">
+        <button class="opt" data-mv="conversa"><span>Conversar com calma</span><b class="num">${pct(ch)}</b><small>Se der certo, relação +8; se não, −6.</small></button>
+        <button class="opt" data-mv="castigo"><span>Deixar de castigo</span><b class="num">−4</b><small>Relação −4.</small></button></div>`,[]);
+      if(v==='conversa'){ f.rel=clamp(f.rel+(Math.random()<ch?8:-6),0,100); } else f.rel=clamp(f.rel-4,0,100); }
+    else { const v=await modal(`<h2>Intercâmbio</h2><p>${pn} quer fazer um semestre de intercâmbio no exterior.</p>`,[{t:'Não dá',v:0,cls:'ghost'},{t:`Pagar · ${brl(40000)}`,v:1,cls:'brass',dis:dinheiroPessoal()<40000}]);
+      if(v){ pagarPessoal(40000); f.rel=clamp(f.rel+15,0,100); f.intercambio=true; addLog(`${pn} foi fazer intercâmbio.`,'g'); } else f.rel=clamp(f.rel-6,0,100); }
+    return; }
+  if(a<=24&&!f.formou&&a>=22){ f.formou=true; const v=await modal(`<h2>Formatura de ${pn}</h2><p>${pn} se forma${f.direito?' em Direito':''} neste mês.</p>`,[{t:'Só ir à cerimônia',v:0,cls:'ghost'},{t:`Dar a festa · ${brl(10000)}`,v:1,cls:'brass',dis:dinheiroPessoal()<10000}]);
+    if(v){ pagarPessoal(10000); f.rel=clamp(f.rel+12,0,100); } else f.rel=clamp(f.rel+4,0,100); V.felicidade=clamp(V.felicidade+8,0,100); addLog(`Formatura de ${pn}.`,'g'); }
+}
+async function eventoAmigoExtra(){ const N=(S.npcs||[]).filter(n=>n.rel>=20); if(!N.length) return; const n=pick(N), pn=esc(n.nome.split(' ')[0]), V=S.vida;
+  const e=pick(['casamento','futebol','emprestimo','aniversario']);
+  if(e==='casamento'&&!n.casou){ n.casou=true; const v=await modal(`<h2>Casamento de ${pn}</h2><p>${esc(n.nome)} vai se casar e convidou você para padrinho.</p>`,[{t:'Recusar',v:0,cls:'ghost'},{t:`Ser padrinho · ${brl(2500)} e −1 bloco`,v:1,cls:'brass'}]);
+    if(v){ pagarPessoal(2500); V.falta=(V.falta||0)+1; n.rel+=15; V.felicidade=clamp(V.felicidade+5,0,100); addLog(`Você foi padrinho no casamento de ${n.nome}.`,'g'); } else n.rel-=10; }
+  else if(e==='futebol'){ const v=await modal(`<h2>Futebol com a turma</h2><p>${pn} chamou a turma da faculdade para uma partida no sábado.</p>`,[{t:'Não vou',v:0,cls:'ghost'},{t:'Jogar (−1 bloco)',v:1,cls:'brass'}]);
+    if(v){ V.falta=(V.falta||0)+1; n.rel+=6; S.estresse=clamp(S.estresse-10,0,100); V.felicidade=clamp(V.felicidade+4,0,100); V.saude=clamp(V.saude+2,0,100); } }
+  else if(e==='emprestimo'){ const val=10000; const v=await modal(`<h2>${pn} pediu dinheiro emprestado</h2><p>${esc(n.nome)} está apertado e pede ${brl(val)} emprestados, prometendo devolver.</p>`,[{t:'Negar',v:0,cls:'ghost'},{t:`Emprestar ${brl(val)}`,v:1,cls:'brass',dis:dinheiroPessoal()<val}]);
+    if(v){ pagarPessoal(val); n.rel+=15; n.divida={val,ate:S.semana+rint(4,10),paga:Math.random()<.65}; addLog(`Você emprestou ${brl(val)} para ${n.nome}.`); } else n.rel-=10; }
+  else { const v=await modal(`<h2>Aniversário de ${pn}</h2><p>${esc(n.nome)} faz festa no fim de semana.</p>`,[{t:'Mandar uma mensagem',v:0,cls:'ghost'},{t:`Ir com presente · ${brl(400)}`,v:1,cls:'brass'}]);
+    if(v){ pagarPessoal(400); n.rel+=8; V.felicidade=clamp(V.felicidade+3,0,100); } else n.rel+=1; }
+  n.rel=clamp(n.rel,-100,100); }
+async function eventosExtras(){ const V=S.vida; if(!V) return;
+  if(V.pet){ pagarPessoal(300); V.felicidade=clamp(V.felicidade+.8,0,100); }
+  V.felicidade=clamp(V.felicidade+imagem()*.1,0,100);
+  for(const n of S.npcs||[]) if(n.divida&&S.semana>=n.divida.ate){ const d=n.divida; n.divida=null;
+    if(d.paga){ pagarPessoal(-d.val); addLog(`${n.nome} devolveu os ${brl(d.val)} emprestados.`,'g'); } else { n.rel=clamp(n.rel-20,-100,100); addLog(`${n.nome} não devolveu os ${brl(d.val)} emprestados.`,'r'); } }
+  if(V.parceiro&&Math.random()<.08) await eventoParceiroExtra(V.parceiro);
+  if(V.filhos.length&&Math.random()<.08) await eventoFilhoExtra();
+  if(Math.random()<.06) await eventoAmigoExtra(); }
+{ const sv0=semanaVida; semanaVida=async function(){ const r=await sv0(); if(r||!S) return r; await eventosExtras(); return false; }; }
+let casoImg=false; // o caso em cálculo é contra empresa ou com júri
+{ const bv0=bonusVida; bonusVida=function(add){ bv0(add); const im=imagem(); if(im&&casoImg) add(`Imagem pessoal (${im})`,im*.5); }; }
+{ const cc0=calcChance; calcChance=function(c,extra){ casoImg=!!c&&(c.adv==='empresa'||!!c.juri); try{ return cc0(c,extra); } finally{ casoImg=false; } }; }
+
+// som: veredito e conquistas, sintetizado no navegador (sem arquivos); pode ser desligado no Diário
+const somLigado=()=>{ try{ return localStorage.getItem('toga-som')!=='off'; }catch(e){ return true; } };
+let audioCtx=null;
+function tocar(tipo){ if(!somLigado()) return; try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  const notas={ganhou:[523,659,784],perdeu:[392,330,262],conquista:[659,784,988,1319]}[tipo]||[440];
+  notas.forEach((f,i)=>{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(), t=audioCtx.currentTime+i*.11;
+    o.type=tipo==='perdeu'?'triangle':'sine'; o.frequency.value=f; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.12,t+.02); g.gain.exponentialRampToValueAtTime(.0001,t+.28);
+    o.connect(g).connect(audioCtx.destination); o.start(t); o.stop(t+.3); }); }catch(e){} }
+new MutationObserver(ms=>{ for(const m of ms){ const el=m.target; if(el.classList&&el.classList.contains('verdict')&&!el.hidden) tocar(el.classList.contains('hi')?'ganhou':'perdeu'); } })
+  .observe(document.getElementById('modal-root'),{subtree:true,attributes:true,attributeFilter:['hidden']});
+{ const t0=toastCq; toastCq=function(c){ t0(c); tocar('conquista'); }; }
+
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
     if(!S.mesV&&S.vida){ const f=12/10, ajusta=x=>Math.round(S.semana-(S.semana-x)*f); S.vida.semana0=ajusta(S.vida.semana0); for(const fi of S.vida.filhos||[]) fi.nasc=ajusta(fi.nasc); if(S.vida.parceiro) S.vida.parceiro.desde=ajusta(S.vida.parceiro.desde); } S.mesV=1;
-    if(!S.tut) S.tut={off:S.semana>3,t:{}}; migrarEquipeAdv(); if(!S.cq) S.cq=cqInicial(); if(S.ac&&!S.ac.titulos.areas){ const T=S.ac.titulos; T.areas={}; if(T.esp) T.areas[S.espec]=1; if(T.mestrado||T.doutorado) T.areas[S.espec]=2; } if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20; if(!S.npcs) criarColegas(); if(S.vida&&!S.vida.inv){ S.vida.inv=invInicial(); S.vida.alugueis=[]; }
+    if(!S.tut) S.tut={off:S.semana>3,t:{}}; migrarEquipeAdv(); if(S.u&&S.carreira==='adv'&&!S.u.fundado) S.u.fundado=S.semanaFormatura||1; if(!S.cq) S.cq=cqInicial(); if(S.ac&&!S.ac.titulos.areas){ const T=S.ac.titulos; T.areas={}; if(T.esp) T.areas[S.espec]=1; if(T.mestrado||T.doutorado) T.areas[S.espec]=2; } if(!S.ac) S.ac=acadInicial(); if(S.skills.didatica===undefined) S.skills.didatica=20; if(!S.npcs) criarColegas(); if(S.vida&&!S.vida.inv){ S.vida.inv=invInicial(); S.vida.alugueis=[]; }
     if(!S.vida){ S.vida=vidaInicial(25+Math.floor((S.semana-1)/ANO)); S.vida.semana0=S.semana; } if(S.agenda.familia===undefined){ S.agenda.familia=0; S.agenda.saude=0; }
     if(!S.u){ if(S.carreira==='adv') S.u=estruturaInicial(false); else estruturaPub(); } if(S.bolso===undefined) S.bolso=3000; if(S.skills.tributario===undefined) S.skills.tributario=20; if(S.j&&!S.j.vara) S.j.vara=S.espec; S.sede=S.sede||'sp'; S.filiais=S.filiais||[]; for(const c of [...S.casos,...S.ofertas]) c.cidade=c.cidade||S.sede; }
   render(); }

@@ -193,9 +193,9 @@ function painelBens(){ const V=S.vida;
     return `<button class="opt" data-act="${tipo}" data-v="${i}" ${meu?'disabled':''}><span>${it.nome}${meu?' · atual':''}</span><b class="num">${meu?'—':c>=0?brl(c):'+'+brl(-c)}</b><small>${extra}</small></button>`; };
   return `<section class="panel"><div class="panel-head"><h2>Casa e carro</h2><span class="label">à vista ou financiado</span></div>
     <span class="label">Moradia · o imóvel atual entra por 80% do valor, menos o que ainda deve</span>
-    <div class="opts">${MORADIAS.map((_,i)=>item('moradia',i)).join('')}</div>
+    <div class="opts">${MORADIAS.map((x,i)=>[x.preco,i]).sort((a,b)=>a[0]-b[0]).map(([,i])=>item('moradia',i)).join('')}</div>
     <span class="label">Carro · o atual entra por 70% do valor, menos o que ainda deve</span>
-    <div class="opts">${CARROS.map((_,i)=>item('carro',i)).join('')}</div>
+    <div class="opts">${CARROS.map((x,i)=>[x.preco,i]).sort((a,b)=>a[0]-b[0]).map(([,i])=>item('carro',i)).join('')}</div>
   </section>`; }
 
 async function aposentar(){ if(idade()<60||ocupado) return;
@@ -215,7 +215,7 @@ function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro;
         <button class="btn ghost" data-act="aposentar" ${id<60?'disabled':''}>${id<60?`Aposentadoria a partir dos 60 (faltam ${60-id} anos)`:'Aposentar-se'}</button>
         <p style="margin:0;font-size:12px;color:var(--muted)">A vida corre mais rápido que a agenda: cada ${ANO} meses jogados são 1 ano de idade. Saúde cai com a idade e o estresse; academia recupera. Felicidade acima de 80 dá +3 nos casos; saúde abaixo de 40 tira 4.</p>
       </section>
-      ${painelBens()}${painelDividas()}
+      ${painelBens()}${painelEstilo()}${painelDividas()}
       <section class="panel"><div class="panel-head"><h2>Rotina</h2></div>
         <ul class="break">
           <li><span>${temFamilia()?'Família':'Vida social'}</span><span class="num">${S.agenda.familia||0} bloco(s)/mês</span></li>
