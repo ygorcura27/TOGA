@@ -21,4 +21,4 @@ Protótipo jogável de simulação de carreira jurídica. Tudo roda num único a
 ## Como jogar
 - Versão publicada: https://claude.ai/artifact/5mYeCmyvi3t7fpJi4qQm1R (privada; compartilhe pelo menu Share).
 - Ou baixe o `index.html` e abra no navegador. O progresso fica salvo no próprio navegador.
-- **Jogar online: https://toga-jogo.netlify.app** · save na nuvem por código (botão "Salvar na nuvem") e Hall da Fama global, pelas funções do Netlify em `netlify/functions/`. O Firebase continua como opção: veja [`docs/DEPLOY.md`](docs/DEPLOY.md).
+- **Jogar online: https://toga-jogo.netlify.app** · conta com usuário e senha para salvar na nuvem (botão "Entrar ou criar conta"; o código de save também funciona) e Hall da Fama global, pelas funções do Netlify em `netlify/functions/`. O Firebase continua como opção: veja [`docs/DEPLOY.md`](docs/DEPLOY.md).

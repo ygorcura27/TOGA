@@ -1,7 +1,8 @@
 # Publicar o TOGA online
 
 **No ar em https://toga-jogo.netlify.app.** O save na nuvem e o Hall da Fama global funcionam só com o Netlify:
-- `netlify/functions/save.mts` (`/api/save`): GET, PUT ou DELETE do jogo salvo, identificado por um código de 16 caracteres aleatórios. O código é a chave do jogador.
+- `netlify/functions/conta.mts` (`/api/conta`): cria conta e faz login com usuário e senha. A senha é guardada como hash scrypt com sal, e o login devolve um token de sessão. Limite de 10 tentativas por minuto.
+- `netlify/functions/save.mts` (`/api/save`): GET, PUT ou DELETE do jogo salvo. O dono é identificado pelo token da conta (cabeçalho `Authorization: Bearer`) ou por um código de save de 16 caracteres.
 - `netlify/functions/hall.mts` (`/api/hall`): POST de uma vida encerrada e GET do top 20.
 - Os dados ficam em Netlify Blobs, nos stores `saves` e `hall`. As duas funções têm limite de requisições por IP.
 - No navegador, `web/online-netlify.js` cria ou usa o código, grava sozinho e pergunta qual save usar quando a nuvem e o navegador divergem.
