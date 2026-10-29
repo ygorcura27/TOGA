@@ -1,12 +1,19 @@
 // ===================== MAGISTRATURA =====================
 const CARGOS=[
-  {nome:'Juiz Substituto',gab:3,salario:7500},
-  {nome:'Juiz Titular',gab:6,salario:8500,req:{prest:35,sent:40,reforma:.35}},
-  {nome:'Desembargador',gab:10,salario:10000,req:{prest:60,sent:120,reforma:.25}},
-  {nome:'Ministro do STJ',gab:14,salario:11500,req:{prest:85,sent:250,reforma:.20}},
-  {nome:'Ministro do STF',gab:18,salario:13000,req:{prest:95,sent:400,reforma:.15}},
+  {nome:'Juiz Substituto',gab:3,salario:32000},
+  {nome:'Juiz Titular',gab:6,salario:35000,req:{prest:35,sent:40,reforma:.35}},
+  {nome:'Desembargador',gab:10,salario:41800,req:{prest:60,sent:120,reforma:.25}},
+  {nome:'Ministro do STJ',gab:14,salario:44000,req:{prest:85,sent:250,reforma:.20}},
+  {nome:'Ministro do STF',gab:18,salario:46400,req:{prest:95,sent:400,reforma:.15}},
 ];
-const CUSTO_VIDA_JUIZ=2500;
+const CUSTO_VIDA_JUIZ=2500; // promotor e defensor
+const CUSTO_VIDA_MAG=7000; // magistratura: padrão de vida mais alto
+// requisitos para prestar o concurso da magistratura (muito difícil: perto dos 28 a 30 anos para quem se dedica)
+const REQ_MAG={area:82,oratoria:92,escrita:82,analise:82,pratica:36};
+function reqMagistratura(){ const L=Object.keys(AREAS).map(k=>({l:`${AREAS[k].nome} 4★`,ok:S.skills[k]>=REQ_MAG.area,v:Math.floor(S.skills[k])}));
+  L.push({l:'Oratória 5★',ok:S.skills.oratoria>=REQ_MAG.oratoria,v:Math.floor(S.skills.oratoria)},{l:'Escrita 4★',ok:S.skills.escrita>=REQ_MAG.escrita,v:Math.floor(S.skills.escrita)},{l:'Análise 4★',ok:S.skills.analise>=REQ_MAG.analise,v:Math.floor(S.skills.analise)});
+  const m=S.semana-(S.semanaFormatura||0); L.push({l:'3 anos de prática jurídica após a OAB',ok:m>=REQ_MAG.pratica,v:tempoTxt(Math.max(0,m))}); return L; }
+const aptoMag=()=>reqMagistratura().every(x=>x.ok);
 const VARAS={penal:'Vara Criminal',civel:'Vara Cível',familia:'Vara de Família',empresarial:'Vara Empresarial',trabalho:'Vara do Trabalho',tributario:'Vara Federal Tributária'};
 const NOMES_CARGO={
   trabalho:['Juiz do Trabalho Substituto','Juiz Titular de Vara do Trabalho','Desembargador do TRT','Ministro do TST','Ministro do STF'],
@@ -77,11 +84,13 @@ const promoOk=()=>{const r=promoReq(); return !!r&&r.every(x=>x.ok)&&!((S.j.stfE
 function xpJuiz(p,mult){ for(const [k,w] of [[p.area,.5],['escrita',.3],['analise',.2]]) S.skills[k]=clamp(S.skills[k]+w*3*RAR[p.rar].xp*mult*(1-S.skills[k]/110),0,100); }
 
 function painelCarreiraAdv(){
-  const cedo=S.semana-(S.semanaFormatura||0)<24, espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000, dis=cedo||espera||semDin;
+  const cedo=S.semana-(S.semanaFormatura||0)<24, espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000, dis=cedo||espera||semDin, rm=reqMagistratura(), faltam=rm.filter(x=>!x.ok).length;
   const txt=t=>cedo?`${t} · disponível no mês ${(S.semanaFormatura||0)+24}`:espera?`${t} · nova tentativa no mês ${S.concursoEm}`:semDin?`${t} · inscrição de ${brl(3000)}: falta dinheiro pessoal (faça uma retirada)`:t;
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">Advocacia</span></div>
     <p style="margin:0;font-size:12.5px">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria têm três fases eliminatórias: objetiva, discursiva e oral. Exigem prática jurídica (no protótipo, 20 meses) e inscrição de ${brl(3000)}. Blocos de estudo acumulados dão bônus nas provas.</p>
-    <button class="btn ghost" data-act="concurso" data-v="juiz" ${dis?'disabled':''}>${txt('Concurso para juiz')}</button>
+    <button class="btn ghost" data-act="concurso" data-v="juiz" ${dis||faltam?'disabled':''}>${faltam?`Concurso para juiz · faltam ${faltam} requisito${faltam>1?'s':''}`:txt('Concurso para juiz')}</button>
+    <details><summary class="label">Requisitos da magistratura</summary><ul class="break">${rm.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
+      <p style="margin:0;font-size:12px;color:var(--muted)">Estudando sozinho, cada área para em 3★: o <b>curso preparatório para a magistratura</b> (na academia) libera a 4ª estrela em todas as áreas de uma vez.</p></details>
     <button class="btn ghost" data-act="concurso" data-v="promotor" ${dis?'disabled':''}>${txt('Concurso para promotor')}</button>
     <button class="btn ghost" data-act="concurso" data-v="defensor" ${dis?'disabled':''}>${txt('Concurso para defensor')}</button>
     <button class="btn ghost" data-act="virarAcademico">Largar a advocacia pela carreira acadêmica</button>
@@ -218,7 +227,7 @@ async function fimSemanaJuiz(){
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
     S.energia=clamp(S.energia-3.2*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*S.agenda.lazer,0,100);
     S.estresse=clamp(S.estresse+2.2*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*S.agenda.lazer,0,100);
-    S.caixa+=C.salario-CUSTO_VIDA_JUIZ;
+    S.caixa+=C.salario-CUSTO_VIDA_MAG;
     // sentenças
     const sent=[], dec=[];
     // processo só vai a sentença quando o estudo acumulado chega ao mínimo da complexidade dele
@@ -255,7 +264,7 @@ async function fimSemanaJuiz(){
       ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
       <dl class="meta"><dt>Processos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
-        <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_JUIZ)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
+        <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_MAG)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
     // corregedoria
     if(J.propina && Math.random()<.2*J.propina){ S.fim='cassado'; }
     await semanaAcademia(); if(await semanaVida()) return;
@@ -303,9 +312,10 @@ async function promocao(){
 function fasesConcurso(tipo){ const b=Math.min(15,(S.estudoTotal||0)*.5)+bonusTitulos()+Math.min(5,((S.formacao&&S.formacao.contatos[tipo])||0)/10);
   const areas=Object.keys(AREAS).reduce((a,k)=>a+S.skills[k],0)/Object.keys(AREAS).length;
   const f=(n,sk,d)=>({n,sk:Math.round(sk),d,ch:clamp(sig((sk+b-d)/8),.05,.95)});
-  return {b,fs:[f('Prova objetiva',areas,32),f('Prova discursiva',S.skills.escrita,38),f('Prova oral',(S.skills.oratoria+S.skills.analise)/2,38)]}; }
+  const D=tipo==='juiz'?[75,76,80]:[32,38,38];
+  return {b,fs:[f('Prova objetiva',areas,D[0]),f('Prova discursiva',S.skills.escrita,D[1]),f('Prova oral',(S.skills.oratoria+S.skills.analise)/2,D[2])]}; }
 async function concurso(tipo='juiz'){
-  if(ocupado) return; const MP=tipo==='promotor', {b,fs}=fasesConcurso(tipo);
+  if(ocupado||(tipo==='juiz'&&!aptoMag())) return; const MP=tipo==='promotor', {b,fs}=fasesConcurso(tipo);
   const NOME_CONC={juiz:'Concurso da magistratura',promotor:'Concurso do Ministério Público',defensor:'Concurso da Defensoria Pública'}, POSSE={juiz:'Juiz Substituto',promotor:'Promotor Substituto',defensor:'Defensor Público Substituto'};
   const v=await modal(`<h2>${NOME_CONC[tipo]}</h2><p>Três fases eliminatórias. Cada bloco de estudo acumulado vale +0,5 nas provas (máximo +15). Seu bônus atual: <b class="num">+${b.toLocaleString('pt-BR')}</b>.</p>
     <dl class="meta">${fs.map(x=>`<dt>${x.n} · skill ${x.sk} vs ${x.d}</dt><dd class="num ${cls(x.ch)}">${pct(x.ch)}</dd>`).join('')}

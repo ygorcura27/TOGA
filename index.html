@@ -448,6 +448,9 @@ const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length;
 const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
+// porte do escritório: imóvel e filiais definem até que raridade de caso chega e quanto valem as causas
+const PORTE_ESC=[{nome:'Escritório pequeno',rarMax:2,valor:.6},{nome:'Escritório médio',rarMax:3,valor:.8},{nome:'Escritório grande',rarMax:4,valor:1},{nome:'Escritório nacional',rarMax:4,valor:1.25},{nome:'Banca internacional',rarMax:4,valor:1.6}];
+function porteEscritorio(){ if(!S.u) return 0; let n=S.u.imovel||0; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='nacional')) n++; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='global')) n++; return Math.min(4,n); }
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
     epico:(p>=35?(p-30)*.4:0)+(p>=25?f:0),lendario:p>=65?(p-60)*.15:0};}
@@ -455,11 +458,13 @@ function sortearRaridade(C,extra={}){const w=pesosRaridade(C); for(const k in ex
   let r=Math.random()*tot; for(const k of RORD){ r-=w[k]; if(r<=0) return k;} return 'comum';}
 function novoCaso(cid=S.sede,extra={},area=null){
   const C=LOC[cid];
-  let rar=sortearRaridade(C,extra); let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
+  let rar=sortearRaridade(C,extra);
+  const PE=S.carreira==='adv'?PORTE_ESC[porteEscritorio()]:null; if(PE&&RORD.indexOf(rar)>PE.rarMax) rar=RORD[PE.rarMax];
+  let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
   if(!pool.length){ pool=TEMPLATES.filter(t=>t.area===area); }
   const t=pickW(pool,x=>(C.areas[x.area]||1)*pesoArea(x.area)*demEpoca(x.area)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];
   const d=rint(R.d[0],R.d[1]);
-  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator*valorEpoca()/100)*100;
+  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator*valorEpoca()*(PE?PE.valor:1)/100)*100;
   const cliente = t.area==='empresarial' ? pick(EMPRESAS) : pick(NOMES);
   return {id:++uid,...t,rar,d,valor,hon:Math.round(valor*.2),cliente,cidade:cid,
     prazo:rint(R.prazo[0],R.prazo[1]),juiz:pick(Object.keys(JUIZES)),juizNome:pick(JNOMES),
@@ -915,7 +920,7 @@ function renderInicio(){
     <div class="field"><label class="label" for="nome">Nome</label><input id="nome" value="${esc(escolha.nome)}" maxlength="30"></div>
     <div class="field"><label class="label" for="inicio">Ponto de partida</label><select id="inicio"><option value="faculdade">Faculdade de Direito, aos 18 anos (recomendado)</option><option value="formado" ${escolha.inicio==='formado'?'selected':''}>Já formado e aprovado, aos 25 anos</option></select></div>
     <div class="field"><label class="label" for="facul">Faculdade (se começar na faculdade)</label><select id="facul">${Object.entries(FACS).map(([k,f])=>`<option value="${k}" ${escolha.facul===k?'selected':''}>${f.nome} · ${f.mensal?brl(f.mensal)+'/mês':'gratuita, exige vestibular'}</option>`).join('')}</select></div>
-    <div class="field"><label class="label" for="carreira">Carreira <span id="car-nota" style="text-transform:none;letter-spacing:0;font-weight:400">${escolha.inicio==='formado'?'':'· na faculdade, você escolhe na formatura; mude para "Já formado" para começar direto na carreira'}</span></label><select id="carreira"><option value="adv">Advocacia · abrir o próprio escritório</option><option value="juiz" ${escolha.carreira==='juiz'?'selected':''}>Magistratura · já aprovado no concurso, começa como juiz substituto</option><option value="promotor" ${escolha.carreira==='promotor'?'selected':''}>Ministério Público · já aprovado no concurso, começa como promotor substituto</option><option value="defensor" ${escolha.carreira==='defensor'?'selected':''}>Defensoria Pública · já aprovado no concurso, começa como defensor substituto</option></select></div>
+    <div class="field"><label class="label" for="carreira">Carreira <span id="car-nota" style="text-transform:none;letter-spacing:0;font-weight:400">${escolha.inicio==='formado'?'':'· na faculdade, você escolhe na formatura; mude para "Já formado" para começar direto na carreira'}</span></label><select id="carreira"><option value="adv">Advocacia · abrir o próprio escritório</option><option value="juiz" ${escolha.carreira==='juiz'?'selected':''}>Magistratura · já aprovado no concurso, começa como juiz substituto aos 30 anos</option><option value="promotor" ${escolha.carreira==='promotor'?'selected':''}>Ministério Público · já aprovado no concurso, começa como promotor substituto</option><option value="defensor" ${escolha.carreira==='defensor'?'selected':''}>Defensoria Pública · já aprovado no concurso, começa como defensor substituto</option></select></div>
     <div class="field"><label class="label" for="espec">Área de especialização (+15) · no escritório, é a área de atuação inicial; para juízes, é a vara</label>
       <select id="espec">${Object.entries(AREAS).map(([k,a])=>`<option value="${k}" ${escolha.espec===k?'selected':''}>${a.nome}</option>`).join('')}</select></div>
     <div class="field"><label class="label" for="sede">Cidade da sede ou comarca</label>
@@ -1174,13 +1179,20 @@ function painelDiario(){ return `<section class="panel">
       </section>`; }
 // ===================== MAGISTRATURA =====================
 const CARGOS=[
-  {nome:'Juiz Substituto',gab:3,salario:7500},
-  {nome:'Juiz Titular',gab:6,salario:8500,req:{prest:35,sent:40,reforma:.35}},
-  {nome:'Desembargador',gab:10,salario:10000,req:{prest:60,sent:120,reforma:.25}},
-  {nome:'Ministro do STJ',gab:14,salario:11500,req:{prest:85,sent:250,reforma:.20}},
-  {nome:'Ministro do STF',gab:18,salario:13000,req:{prest:95,sent:400,reforma:.15}},
+  {nome:'Juiz Substituto',gab:3,salario:32000},
+  {nome:'Juiz Titular',gab:6,salario:35000,req:{prest:35,sent:40,reforma:.35}},
+  {nome:'Desembargador',gab:10,salario:41800,req:{prest:60,sent:120,reforma:.25}},
+  {nome:'Ministro do STJ',gab:14,salario:44000,req:{prest:85,sent:250,reforma:.20}},
+  {nome:'Ministro do STF',gab:18,salario:46400,req:{prest:95,sent:400,reforma:.15}},
 ];
-const CUSTO_VIDA_JUIZ=2500;
+const CUSTO_VIDA_JUIZ=2500; // promotor e defensor
+const CUSTO_VIDA_MAG=7000; // magistratura: padrão de vida mais alto
+// requisitos para prestar o concurso da magistratura (muito difícil: perto dos 28 a 30 anos para quem se dedica)
+const REQ_MAG={area:82,oratoria:92,escrita:82,analise:82,pratica:36};
+function reqMagistratura(){ const L=Object.keys(AREAS).map(k=>({l:`${AREAS[k].nome} 4★`,ok:S.skills[k]>=REQ_MAG.area,v:Math.floor(S.skills[k])}));
+  L.push({l:'Oratória 5★',ok:S.skills.oratoria>=REQ_MAG.oratoria,v:Math.floor(S.skills.oratoria)},{l:'Escrita 4★',ok:S.skills.escrita>=REQ_MAG.escrita,v:Math.floor(S.skills.escrita)},{l:'Análise 4★',ok:S.skills.analise>=REQ_MAG.analise,v:Math.floor(S.skills.analise)});
+  const m=S.semana-(S.semanaFormatura||0); L.push({l:'3 anos de prática jurídica após a OAB',ok:m>=REQ_MAG.pratica,v:tempoTxt(Math.max(0,m))}); return L; }
+const aptoMag=()=>reqMagistratura().every(x=>x.ok);
 const VARAS={penal:'Vara Criminal',civel:'Vara Cível',familia:'Vara de Família',empresarial:'Vara Empresarial',trabalho:'Vara do Trabalho',tributario:'Vara Federal Tributária'};
 const NOMES_CARGO={
   trabalho:['Juiz do Trabalho Substituto','Juiz Titular de Vara do Trabalho','Desembargador do TRT','Ministro do TST','Ministro do STF'],
@@ -1251,11 +1263,13 @@ const promoOk=()=>{const r=promoReq(); return !!r&&r.every(x=>x.ok)&&!((S.j.stfE
 function xpJuiz(p,mult){ for(const [k,w] of [[p.area,.5],['escrita',.3],['analise',.2]]) S.skills[k]=clamp(S.skills[k]+w*3*RAR[p.rar].xp*mult*(1-S.skills[k]/110),0,100); }
 
 function painelCarreiraAdv(){
-  const cedo=S.semana-(S.semanaFormatura||0)<24, espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000, dis=cedo||espera||semDin;
+  const cedo=S.semana-(S.semanaFormatura||0)<24, espera=(S.concursoEm||0)>S.semana, semDin=dinheiroPessoal()<3000, dis=cedo||espera||semDin, rm=reqMagistratura(), faltam=rm.filter(x=>!x.ok).length;
   const txt=t=>cedo?`${t} · disponível no mês ${(S.semanaFormatura||0)+24}`:espera?`${t} · nova tentativa no mês ${S.concursoEm}`:semDin?`${t} · inscrição de ${brl(3000)}: falta dinheiro pessoal (faça uma retirada)`:t;
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">Advocacia</span></div>
     <p style="margin:0;font-size:12.5px">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria têm três fases eliminatórias: objetiva, discursiva e oral. Exigem prática jurídica (no protótipo, 20 meses) e inscrição de ${brl(3000)}. Blocos de estudo acumulados dão bônus nas provas.</p>
-    <button class="btn ghost" data-act="concurso" data-v="juiz" ${dis?'disabled':''}>${txt('Concurso para juiz')}</button>
+    <button class="btn ghost" data-act="concurso" data-v="juiz" ${dis||faltam?'disabled':''}>${faltam?`Concurso para juiz · faltam ${faltam} requisito${faltam>1?'s':''}`:txt('Concurso para juiz')}</button>
+    <details><summary class="label">Requisitos da magistratura</summary><ul class="break">${rm.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
+      <p style="margin:0;font-size:12px;color:var(--muted)">Estudando sozinho, cada área para em 3★: o <b>curso preparatório para a magistratura</b> (na academia) libera a 4ª estrela em todas as áreas de uma vez.</p></details>
     <button class="btn ghost" data-act="concurso" data-v="promotor" ${dis?'disabled':''}>${txt('Concurso para promotor')}</button>
     <button class="btn ghost" data-act="concurso" data-v="defensor" ${dis?'disabled':''}>${txt('Concurso para defensor')}</button>
     <button class="btn ghost" data-act="virarAcademico">Largar a advocacia pela carreira acadêmica</button>
@@ -1392,7 +1406,7 @@ async function fimSemanaJuiz(){
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
     S.energia=clamp(S.energia-3.2*pessoal*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*S.agenda.lazer,0,100);
     S.estresse=clamp(S.estresse+2.2*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*S.agenda.lazer,0,100);
-    S.caixa+=C.salario-CUSTO_VIDA_JUIZ;
+    S.caixa+=C.salario-CUSTO_VIDA_MAG;
     // sentenças
     const sent=[], dec=[];
     // processo só vai a sentença quando o estudo acumulado chega ao mínimo da complexidade dele
@@ -1429,7 +1443,7 @@ async function fimSemanaJuiz(){
       ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
       <dl class="meta"><dt>Processos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
-        <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_JUIZ)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
+        <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_MAG)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
     // corregedoria
     if(J.propina && Math.random()<.2*J.propina){ S.fim='cassado'; }
     await semanaAcademia(); if(await semanaVida()) return;
@@ -1477,9 +1491,10 @@ async function promocao(){
 function fasesConcurso(tipo){ const b=Math.min(15,(S.estudoTotal||0)*.5)+bonusTitulos()+Math.min(5,((S.formacao&&S.formacao.contatos[tipo])||0)/10);
   const areas=Object.keys(AREAS).reduce((a,k)=>a+S.skills[k],0)/Object.keys(AREAS).length;
   const f=(n,sk,d)=>({n,sk:Math.round(sk),d,ch:clamp(sig((sk+b-d)/8),.05,.95)});
-  return {b,fs:[f('Prova objetiva',areas,32),f('Prova discursiva',S.skills.escrita,38),f('Prova oral',(S.skills.oratoria+S.skills.analise)/2,38)]}; }
+  const D=tipo==='juiz'?[75,76,80]:[32,38,38];
+  return {b,fs:[f('Prova objetiva',areas,D[0]),f('Prova discursiva',S.skills.escrita,D[1]),f('Prova oral',(S.skills.oratoria+S.skills.analise)/2,D[2])]}; }
 async function concurso(tipo='juiz'){
-  if(ocupado) return; const MP=tipo==='promotor', {b,fs}=fasesConcurso(tipo);
+  if(ocupado||(tipo==='juiz'&&!aptoMag())) return; const MP=tipo==='promotor', {b,fs}=fasesConcurso(tipo);
   const NOME_CONC={juiz:'Concurso da magistratura',promotor:'Concurso do Ministério Público',defensor:'Concurso da Defensoria Pública'}, POSSE={juiz:'Juiz Substituto',promotor:'Promotor Substituto',defensor:'Defensor Público Substituto'};
   const v=await modal(`<h2>${NOME_CONC[tipo]}</h2><p>Três fases eliminatórias. Cada bloco de estudo acumulado vale +0,5 nas provas (máximo +15). Seu bônus atual: <b class="num">+${b.toLocaleString('pt-BR')}</b>.</p>
     <dl class="meta">${fs.map(x=>`<dt>${x.n} · skill ${x.sk} vs ${x.d}</dt><dd class="num ${cls(x.ch)}">${pct(x.ch)}</dd>`).join('')}
@@ -2978,6 +2993,7 @@ const CURSOS={
   esp:{nome:'Especialização (pós lato sensu)',meta:40,minSem:12,mensal:600},
   mestrado:{nome:'Mestrado',meta:120,minSem:24,mensal:0,bolsa:750,selecao:true},
   doutorado:{nome:'Doutorado',meta:240,minSem:48,mensal:0,bolsa:1050,selecao:true},
+  prep:{nome:'Preparatório para a magistratura',meta:60,minSem:18,mensal:1500,todas:true},
 };
 const PROJ={artigo:{nome:'Artigo científico',meta:12},livro:{nome:'Livro acadêmico',meta:60},manual:{nome:'Manual para OAB e concursos',meta:45}};
 const NIVEIS_DOC=['Professor Adjunto','Professor Associado','Professor Titular'];
@@ -3011,9 +3027,10 @@ function publicar(pj){ const A=S.ac, q=qualidade(pj.area)+rnd(-8,8);
 async function semanaAcademia(){ const A=S.ac, G=S.agenda; if(!A) return [];
   const L=[], up=(k,v)=>{ S.skills[k]=clamp(S.skills[k]+v*(1-S.skills[k]/110),0,100); };
   if(A.curso){ const c=A.curso, n=G.curso||0; c.prog+=n; if(c.mensal) pagarPessoal(c.mensal); if(c.bolsa&&S.carreira==='academico') pagarPessoal(-c.bolsa);
-    for(let i=0;i<n;i++){ up('pesquisa',.25); up('escrita',.15); up(c.area,.3); }
+    for(let i=0;i<n;i++){ if(c.tipo==='prep'){ up(pick(Object.keys(AREAS)),.5); up('oratoria',.2); up('escrita',.15); up('analise',.15); } else { up('pesquisa',.25); up('escrita',.15); up(c.area,.3); } }
     if(c.prog>=c.meta&&S.semana-c.inicio>=c.minSem){
-      if(c.tipo==='esp'){ A.titulos.esp++; (A.titulos.areas=A.titulos.areas||{})[c.area]=Math.max(titArea(c.area),1); up(c.area,6); S.prest=clamp(S.prest+1,0,100); L.push(`Especialização concluída em ${AREAS[c.area].nome}.`); A.curso=null; G.curso=0; }
+      if(c.tipo==='prep'){ for(const k in AREAS){ (A.titulos.areas=A.titulos.areas||{})[k]=Math.max(titArea(k),1); up(k,3); } A.titulos.prep=true; L.push('Preparatório para a magistratura concluído: a 4ª estrela está liberada em todas as áreas.'); A.curso=null; G.curso=0; }
+      else if(c.tipo==='esp'){ A.titulos.esp++; (A.titulos.areas=A.titulos.areas||{})[c.area]=Math.max(titArea(c.area),1); up(c.area,6); S.prest=clamp(S.prest+1,0,100); L.push(`Especialização concluída em ${AREAS[c.area].nome}.`); A.curso=null; G.curso=0; }
       else { const ch=clamp(sig(((S.skills.pesquisa+S.skills.escrita)/2-(c.tipo==='doutorado'?52:42))/8),.05,.95);
         const ok=await rolar(`Defesa ${c.tipo==='doutorado'?'da tese':'da dissertação'}`,`A banca avalia a sua pesquisa em ${AREAS[c.area].nome}. Pesquisa e Escrita contam.`,ch,'Aprovado','Volte com ajustes');
         if(ok){ A.titulos[c.tipo]=true; (A.titulos.areas=A.titulos.areas||{})[c.area]=2; const pts=c.tipo==='doutorado'?5:3; A.indice+=pts; A.pubs.push({tipo:c.tipo==='doutorado'?'tese':'dissertação',titulo:c.titulo,pts,semana:S.semana});
@@ -3038,13 +3055,13 @@ async function semanaAcademia(){ const A=S.ac, G=S.agenda; if(!A) return [];
 async function escolherArea(titulo){ return await modal(`<h2>${titulo}</h2><div class="opts">${Object.entries(AREAS).map(([k,a])=>`<button class="opt" data-mv="${k}"><span>${a.nome}</span><b class="num">${Math.floor(S.skills[k])}</b><small>Sua skill na área</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]); }
 async function acMatricular(tipo){ const A=S.ac, C=CURSOS[tipo]; if(ocupado||A.curso) return;
   if(tipo==='doutorado'&&!A.titulos.mestrado) return; if(C.selecao&&A.selEm>S.semana) return;
-  const area=await escolherArea(`${C.nome}: em qual área? ${tipo==='esp'?'Libera a 4ª estrela nela.':'Libera a 5ª estrela nela.'}`); if(!area) return;
+  const area=C.todas?null:await escolherArea(`${C.nome}: em qual área? ${tipo==='esp'?'Libera a 4ª estrela nela.':'Libera a 5ª estrela nela.'}`); if(!area&&!C.todas) return;
   if(C.selecao){ ocupado=true; let ok;
     try{ ok=await rolar(`Seleção do ${C.nome.toLowerCase()}`,`Projeto de pesquisa, prova e entrevista. Pesquisa, ${tipo==='mestrado'?'CR da graduação':'experiência'} e publicações contam.`,chanceSelecao(tipo),'Aprovado','Não foi desta vez'); }
     finally{ ocupado=false; }
     if(!ok){ A.selEm=S.semana+10; addLog(`Reprovado na seleção do ${C.nome.toLowerCase()}. Nova seleção no mês ${A.selEm}.`,'r'); salvar(); render(); return; } }
-  A.curso={tipo,area,prog:0,meta:C.meta,inicio:S.semana,minSem:C.minSem,mensal:C.mensal,bolsa:C.bolsa||0,titulo:tituloPesquisa(area)};
-  S.agenda.curso=Math.max(S.agenda.curso||0,2); addLog(`Matrícula: ${C.nome} em ${AREAS[area].nome}.`,'g'); salvar(); render(); }
+  A.curso={tipo,area,prog:0,meta:C.meta,inicio:S.semana,minSem:C.minSem,mensal:C.mensal,bolsa:C.bolsa||0,titulo:area?tituloPesquisa(area):'Curso preparatório'};
+  S.agenda.curso=Math.max(S.agenda.curso||0,2); addLog(`Matrícula: ${C.nome}${area?' em '+AREAS[area].nome:''}.`,'g'); salvar(); render(); }
 async function acProjeto(tipo){ const A=S.ac; if(ocupado||A.proj) return; const area=await escolherArea(`${PROJ[tipo].nome}: sobre qual área?`); if(!area) return;
   A.proj={tipo,area,prog:0,meta:PROJ[tipo].meta,titulo:tituloPesquisa(area)}; S.agenda.pesquisa=Math.max(S.agenda.pesquisa||0,2);
   addLog(`Você começou a escrever: “${A.proj.titulo}”.`); salvar(); render(); }
@@ -3063,12 +3080,12 @@ function painelFormacao(){ const A=S.ac, T=A.titulos, c=A.curso;
   return `<section class="panel"><div class="panel-head"><h2>Formação</h2><span class="label">títulos +${bonusTitulos()} em concursos</span></div>
     <ul class="break"><li><span>Graduação em Direito${S.formacao?' · '+FACS[S.formacao.tier].nome:''}</span><span class="num">${S.formacao?'CR '+S.formacao.cr.toLocaleString('pt-BR',{maximumFractionDigits:1}):'✓'}</span></li>
       <li><span>Especializações</span><span class="num">${T.esp}</span></li><li><span>Mestrado</span><span class="num ${T.mestrado?'hi':''}">${T.mestrado?'✓':'—'}</span></li><li><span>Doutorado</span><span class="num ${T.doutorado?'hi':''}">${T.doutorado?'✓':'—'}</span></li></ul>
-    ${c?`<span class="label">Cursando: ${CURSOS[c.tipo].nome} em ${AREAS[c.area].nome}</span>
+    ${c?`<span class="label">Cursando: ${CURSOS[c.tipo].nome}${c.area?' em '+AREAS[c.area].nome:''}</span>
       <div class="vs"><span>Trabalho</span><div class="bar"><i style="width:${Math.min(100,c.prog/c.meta*100)}%;background:var(--b-estudo)"></i></div><span class="num">${Math.round(c.prog/c.meta*100)}%</span>
         <span>Tempo</span><div class="bar"><i style="width:${Math.min(100,(S.semana-c.inicio)/c.minSem*100)}%;background:var(--brass)"></i></div><span class="num">${S.semana-c.inicio}/${c.minSem}</span></div>
       <p style="margin:0;font-size:12px;color:var(--muted)">${c.prog}/${c.meta} blocos e ${c.minSem} meses no mínimo${c.mensal?` · mensalidade ${brl(c.mensal)}/mês`:''}${c.bolsa?` · bolsa de ${brl(c.bolsa)}/mês só em dedicação exclusiva`:''}.</p>`
     :`<div class="opts">${Object.entries(CURSOS).map(([k,C])=>{ const bloq=k==='doutorado'&&!T.mestrado, espera=C.selecao&&A.selEm>S.semana;
-        return `<button class="opt" data-act="acMatricular" data-v="${k}" ${bloq||espera?'disabled':''}><span>${C.nome}</span><b class="num">${C.selecao?pct(chanceSelecao(k)):brl(C.mensal)+'/mês'}</b><small>${C.meta} blocos e pelo menos ${C.minSem} meses (${C.minSem/ANO} ano${C.minSem/ANO>1?'s':''})${C.selecao?' · chance na seleção':''}${bloq?' · exige mestrado':''}${espera?` · nova seleção no mês ${A.selEm}`:''}</small></button>`; }).join('')}</div>`}
+        return `<button class="opt" data-act="acMatricular" data-v="${k}" ${bloq||espera?'disabled':''}><span>${C.nome}</span><b class="num">${C.selecao?pct(chanceSelecao(k)):brl(C.mensal)+'/mês'}</b><small>${C.meta} blocos e pelo menos ${C.minSem} meses (${tempoTxt(C.minSem)})${C.selecao?' · chance na seleção':''}${bloq?' · exige mestrado':''}${espera?` · nova seleção no mês ${A.selEm}`:''}</small></button>`; }).join('')}</div>`}
   </section>`; }
 function painelPesquisa(){ const A=S.ac, pj=A.proj;
   return `<section class="panel"><div class="panel-head"><h2>Pesquisa e publicações</h2><span class="label">índice ${A.indice}</span></div>
@@ -3381,7 +3398,7 @@ const titArea=k=>{ const T=S.ac&&S.ac.titulos; return T&&T.areas?T.areas[k]||0:0
 const tetoArea=k=>TETO_AREA[titArea(k)];
 const estrelas=k=>NIV_AREA.filter(x=>S.skills[k]>=x).length;
 function aplicarTetos(){ if(!S||!S.skills) return; for(const k in AREAS) if(S.skills[k]>tetoArea(k)) S.skills[k]=tetoArea(k); }
-function estrelasHtml(k){ if(!ehArea(k)) return `${'★'.repeat(nivel(k))}`;
+function estrelasHtml(k){ if(!ehArea(k)) return `${'★'.repeat(estrelas(k))}<span style="opacity:.35">${'☆'.repeat(5-estrelas(k))}</span>`;
   const e=estrelas(k), lib=[3,4,5][titArea(k)];
   return `<span title="${lib===3?'Estudando sozinho: até 3 estrelas. Especialização na área libera a 4ª, mestrado ou doutorado a 5ª.':lib===4?'Especialização: até 4 estrelas. Mestrado ou doutorado na área libera a 5ª.':'Mestrado ou doutorado: até 5 estrelas.'}">${'★'.repeat(e)}${'☆'.repeat(Math.max(0,lib-e))}<span style="opacity:.25">${'☆'.repeat(5-Math.max(lib,e))}</span></span>`; }
 function bonusArea(c,add){ const e=estrelas(c.area); if(e<2) return;
@@ -3469,7 +3486,7 @@ function painelCasosAtivos(){
   const grupos={}; for(const c of rec.sort((a,b)=>a.inst-b.inst)) (grupos[nomeTribunal(c)]=grupos[nomeTribunal(c)]||[]).push(c);
   return `<section class="panel" style="background:transparent;border:0;padding:0">
       <div class="panel-head"><h2>Casos ativos</h2><span class="num">${S.casos.length}/${maxCasos()}</span></div>
-      <p class="label" style="margin:0">Limite: 3 sozinho + 1 por advogado (${advsEquipe()}) + 1 a cada 2 estagiários (${estagEquipe()})${S.filiais.length?` + ${S.filiais.length} pelas filiais`:''} · manutenção deste mês: ${S.casos.reduce((a,c)=>a+manut(c),0)} blocos</p>
+      <p class="label" style="margin:0">${PORTE_ESC[porteEscritorio()].nome}: casos até ${RAR[RORD[PORTE_ESC[porteEscritorio()].rarMax]].nome.toLowerCase()}, causas ×${PORTE_ESC[porteEscritorio()].valor.toLocaleString('pt-BR')}${porteEscritorio()<2?' (um imóvel maior abre casos maiores)':''} · Limite: 3 sozinho + 1 por advogado (${advsEquipe()}) + 1 a cada 2 estagiários (${estagEquipe()})${S.filiais.length?` + ${S.filiais.length} pelas filiais`:''} · manutenção deste mês: ${S.casos.reduce((a,c)=>a+manut(c),0)} blocos</p>
       ${rec.length?`<span class="label">1ª instância · ${prim.length}</span>`:''}
       <div class="cases">${prim.length?prim.map(c=>pasta(c,true)).join(''):`<p class="empty">${rec.length?'Nenhum caso em 1ª instância.':'Nenhum caso ativo. Aceite uma das ofertas abaixo.'}</p>`}</div>
     </section>
@@ -3697,7 +3714,7 @@ app.addEventListener('click',e=>{
     if(escolha.inicio==='faculdade'){ view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; iniciarComFaculdade(escolha.facul); return; }
     if(escolha.carreira==='defensor'){ iniciarDP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Defensor Público Substituto')} em ${CIDADES[escolha.sede].nome}. A fila de assistidos já está grande.`); }
     if(escolha.carreira==='promotor'){ iniciarMP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Promotor Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou 8 inquéritos.`); }
-    if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Juiz Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
+    if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.vida.idade0=30; S.vida.ultimoAniv=30; S.log=[]; addLog(`Posse como ${fem('Juiz Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
   if(a==='login'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.login().catch(err=>modal(`<h2>Não foi possível entrar</h2><p>${esc(err.message||err)}</p>`,[{t:'Tentar de novo',v:1,cls:'brass'},{t:'Fechar',v:0,cls:'ghost'}]).then(x=>{ if(x) app.querySelector('[data-act=login]')?.click(); })); return; }
   if(a==='logout'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.logout(); return; }
   if(!S) return;

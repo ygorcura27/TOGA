@@ -14,7 +14,7 @@ app.addEventListener('click',e=>{
     if(escolha.inicio==='faculdade'){ view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; iniciarComFaculdade(escolha.facul); return; }
     if(escolha.carreira==='defensor'){ iniciarDP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Defensor Público Substituto')} em ${CIDADES[escolha.sede].nome}. A fila de assistidos já está grande.`); }
     if(escolha.carreira==='promotor'){ iniciarMP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Promotor Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou 8 inquéritos.`); }
-    if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Juiz Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
+    if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.vida.idade0=30; S.vida.ultimoAniv=30; S.log=[]; addLog(`Posse como ${fem('Juiz Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
   if(a==='login'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.login().catch(err=>modal(`<h2>Não foi possível entrar</h2><p>${esc(err.message||err)}</p>`,[{t:'Tentar de novo',v:1,cls:'brass'},{t:'Fechar',v:0,cls:'ghost'}]).then(x=>{ if(x) app.querySelector('[data-act=login]')?.click(); })); return; }
   if(a==='logout'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.logout(); return; }
   if(!S) return;

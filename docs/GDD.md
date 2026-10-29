@@ -114,6 +114,12 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 
 ### 3.3 Fluxo do caso
 1. **Oferta:** 3 casos novos por semana, +1 por filial, +1 com recepção, +1 a cada 2 advogados da equipe, além de indicações de amigos.
+   - **Porte do escritório:** limita a raridade e o valor das causas, para evitar enriquecer rápido demais.
+     - pequeno (sala comercial): até raro, causas ×0,6;
+     - médio (conjunto): até épico, ×0,8;
+     - grande (andar corporativo): tudo, ×1;
+     - com filial nacional: ×1,25;
+     - com filial internacional: ×1,6.
    - **Limite de casos ativos:** 3 sozinho, +1 por advogado (júnior, pleno, sênior ou sócio), +1 a cada 2 estagiários e +1 por filial.
    - **Manutenção semanal de cada caso** (prazos, petições, cliente): comum e incomum 1 bloco, raro 2, épico 3, lendário 4, recurso 1. A manutenção é paga primeiro; os blocos seguintes quitam o atraso e só o resto vira preparação.
 2. **Preparação** ao longo das semanas, com os blocos da agenda e da equipe.
@@ -242,14 +248,24 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ### 5.2 Magistratura (por vara)
 | Cargo | Gabinete | Salário/sem | Requisitos |
 |---|---|---|---|
-| Juiz Substituto | 3 | R$ 7.500 | concurso |
-| Juiz Titular | 6 | R$ 8.500 | prestígio 35, 40 sentenças, reforma ≤ 35% |
-| Desembargador | 10 | R$ 10.000 | prestígio 60, 120 sentenças, reforma ≤ 25% |
-| Ministro do STJ | 14 | R$ 11.500 | prestígio 85, 250 sentenças, reforma ≤ 20% |
-| Ministro do STF | 18 | R$ 13.000 | prestígio 95, 400 sentenças, reforma ≤ 15% |
+| Juiz Substituto | 3 | R$ 32.000 | concurso (ver requisitos abaixo) |
+| Juiz Titular | 6 | R$ 35.000 | prestígio 35, 40 sentenças, reforma ≤ 35% |
+| Desembargador | 10 | R$ 41.800 | prestígio 60, 120 sentenças, reforma ≤ 25% |
+| Ministro do STJ | 14 | R$ 44.000 | prestígio 85, 250 sentenças, reforma ≤ 20% |
+| Ministro do STF | 18 | R$ 46.400 | prestígio 95, 400 sentenças, reforma ≤ 15% |
 
 - **Varas:** criminal, cível, família, empresarial, trabalho e federal tributária. O juiz só recebe processos da própria vara; no STF, julga todas as áreas.
 - **Propina:** se a corregedoria descobrir, o juiz é cassado.
+- **Concurso da magistratura (muito difícil):**
+  - **Requisitos para prestar:**
+    - **4★ em todas as áreas** do direito (skill 82 ou mais);
+    - **5★ em Oratória** (92 ou mais);
+    - 4★ em Escrita e em Análise;
+    - **3 anos de prática jurídica** depois da OAB.
+  - **Curso preparatório para a magistratura:** como estudar sozinho para em 3★, este curso da academia (18 meses, R$ 1.500 por mês) libera a 4ª estrela em todas as áreas de uma vez.
+  - **Provas:** mais difíceis que as de promotor e defensor (dificuldade 75, 76 e 80).
+  - **Idade:** quem se dedica chega perto dos 28 a 30 anos. Começar direto como juiz na tela inicial põe o personagem com 30 anos.
+- **Custo de vida da magistratura:** R$ 7.000 por mês.
 - **Carga de trabalho:**
   - **Estudo mínimo:** o processo só vai a sentença quando o estudo acumulado chega ao mínimo da complexidade dele (comum 2, incomum 3, raro 4, épico 6, lendário 9 blocos).
   - **Chance de acerto:** usa a mesma curva de preparação dos casos da advocacia.

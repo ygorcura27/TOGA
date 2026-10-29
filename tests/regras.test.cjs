@@ -14,6 +14,7 @@ let falhas = 0; const ok = (cond, nome, extra = '') => { console.log(`${cond ? '
     const lend = { ...c, rar: 'lendario' }, comum = { ...c, rar: 'comum' };
     return { ano: T.ANO, chMin: Math.min(...chs), chMax: Math.max(...chs), satComum: T.prepCaso(comum, 5) / T.prepCaso(comum, 50), satLend: T.prepCaso(lend, 5) / T.prepCaso(lend, 50),
       manutL: T.manut(lend), manutC: T.manut(comum), limite: T.maxCasos(), teto: T.tetoArea('penal'), honOk: c.hon === Math.round(c.valor * .2),
+      rarMax: (()=>{ let m=0; for(let i=0;i<300;i++){ const x=T.novoCaso(S.sede); m=Math.max(m,['comum','incomum','raro','epico','lendario'].indexOf(x.rar)); } return m; })(),
       ret: T.divisaoRetirada(10000), carga: T.cargaCaso({ ...comum, semana: 0, prep: 0, atraso: 0 }, false) }; });
   ok(r.ano === 12, 'ano tem 12 meses', r.ano);
   ok(r.chMin >= .05 && r.chMax <= .95, 'chance sempre entre 5% e 95%', `${r.chMin.toFixed(2)}–${r.chMax.toFixed(2)}`);
@@ -23,6 +24,7 @@ let falhas = 0; const ok = (cond, nome, extra = '') => { console.log(`${cond ? '
   ok(r.manutC === 1 && r.manutL === 4, 'manutenção: comum 1, lendário 4 blocos');
   ok(r.limite === 3, 'advogado sozinho atende 3 casos', r.limite);
   ok(r.teto === 81, 'sem título, área para em 81 (3★)', r.teto);
+  ok(r.rarMax <= 2, 'escritório pequeno só recebe casos até raro', r.rarMax);
   ok(r.ret.voce === 10000 && r.ret.soc === 0, 'retirada sem sócios fica toda com o titular');
   ok(r.carga.atraso === 1, 'manutenção não paga vira atraso', r.carga.atraso);
   ok(erros.length === 0, 'sem erros de JavaScript', erros.join(' | '));

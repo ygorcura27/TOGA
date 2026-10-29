@@ -5,6 +5,9 @@ const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length;
 const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
+// porte do escritório: imóvel e filiais definem até que raridade de caso chega e quanto valem as causas
+const PORTE_ESC=[{nome:'Escritório pequeno',rarMax:2,valor:.6},{nome:'Escritório médio',rarMax:3,valor:.8},{nome:'Escritório grande',rarMax:4,valor:1},{nome:'Escritório nacional',rarMax:4,valor:1.25},{nome:'Banca internacional',rarMax:4,valor:1.6}];
+function porteEscritorio(){ if(!S.u) return 0; let n=S.u.imovel||0; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='nacional')) n++; if(S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='global')) n++; return Math.min(4,n); }
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
     epico:(p>=35?(p-30)*.4:0)+(p>=25?f:0),lendario:p>=65?(p-60)*.15:0};}
@@ -12,11 +15,13 @@ function sortearRaridade(C,extra={}){const w=pesosRaridade(C); for(const k in ex
   let r=Math.random()*tot; for(const k of RORD){ r-=w[k]; if(r<=0) return k;} return 'comum';}
 function novoCaso(cid=S.sede,extra={},area=null){
   const C=LOC[cid];
-  let rar=sortearRaridade(C,extra); let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
+  let rar=sortearRaridade(C,extra);
+  const PE=S.carreira==='adv'?PORTE_ESC[porteEscritorio()]:null; if(PE&&RORD.indexOf(rar)>PE.rarMax) rar=RORD[PE.rarMax];
+  let pool=TEMPLATES.filter(t=>t.rars.includes(rar)&&(!area||t.area===area));
   if(!pool.length){ pool=TEMPLATES.filter(t=>t.area===area); }
   const t=pickW(pool,x=>(C.areas[x.area]||1)*pesoArea(x.area)*demEpoca(x.area)); if(!t.rars.includes(rar)) rar=t.rars[t.rars.length-1]; const R=RAR[rar];
   const d=rint(R.d[0],R.d[1]);
-  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator*valorEpoca()/100)*100;
+  const valor=Math.round(5000*Math.pow(1.1,d)*rnd(.8,1.2)*C.fator*valorEpoca()*(PE?PE.valor:1)/100)*100;
   const cliente = t.area==='empresarial' ? pick(EMPRESAS) : pick(NOMES);
   return {id:++uid,...t,rar,d,valor,hon:Math.round(valor*.2),cliente,cidade:cid,
     prazo:rint(R.prazo[0],R.prazo[1]),juiz:pick(Object.keys(JUIZES)),juizNome:pick(JNOMES),
