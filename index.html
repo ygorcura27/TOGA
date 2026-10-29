@@ -1063,7 +1063,7 @@ async function audiencia(c){
       addLog(`A parte contrária recorreu de “${c.titulo}”. ${brl(c.hon)} retidos até o ${INST[c.inst+1]}.`);
     } else {
       if(c.retido) S.aReceber-=c.hon;
-      S.caixa+=c.hon; S.u.honSemana+=c.hon; addLog(`Trânsito em julgado: ${brl(c.hon)} de honorários recebidos.`,'g');
+      S.caixa+=c.hon; S.u.honSemana+=c.hon; addLog(`Trânsito em julgado: ${brl(c.hon)} de honorários recebidos.`,'g'); pagarAssociados(c.hon);
     }
   } else {
     if(c.retido){ S.aReceber-=c.hon; addLog(`Decisão reformada: ${brl(c.hon)} retidos foram perdidos.`,'r'); }
@@ -1132,7 +1132,7 @@ async function fimSemana(){
       if(c.estrategia!=='acordo') continue;
       const ok=await rolar(`Tentativa de acordo · ${esc(c.titulo)}`,`Negociação ${Math.round(S.skills.negociacao)}${c.juiz==='pragmatico'?' · juiz pragmático':''}${S.traits.includes('carismatico')?' · carismático':''}.`,chanceAcordo(c),'Acordo fechado','Sem acordo');
       if(ok){ const val=c.valor*fracAcordo(), hon=Math.round(val*.2);
-        S.caixa+=hon; S.u.honSemana+=hon; S.casos=S.casos.filter(x=>x.id!==c.id); S.vitorias++;
+        S.caixa+=hon; S.u.honSemana+=hon; pagarAssociados(hon); S.casos=S.casos.filter(x=>x.id!==c.id); S.vitorias++;
         addLog(`Acordo em “${c.titulo}”: ${brl(val)} acordados, ${brl(hon)} de honorários.`,'g');
       } else { c.estrategia='equilibrada'; c.acordoFalhou=true; addLog(`Acordo falhou em “${c.titulo}”. O caso segue para julgamento.`,'r'); }
     }
@@ -1169,6 +1169,7 @@ function painelSkills(){ return `<section class="panel">
 function painelDiario(){ return `<section class="panel">
         <div class="panel-head"><h2>Diário</h2><span class="label">${S.carreira==='juiz'?S.j.sentencas+' sentenças':S.carreira==='promotor'?S.p.condenacoes+' condenações':S.carreira==='defensor'?S.d.atendimentos+' atendimentos':S.carreira==='academico'||S.carreira==='estudante'?S.ac.pubs.length+' publicações':S.vitorias+'V · '+S.derrotas+'D'}</span></div>
         <ul class="log">${S.log.map(l=>`<li><span class="w">M${l.w}</span><span class="${l.k}">${l.t}</span></li>`).join('')}</ul>
+        <button class="btn ghost" data-act="toggleResumo">${S.semResumo?'Religar o resumo do mês':'Desligar o resumo do mês'}</button>
         <button class="btn ghost" data-act="reiniciar">Recomeçar carreira</button>
       </section>`; }
 // ===================== MAGISTRATURA =====================
@@ -1211,7 +1212,7 @@ function novoProcesso(){
 }
 function iniciarMagistratura(cid,vr=S.espec){
   S.carreira='juiz'; posse(); estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
-  S.j={cargo:0,vara:vr,comarca:cid,acervo:[],recursos:[],sentencas:0,mantidas:0,reformas:0,transitadas:0,propina:0};
+  S.j={cargo:0,desde:S.semana,vara:vr,comarca:cid,acervo:[],recursos:[],sentencas:0,mantidas:0,reformas:0,transitadas:0,propina:0};
   for(let i=0;i<8;i++){ const p=novoProcesso(); p.idade=rint(0,p.meta); S.j.acervo.push(p); }
 }
 function calcAcerto(p){
@@ -1230,8 +1231,13 @@ function calcAcerto(p){
   return {skill,items,ch:clamp(ch,.05,.95)};
 }
 function chanceRecursoJ(p){ const c=S.j.cargo; if(c===4) return 0; if(c===3) return RORD.indexOf(p.rar)>=3?chanceApeloAdv(p,false)*.6:0; if(c===2 && RORD.indexOf(p.rar)<2) return 0; return chanceApeloAdv(p,false); }
+// tempo mínimo no cargo atual antes da promoção, em meses (índice = cargo de destino)
+const TEMPO_CARGO={juiz:[0,24,96,180,240],promotor:[0,24,96,144],defensor:[0,24,96,144]};
+const tempoTxt=m=>m>=12?`${Math.floor(m/12)} ano${m>=24?'s':''}${m%12?` e ${m%12} ${m%12>1?'meses':'mês'}`:''}`:`${m} ${m===1?'mês':'meses'}`;
+function reqTempo(X,car){ const T=TEMPO_CARGO[car][X.cargo+1]; if(!T) return []; const m=S.semana-(X.desde||0);
+  return [{l:`${tempoTxt(T)} no cargo`,ok:m>=T,v:tempoTxt(Math.max(0,m))}]; }
 function promoReq(){ const n=CARGOS[S.j.cargo+1]; if(!n) return null; const r=n.req;
-  return [{l:`Reputação ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)},
+  return [...reqTempo(S.j,'juiz'),{l:`Reputação ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)},
           {l:`${r.sent} sentenças`,ok:S.j.sentencas>=r.sent,v:S.j.sentencas},
           {l:`Taxa de reforma até ${pct(r.reforma)}`,ok:taxaReforma()<=r.reforma,v:pct(taxaReforma())}]; }
 const concilia=p=>['civel','familia','trabalho','empresarial'].includes(p.area)&&S.j.cargo<2;
@@ -1458,7 +1464,7 @@ async function promocao(){
     if(!ok){ J.stfEm=S.semana+12; addLog(`O Senado rejeitou sua indicação ao STF. Nova chance no mês ${J.stfEm}.`,'r'); salvar(); render(); return; }
   }
   if(v!==J.comarca && !(await mudancaVida(CIDADES[v].nome))) return;
-  J.cargo=prox; J.comarca=v; J.avisoPromo=false; J.acervo=[]; for(let i=0;i<6;i++) J.acervo.push(novoProcesso());
+  J.cargo=prox; J.desde=S.semana; J.comarca=v; J.avisoPromo=false; J.acervo=[]; for(let i=0;i<6;i++) J.acervo.push(novoProcesso());
   addLog(`Promovido a ${nomeCargo(prox)} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
   if(prox===4) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} meses você chegou a ${fem('Ministro')} do Supremo Tribunal Federal, com ${J.sentencas} sentenças e taxa de reforma de ${pct(taxaReforma())}.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
@@ -1534,7 +1540,7 @@ function novoInquerito(){
 }
 function iniciarMP(cid){
   S.carreira='promotor'; posse(); estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
-  S.p={cargo:0,comarca:cid,casos:[],recursos:[],erros:[],denuncias:0,condenacoes:0,absolvicoes:0,acordos:0,arquivados:0};
+  S.p={cargo:0,desde:S.semana,comarca:cid,casos:[],recursos:[],erros:[],denuncias:0,condenacoes:0,absolvicoes:0,acordos:0,arquivados:0};
   for(let i=0;i<8;i++){ const c=novoInquerito(); c.idade=rint(0,c.meta); S.p.casos.push(c); }
 }
 function calcCondenacao(c){
@@ -1563,7 +1569,7 @@ function efeitoArquivar(c){ const R=RAR[c.rar];
   if(calcCondenacao(c).ch>=.6) return {v:-R.perda/2,t:'A imprensa critica o arquivamento de um caso forte'};
   return {v:0,t:'Provas fracas: arquivamento sem repercussão'}; }
 function promoReqMP(){ const n=CARGOS_MP[S.p.cargo+1]; if(!n) return null; const r=n.req;
-  return [{l:`Reputação ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)},
+  return [...reqTempo(S.p,'promotor'),{l:`Reputação ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)},
           {l:`${r.cond} condenações`,ok:S.p.condenacoes>=r.cond,v:S.p.condenacoes},
           {l:`Taxa de condenação de ${pct(r.taxa)}`,ok:taxaCond()>=r.taxa,v:pct(taxaCond())}]; }
 const promoOkMP=()=>{const r=promoReqMP(); return !!r&&r.every(x=>x.ok)&&!((S.p.pgjEm||0)>S.semana);};
@@ -1821,7 +1827,7 @@ async function promocaoMP(){
     if(!ok){ P.pgjEm=S.semana+12; addLog(`O governador escolheu outro nome da lista tríplice. Nova lista no mês ${P.pgjEm}.`,'r'); salvar(); render(); return; }
   }
   if(v!==P.comarca && !(await mudancaVida(CIDADES[v].nome))) return;
-  P.cargo=prox; P.comarca=v; P.avisoPromo=false; P.casos=[]; for(let i=0;i<6;i++) P.casos.push(novoInquerito());
+  P.cargo=prox; P.desde=S.semana; P.comarca=v; P.avisoPromo=false; P.casos=[]; for(let i=0;i<6;i++) P.casos.push(novoInquerito());
   addLog(`Promovido a ${fem(N.nome)} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
   if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} meses você virou ${fem('Procurador')}-Geral de Justiça, com ${P.condenacoes} condenações e taxa de ${pct(taxaCond())}.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
@@ -1900,7 +1906,7 @@ function novoAssistido(){
 }
 function iniciarDP(cid){
   S.carreira='defensor'; posse(); estruturaPub(); S.casos=[]; S.ofertas=[]; S.filiais=[]; S.aReceber=0;
-  S.d={cargo:0,comarca:cid,casos:[],recursos:[],atendimentos:0,vitorias:0,derrotas:0,acordos:0,solturas:0,cartas:0};
+  S.d={cargo:0,desde:S.semana,comarca:cid,casos:[],recursos:[],atendimentos:0,vitorias:0,derrotas:0,acordos:0,solturas:0,cartas:0};
   for(let i=0;i<10;i++) S.d.casos.push(novoAssistido());
 }
 function calcDefesa(c){
@@ -1923,7 +1929,7 @@ function calcDefesa(c){
 const chanceAcordoDP=()=>clamp(.45+S.skills.negociacao/200+(tem('negociacao',1)?.1:0)+(temSala('reuniao')?.1:0)+(S.traits.includes('carismatico')?.1:0),.05,.95);
 const chanceHC=c=>clamp(sig(((S.skills.escrita+S.skills.penal)/2+prepBonus(c.prep+(c.semana||0))-c.d)/10),.05,.95);
 function promoReqDP(){ const n=CARGOS_DP[S.d.cargo+1]; if(!n) return null; const r=n.req;
-  return [{l:`Reputação ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)},
+  return [...reqTempo(S.d,'defensor'),{l:`Reputação ${r.prest}`,ok:S.prest>=r.prest,v:Math.round(S.prest)},
           {l:`${r.atend} atendimentos adequados`,ok:S.d.atendimentos>=r.atend,v:S.d.atendimentos+(S.d.precarios?` (+${S.d.precarios} precários)`:'')},
           {l:`Taxa de êxito de ${pct(r.taxa)}`,ok:taxaDP()>=r.taxa,v:pct(taxaDP())}]; }
 const promoOkDP=()=>{const r=promoReqDP(); return !!r&&r.every(x=>x.ok)&&!((S.d.dpgEm||0)>S.semana);};
@@ -2146,7 +2152,7 @@ async function promocaoDP(){
     if(!ok){ D.dpgEm=S.semana+12; addLog(`O governador escolheu outro nome da lista. Nova lista no mês ${D.dpgEm}.`,'r'); salvar(); render(); return; }
   }
   if(v!==D.comarca && !(await mudancaVida(CIDADES[v].nome))) return;
-  D.cargo=prox; D.comarca=v; D.avisoPromo=false; D.casos=[]; for(let i=0;i<8;i++) D.casos.push(novoAssistido());
+  D.cargo=prox; D.desde=S.semana; D.comarca=v; D.avisoPromo=false; D.casos=[]; for(let i=0;i<8;i++) D.casos.push(novoAssistido());
   addLog(`Promovido a ${fem(N.nome)} em ${CIDADES[v].nome}.`,'g'); salvar(); render();
   if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} meses você virou ${fem('Defensor Público')}-Geral, com ${D.atendimentos} atendimentos e ${D.cartas} cartas de agradecimento.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
@@ -2182,7 +2188,7 @@ const IMOVEIS={
 };
 const FUNCOES={
   adv:{estagiario:{nome:'Estagiário',bl:2,q:[25,45],sal:450},secretaria:{nome:'Secretária',bl:0,q:[30,50],org:6,sal:900},
-       junior:{nome:'Advogado júnior',bl:4,q:[40,60],sal:1500},pleno:{nome:'Advogado pleno',bl:5,q:[55,72],sal:2600},
+       associado:{nome:'Advogado associado',bl:4,q:[40,58],sal:0,parteHon:.1},junior:{nome:'Advogado júnior',bl:4,q:[40,60],sal:1500},pleno:{nome:'Advogado pleno',bl:5,q:[55,72],sal:2600},
        senior:{nome:'Advogado sênior',bl:6,q:[68,85],sal:4200},gestor:{nome:'Gestor administrativo',bl:0,q:[30,50],g:[55,90],sal:3200},
        socio:{nome:'Sócio',bl:7,q:[70,90],sal:0}},
   pub:{estagiario:{nome:'Estagiário',bl:3,q:[25,45],sal:350},servidor:{nome:'Servidor efetivo',bl:5,q:[35,65],org:4,sal:0},
@@ -2319,7 +2325,7 @@ async function contratar(funcao){
         return `<button class="opt" data-mv="${k}"><span>${A.nome}</span><b class="num">${mn}–${mx}</b><small>Skill dos candidatos na área · ${'★'.repeat(Math.min(...est))}${Math.max(...est)>Math.min(...est)?' a '+'★'.repeat(Math.max(...est)):''}${at.includes(k)?' · área já atendida':chefe?' · algum pode abrir a área':''}</small></button>`; }).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
     if(!area) return; cands=porArea[area]; }
   else cands=[gerarCandidato(funcao),gerarCandidato(funcao),gerarCandidato(funcao)];
-  const origem=funcao==='servidor'?'Servidores disponíveis para requisição (pagos pelo tribunal)':pubCar()?'Salário pago pelo orçamento da unidade':'Salário pago pelo caixa do escritório';
+  const origem=funcao==='associado'?'Sem salário fixo: fica com 10% dos honorários que o escritório recebe (até 30% somando todos os associados)':funcao==='servidor'?'Servidores disponíveis para requisição (pagos pelo tribunal)':pubCar()?'Salário pago pelo orçamento da unidade':'Salário pago pelo caixa do escritório';
   const v=await modal(`<h2>${funcao==='servidor'?'Requisitar':'Contratar'}: ${funcao==='gestor'?nomeGestor():F.nome}</h2><p>${origem}. ${F.bl?`Rende cerca de ${F.bl} blocos por mês, conforme a moral.`:'Não atende casos, mas melhora a organização.'}</p>
     <div class="opts">${cands.map((c,i)=>`<button class="opt" data-mv="${i}"><span>${esc(c.nome)}</span><b class="num">${F.sal?brl(c.sal)+'/mês':'sem custo'}</b><small>Qualidade ${c.q}${F.g?` · gestão ${c.g}`:''} · moral ${c.moral}${c.area?` · ${AREAS[c.area].nome} ${'★'.repeat(estrelasF(c))} (${c.ae})${estrelasF(c)>=3&&RESP_FUNCS.includes(funcao)?' · pode chefiar a área':''}`:''}</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
   if(v===''||v===undefined) return;
@@ -2480,7 +2486,7 @@ function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX(
   </div>
   <section class="panel" style="margin-top:20px;background:transparent;border:0;padding:0">
     <div class="panel-head"><h2>Equipe</h2><span class="num">${U.equipe.length} pessoa${U.equipe.length===1?'':'s'}</span></div>
-    <div class="chips">${funcs.map(([k,F])=>`<button class="btn ghost" data-act="contratar" data-v="${k}" ${U.equipe.length>=mesas()?'disabled':''}>${k==='servidor'?'Requisitar':'Contratar'} ${(k==='gestor'?nomeGestor():F.nome).toLowerCase()}${F.sal?' · ~'+brl(F.sal):''}</button>`).join('')}</div>
+    <div class="chips">${funcs.map(([k,F])=>`<button class="btn ghost" data-act="contratar" data-v="${k}" ${U.equipe.length>=mesas()?'disabled':''}>${k==='servidor'?'Requisitar':'Contratar'} ${(k==='gestor'?nomeGestor():F.nome).toLowerCase()}${F.sal?' · ~'+brl(F.sal):F.parteHon?` · sem salário, ${pct(F.parteHon)} dos honorários ganhos`:''}</button>`).join('')}</div>
     <div class="cases" style="margin-top:12px">${U.equipe.length?U.equipe.map(cardFunc).join(''):'<p class="empty">Ninguém na equipe ainda. Contrate alguém para dividir o trabalho.</p>'}</div>
   </section>`;
 }
@@ -3517,10 +3523,15 @@ function tutMarcar(){ document.querySelectorAll('.tut-alvo').forEach(x=>x.classL
 // ===================== CARGA DE TRABALHO E PORTE DO ESCRITÓRIO =====================
 // cada caso ativo consome blocos de manutenção (prazos, petições, cliente) antes de render preparação;
 // o limite de casos e o porte para casos grandes dependem da equipe de advogados
+// advogado associado: sem salário fixo; cada um fica com 10% dos honorários que entram (no máximo 30% somados)
+function pagarAssociados(v){ if(S.carreira!=='adv'||!S.u||v<=0) return 0; const A=S.u.equipe.filter(f=>f.funcao==='associado'); if(!A.length) return 0;
+  const parte=Math.round(v*Math.min(.3,A.length*FUNCOES.adv.associado.parteHon)); S.caixa-=parte; S.u.honSemana-=parte;
+  for(const f of A) f.moral=clamp(f.moral+3,0,100);
+  addLog(`${A.length>1?'Os associados ficaram':`${A[0].nome} (associado) ficou`} com ${brl(parte)} dos honorários.`); return parte; }
 const MANUT={comum:1,incomum:1,raro:2,epico:3,lendario:4};
 const manut=c=>(c.inst||1)>1?1:MANUT[c.rar];
 const PORTE={epico:1,lendario:2}; // advogados na equipe para atender o porte do caso
-const advsEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>['junior','pleno','senior','socio'].includes(f.funcao)).length:0;
+const advsEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>['associado','junior','pleno','senior','socio'].includes(f.funcao)).length:0;
 const estagEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>f.funcao==='estagiario').length:0;
 const faltaPorte=c=>Math.max(0,(PORTE[c.rar]||0)-advsEquipe());
 // aplica os blocos do mês: primeiro a manutenção, depois o atraso acumulado, o resto vira preparação
@@ -3562,9 +3573,9 @@ async function fazerRetirada(){ const U=S.u, el=document.getElementById('ret-val
 // ===================== ESPECIALIDADES DO ESCRITÓRIO =====================
 // o escritório nasce com a área do titular e só recebe casos das áreas que atende;
 // cada área nova exige um advogado pleno (ou sênior/sócio) da área com pelo menos 3 estrelas nela
-const ADV_FUNCS=['junior','pleno','senior','socio'], RESP_FUNCS=['pleno','senior','socio'];
+const ADV_FUNCS=['associado','junior','pleno','senior','socio'], RESP_FUNCS=['pleno','senior','socio'];
 const CUSTO_AREA=10000, CUSTO_FULL=50000;
-const AE_FAIXA={junior:[40,62],pleno:[55,80],senior:[68,90],socio:[75,92]};
+const AE_FAIXA={associado:[42,62],junior:[40,62],pleno:[55,80],senior:[68,90],socio:[75,92]};
 const estrelasF=f=>f.ae?NIV_AREA.filter(x=>f.ae>=x).length:0;
 const areasEsc=()=>{ const U=S.u; if(!U.areas) U.areas=[S.espec]; return U.full?Object.keys(AREAS):U.areas; };
 function responsavel(a){ if(a===(S.u.fundadora||S.espec)) return {titular:true,nome:S.nome};
@@ -3591,6 +3602,32 @@ function migrarEquipeAdv(){ if(S.carreira!=='adv'||!S.u) return; if(!S.u.areas) 
   for(const f of S.u.equipe) if(ADV_FUNCS.includes(f.funcao)&&!f.area){ f.area=S.espec; const [a,b]=AE_FAIXA[f.funcao]; f.ae=Math.round(a+(b-a)*clamp((f.q-40)/50,0,1)); } }
 // advogados da equipe evoluem na própria área com o tempo (e mais rápido se a área é atendida)
 function semanaAreasEquipe(){ if(S.carreira!=='adv') return; for(const f of S.u.equipe) if(f.area&&f.ae<95) f.ae=clamp(f.ae+(areasEsc().includes(f.area)?.25:.08),0,95); }
+
+// ===================== RESUMO DO MÊS =====================
+// ao encerrar o mês, uma tela única com o que mudou (dinheiro, reputação, saúde, produção) e os destaques do diário
+function fotoMes(){ const V=S.vida||{};
+  return {semana:S.semana,caixa:S.caixa,bolso:S.bolso||0,prest:S.prest,saude:V.saude,fel:V.felicidade,energia:S.energia,estresse:S.estresse,
+    vit:S.vitorias,der:S.derrotas,sent:S.j?S.j.sentencas:0,cond:S.p?S.p.condenacoes:0,atend:S.d?S.d.atendimentos:0,pubs:S.ac?S.ac.pubs.length:0,
+    equipe:S.u?S.u.equipe.length:0,carreira:S.carreira,cargo:cargoAtual()}; }
+async function resumoMes(a){ const b=fotoMes(), adv=S.carreira==='adv';
+  const linha=(rot,d,fmt=v=>sgn(v),inv=false)=>Math.abs(d)<.05?'':`<dt>${rot}</dt><dd class="num ${(inv?-d:d)>0?'hi':'lo'}">${fmt(d)}</dd>`;
+  const din=v=>(v>0?'+':v<0?'−':'')+brl(Math.abs(v)).replace('R$ −','R$ ');
+  const prod=[S.vitorias-a.vit?`${S.vitorias-a.vit} vitória${S.vitorias-a.vit>1?'s':''}`:'',S.derrotas-a.der?`${S.derrotas-a.der} derrota${S.derrotas-a.der>1?'s':''}`:'',
+    b.sent-a.sent?`${b.sent-a.sent} sentença${b.sent-a.sent>1?'s':''}`:'',b.cond-a.cond?`${b.cond-a.cond} condenaç${b.cond-a.cond>1?'ões':'ão'}`:'',
+    b.atend-a.atend?`${b.atend-a.atend} atendimento${b.atend-a.atend>1?'s':''} adequado${b.atend-a.atend>1?'s':''}`:'',b.pubs-a.pubs?`${b.pubs-a.pubs} publicaç${b.pubs-a.pubs>1?'ões':'ão'}`:''].filter(Boolean);
+  const dest=S.log.filter(l=>l.w===a.semana&&(l.k==='g'||l.k==='r')).slice(0,8);
+  const v=await modal(`<span class="label">Mês ${a.semana} encerrado</span><h2>Resumo do mês</h2>
+    ${b.carreira!==a.carreira||b.cargo!==a.cargo?`<p class="hi" style="margin:0"><b>${esc(descCarreira())}</b></p>`:''}
+    <dl class="meta">
+      ${adv?linha('Caixa do escritório',b.caixa-a.caixa,din)+linha('Dinheiro pessoal',b.bolso-a.bolso,din):linha('Dinheiro',b.caixa-a.caixa,din)}
+      ${linha('Prestígio',b.prest-a.prest)}${linha('Saúde',(b.saude||0)-(a.saude||0))}${linha('Felicidade',(b.fel||0)-(a.fel||0))}
+      ${linha('Energia',b.energia-a.energia)}${linha('Estresse',b.estresse-a.estresse,v=>sgn(v),true)}${linha('Equipe',b.equipe-a.equipe,v=>sgn(v)+(Math.abs(v)>1?' pessoas':' pessoa'))}
+    </dl>
+    ${prod.length?`<p style="margin:0;font-size:13px"><b>Produção:</b> ${prod.join(' · ')}</p>`:''}
+    ${dest.length?`<span class="label">Destaques</span><ul class="log" style="max-height:220px">${dest.map(l=>`<li><span class="w">${l.k==='g'?'▲':'▼'}</span><span class="${l.k}">${l.t}</span></li>`).join('')}</ul>`:'<p style="margin:0;color:var(--muted)">Um mês tranquilo, sem grandes acontecimentos.</p>'}`,
+    [{t:'Não mostrar mais',v:'off',cls:'ghost'},{t:'Próximo mês',v:1,cls:'brass'}]);
+  if(v==='off'){ S.semResumo=true; addLog('Resumo do mês desligado. Para religar, use o botão no Diário.'); salvar(); render(); } }
+{ const f0=fimSemana; fimSemana=async function(){ if(!S||ocupado) return f0(); const a=fotoMes(); await f0(); if(S&&S.semana>a.semana&&!S.semResumo&&!document.querySelector('.ov')) await resumoMes(a); }; }
 
 // ===================== EVENTOS =====================
 app.addEventListener('click',e=>{
@@ -3678,6 +3715,7 @@ app.addEventListener('click',e=>{
   if(a==='antecipar'){ antecipar(id); return; }
   if(a==='tutOk'){ const e=tutEstado(); if(e){ e.t.i++; e.t.ini=S.semana; } salvar(); render(); return; }
   if(a==='tutSair'){ if(S){ S.tut=S.tut||{t:{}}; S.tut.off=true; } salvar(); render(); return; }
+  if(a==='toggleResumo'){ S.semResumo=!S.semResumo; salvar(); render(); return; }
   if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }
   salvar(); render();
 });
