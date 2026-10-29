@@ -20,10 +20,12 @@ ${head}
 ${body}
 <script src="firebase-config.js"></script>
 <script type="module" src="online.js"></script>
+<script type="module" src="online-netlify.js"></script>
 </body>
 </html>
 `);
 copyFileSync('web/online.js', 'dist/online.js');
+copyFileSync('web/online-netlify.js', 'dist/online-netlify.js');
 
 const env = process.env.FIREBASE_CONFIG;
 if (env) {

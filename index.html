@@ -3609,6 +3609,8 @@ app.addEventListener('click',e=>{
     if(escolha.carreira==='defensor'){ iniciarDP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Defensor Público Substituto')} em ${CIDADES[escolha.sede].nome}. A fila de assistidos já está grande.`); }
     if(escolha.carreira==='promotor'){ iniciarMP(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Promotor Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou 8 inquéritos.`); }
     if(escolha.carreira==='juiz'){ iniciarMagistratura(escolha.sede); S.log=[]; addLog(`Posse como ${fem('Juiz Substituto')} na comarca de ${CIDADES[escolha.sede].nome}. Você herdou um acervo de 8 processos.`); } view='escritorio'; sel={regiao:null,brasil:null,mundo:null}; regiaoSel=null; salvar(); render(); return; }
+  if(a==='login'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.login().catch(err=>modal(`<h2>Não foi possível usar o save na nuvem</h2><p>${esc(err.message||err)}</p>`,[{t:'Ok',v:1}])); return; }
+  if(a==='logout'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.logout(); return; }
   if(!S) return;
   if(a==='view'){ view=v; render(); window.scrollTo(0,0); return; }
   if(a==='cidade'){ sel[view]=v; render(); return; }
@@ -3674,8 +3676,6 @@ app.addEventListener('click',e=>{
   if(a==='mpAcordo'){ mpAcordo(id); return; }
   if(a==='mpArquivar'){ mpArquivar(id); return; }
   if(a==='antecipar'){ antecipar(id); return; }
-  if(a==='login'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.login().catch(err=>modal(`<h2>Não foi possível entrar</h2><p>${esc(err.message||err)}</p>`,[{t:'Ok',v:1}])); return; }
-  if(a==='logout'){ window.TOGA_ONLINE&&window.TOGA_ONLINE.logout(); return; }
   if(a==='tutOk'){ const e=tutEstado(); if(e){ e.t.i++; e.t.ini=S.semana; } salvar(); render(); return; }
   if(a==='tutSair'){ if(S){ S.tut=S.tut||{t:{}}; S.tut.off=true; } salvar(); render(); return; }
   if(a==='reiniciar'){ modal('<h2>Recomeçar?</h2><p>A carreira atual será apagada.</p>',[{t:'Cancelar',v:0,cls:'ghost'},{t:'Recomeçar',v:1}]).then(v=>{ if(v){ S=null; apagarSave(); render(); } }); return; }
@@ -3699,8 +3699,8 @@ app.addEventListener('change',e=>{
 const ON=()=>window.TOGA_ONLINE&&window.TOGA_ONLINE.ativo?window.TOGA_ONLINE:null;
 function apagarSave(){ try{localStorage.removeItem('toga-proto');}catch(e){} const o=ON(); if(o) o.apagar(); }
 function contaInner(){ const o=ON(); if(!o) return '';
-  return o.logado?`<span>Conectado como <b>${esc(o.nome)}</b> · o progresso é salvo na nuvem.</span><button class="btn ghost" data-act="logout">Sair</button>`
-    :`<span>Entre com Google para salvar o progresso na nuvem e continuar em outro aparelho.</span><button class="btn" data-act="login">Entrar com Google</button>`; }
+  return o.logado?`<span>${o.descConectado||`Conectado como <b>${esc(o.nome)}</b> · o progresso é salvo na nuvem.`}</span><button class="btn ghost" data-act="logout">${o.textoSair||'Sair'}</button>`
+    :`<span>${o.descEntrar||'Entre com Google para salvar o progresso na nuvem e continuar em outro aparelho.'}</span><button class="btn" data-act="login">${o.textoEntrar||'Entrar com Google'}</button>`; }
 const contaHtml=()=>`<div class="conta-box">${contaInner()}</div>`;
 async function preencherHallOnline(){ const els=document.querySelectorAll('.hall-online'), o=ON(); if(!els.length) return;
   if(!o){ els.forEach(el=>el.innerHTML=''); return; }
@@ -3715,6 +3715,16 @@ window.addEventListener('toga-online',atualizarOnline);
 { const r0=render; render=function(){ r0(); atualizarOnline(); }; }
 window.TOGA_JOGO={
   estado:()=>S,
+  // diálogo do save por código: criar um código novo para este jogo ou usar um que o jogador já tem
+  async dialogoCodigo(sugestao){ let digitado='';
+    const v=await modal(`<h2>Save na nuvem</h2><p>O código guarda o seu jogo na nuvem. Quem tiver o código abre o jogo, então guarde com cuidado.</p>
+      <div class="opts"><button class="opt" data-mv="criar"><span>Criar código novo</span><b class="num">${esc(sugestao)}</b><small>Salva ${S?'este jogo':'os próximos jogos'} na nuvem com este código. Anote-o.</small></button></div>
+      <div class="field"><label class="label" for="cod-in">Já tenho um código</label><input id="cod-in" placeholder="TOGA-XXXX-XXXX-XXXX" maxlength="19" autocomplete="off" style="font-family:var(--f-mono);text-transform:uppercase"></div>`,
+      [{t:'Cancelar',v:'',cls:'ghost'},{t:'Usar o código digitado',v:'usar'}],
+      root=>{ const i=root.querySelector('#cod-in'); if(i) i.addEventListener('input',()=>{ digitado=i.value; }); });
+    if(v==='criar') return {tipo:'criar',codigo:sugestao};
+    if(v==='usar'&&digitado.trim()) return {tipo:'usar',codigo:digitado};
+    return null; },
   carregarEstado(d){ start({S:d}); if(S) salvar(); },
   async escolherSave(n,l){ const q=x=>`${esc(x.nome)} · semana ${x.semana}${x.salvoEm?' · '+new Date(x.salvoEm).toLocaleString('pt-BR'):''}`;
     return await modal(`<h2>Qual save usar?</h2><p>Há um jogo salvo na nuvem diferente do jogo deste navegador. O que você não escolher será substituído.</p>
