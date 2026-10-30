@@ -59,6 +59,7 @@ h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.02em;margi
 .blocks .day{font-size:10px;text-align:center;color:var(--muted);font-family:var(--f-mono)}
 .blk{height:16px;border-radius:2px;background:var(--b-descanso)}
 .blk.case{background:var(--b-case)} .blk.familia{background:var(--b-familia)} .blk.saude{background:var(--b-saude)} .blk.estudo{background:var(--b-estudo)} .blk.lazer{background:var(--b-lazer)} .blk.apoio{background:var(--b-apoio)}
+.blk.exp,.legend i.exp{background:repeating-linear-gradient(45deg,var(--b-apoio) 0 3px,var(--muted) 3px 6px)}
 .blk.off{background:repeating-linear-gradient(45deg,var(--line) 0 3px,transparent 3px 6px)}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--muted)}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}

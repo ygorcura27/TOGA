@@ -84,7 +84,7 @@ function filaPrioridade(){
   return [...S.casos].sort((a,b)=>a.prazo-b.prazo);
 }
 function autoDistribuir(){ const U=S.u, g=gestorAtual(); if(!U.auto||!g) return 0;
-  let livre=Math.max(0,gabinete()-listaCasos().reduce((a,c)=>a+(c.semana||0),0)); if(!livre) return 0;
+  let livre=Math.max(0,(S.carreira==='promotor'?gabCasos():gabinete())-listaCasos().reduce((a,c)=>a+(c.semana||0),0)); if(!livre) return 0;
   const lista=filaPrioridade(); if(!lista.length) return 0;
   if(Math.random()*100>g.g) lista.sort(()=>Math.random()-.5);
   let n=0; while(livre>0){ const c=lista[n%lista.length]; c.semana=(c.semana||0)+1; livre--; n++; }
@@ -309,7 +309,7 @@ function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX(
   app.innerHTML=`${header()}
   <div class="mapgrid">
     <section class="mapbox">
-      <div class="panel-head" style="flex-wrap:wrap"><h2>${imovelAtual().nome}</h2><span class="label">${U.equipe.length}/${mesas()} mesas ocupadas · ${gabinete()} blocos da equipe por mês</span></div>
+      <div class="panel-head" style="flex-wrap:wrap"><h2>${imovelAtual().nome}</h2><span class="label">${U.equipe.length}/${mesas()} mesas ocupadas · ${gabinete()} blocos da equipe por mês${S.carreira==='promotor'?` · ${expEquipe()} no expediente`:''}</span></div>
       <svg viewBox="0 0 ${P.W} ${P.H}" role="img" aria-label="Planta da estrutura" style="border-radius:4px">${P.s}</svg>
       <div class="legend"><span><i style="background:#8FE3FF"></i>Equipe</span><span><i style="background:#FFC857"></i>Gestor</span><span><i style="background:#F4F8FF;border:1px solid var(--line)"></i>Você</span><span>Clique num espaço para construir ou trocar o cômodo</span></div>
     </section>
