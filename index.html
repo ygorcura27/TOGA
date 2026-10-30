@@ -1610,7 +1610,7 @@ const novosInq=k=>2+CIDADES[k].pop+2*(S&&S.p?S.p.cargo:0);
 const MIN_ATD={comum:1,incomum:2,raro:3,epico:4,lendario:5};
 const dilig=c=>(c.prep||0)+(c.semana||0); // diligência acumulada no inquérito, contando os blocos deste mês // blocos mínimos de diligência/atendimento antes de ir a juízo
 // expediente da promotoria: vistas, ofícios, notificações e atendimento ao público. A equipe absorve primeiro; o que sobrar sai da sua agenda
-const expedienteMP=()=>S&&S.carreira==='promotor'&&S.p?2+Math.ceil(CIDADES[S.p.comarca].pop/2)+S.p.cargo:0;
+const expedienteMP=()=>S&&S.carreira==='promotor'&&S.p?1+Math.floor(CIDADES[S.p.comarca].pop/2)+S.p.cargo:0;
 const expEquipe=()=>Math.min(gabinete(),expedienteMP()), expPessoal=()=>Math.max(0,expedienteMP()-gabinete());
 const gabCasos=()=>Math.max(0,gabinete()-expedienteMP());
 const assessoresMP=()=>S.u?S.u.equipe.filter(f=>f.funcao==='assessor'):[];
@@ -1844,6 +1844,9 @@ async function fimSemanaMP(){
     S.estresse=clamp(S.estresse+2.2*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*S.agenda.lazer,0,100);
     S.caixa+=C.salario-CUSTO_VIDA_MP;
     const notas=[];
+    // expediente: em dia só com a equipe cobrindo tudo; feito por você mesmo, pesa no estresse
+    if(!expPessoal()){ S.prest=clamp(S.prest+.5,0,100); notas.push('Expediente em dia, todo feito pela equipe: +0,5 reputação.'); }
+    else S.estresse=clamp(S.estresse+1.5*expPessoal(),0,100);
     // diligências e preparo
     for(const c of P.casos){ const n=c.semana||0;
       if(n && c.fase==='inq' && c.inocente && !c.revelado){ for(let i=0;i<n;i++) if(Math.random()<(tem('analise',2)?.35:.2)){ c.revelado=true; break; }
