@@ -29,7 +29,7 @@ const novosInq=k=>2+CIDADES[k].pop+2*(S&&S.p?S.p.cargo:0);
 const MIN_ATD={comum:1,incomum:2,raro:3,epico:4,lendario:5};
 const dilig=c=>(c.prep||0)+(c.semana||0); // diligência acumulada no inquérito, contando os blocos deste mês // blocos mínimos de diligência/atendimento antes de ir a juízo
 // expediente da promotoria: vistas, ofícios, notificações e atendimento ao público. A equipe absorve primeiro; o que sobrar sai da sua agenda
-const expedienteMP=()=>S&&S.carreira==='promotor'&&S.p?3+CIDADES[S.p.comarca].pop+2*S.p.cargo:0;
+const expedienteMP=()=>S&&S.carreira==='promotor'&&S.p?2+Math.ceil(CIDADES[S.p.comarca].pop/2)+S.p.cargo:0;
 const expEquipe=()=>Math.min(gabinete(),expedienteMP()), expPessoal=()=>Math.max(0,expedienteMP()-gabinete());
 const gabCasos=()=>Math.max(0,gabinete()-expedienteMP());
 const assessoresMP=()=>S.u?S.u.equipe.filter(f=>f.funcao==='assessor'):[];
