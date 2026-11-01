@@ -28,11 +28,6 @@ const TEMPLATES_MP=[
 const novosInq=k=>2+CIDADES[k].pop+2*(S&&S.p?S.p.cargo:0);
 const MIN_ATD={comum:1,incomum:2,raro:3,epico:4,lendario:5};
 const dilig=c=>(c.prep||0)+(c.semana||0); // diligência acumulada no inquérito, contando os blocos deste mês // blocos mínimos de diligência/atendimento antes de ir a juízo
-// expediente da promotoria: vistas, ofícios, notificações e atendimento ao público. A equipe absorve primeiro; o que sobrar sai da sua agenda
-const expedienteMP=()=>S&&S.carreira==='promotor'&&S.p?1+Math.floor(CIDADES[S.p.comarca].pop/2)+S.p.cargo:0;
-const expEquipe=()=>Math.min(gabinete(),expedienteMP()), expPessoal=()=>Math.max(0,expedienteMP()-gabinete());
-const gabCasos=()=>Math.max(0,gabinete()-expedienteMP());
-const assessoresMP=()=>S.u?S.u.equipe.filter(f=>f.funcao==='assessor'):[];
 const taxaCond=()=>{const t=S.p.condenacoes+S.p.absolvicoes; return t?S.p.condenacoes/t:0;};
 const comarcaAtual=()=>S.carreira==='juiz'?S.j.comarca:S.carreira==='defensor'?S.d.comarca:S.p.comarca;
 function novoInquerito(){
@@ -58,9 +53,7 @@ function calcCondenacao(c){
   if((c.inst||1)===1&&n<MIN_ATD[c.rar]) add(`Investigação insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(c.revelado) add('Indícios de inocência',-25);
   if(S.p.cargo>=2) add('Experiência no tribunal',3);
-  if(RORD.indexOf(c.rar)>=3){ const as=assessoresMP(); // investigação complexa (GAECO) depende de assessoria técnica
-    if(!as.length) add('Sem assessor para investigação complexa',-10);
-    else add(`Assessoria técnica na investigação (${as.length})`,Math.min(6,3*as.length)); }
+  bonusAssessoria(c,add);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
   if(S.traits.includes('orador') && c.juri) add('Orador nato (júri)',5);
@@ -141,7 +134,7 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
   </article>`; }
 
 function renderPromotoria(){
-  const P=S.p, gab=gabinete(), exp=expedienteMP(), expE=expEquipe(), expP=expPessoal(), gc=gabCasos(), tot=P.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gc,tot), pessoal=tot-gabUsed;
+  const P=S.p, gab=gabinete(), expP=expPessoal(), gc=gabCasos(), tot=P.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gc,tot), pessoal=tot-gabUsed;
   const free=livres(), inqs=P.casos.filter(c=>c.fase==='inq').sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta)), juizo=P.casos.filter(c=>c.fase==='juizo').sort((a,b)=>a.prazo-b.prazo);
   const atras=inqs.filter(c=>c.idade>c.meta).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
@@ -149,18 +142,18 @@ function renderPromotoria(){
   push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
-  const gabCells=Array.from({length:gab},(_,i)=>`<div class="blk ${i<expE?'exp':i<expE+gabUsed?'apoio':''}"></div>`).join('');
+  const gabCells=celulasEquipe(gab,gabUsed);
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
       <section class="panel">
         <div class="panel-head"><h2>Agenda do mês</h2><span class="num">${S.disp+gab-free}/${S.disp+gab} blocos</span></div>
         <div class="blocks">${grid}</div>
-        <span class="label">Equipe da promotoria · ${gab} blocos de servidores por mês · ${expE} no expediente</span>
+        <span class="label">Equipe da promotoria · ${gab} blocos de servidores por mês · ${expEquipe()} no expediente</span>
         <div class="blocks">${gabCells}</div>
-        <div class="legend"><span><i class="exp"></i>Expediente</span><span><i style="background:var(--b-case)"></i>Casos (você)</span><span><i style="background:var(--b-apoio)"></i>Casos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
+        <div class="legend">${legendaExp}<span><i style="background:var(--b-case)"></i>Casos (você)</span><span><i style="background:var(--b-apoio)"></i>Casos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
         <div class="rows">
-          <div class="row"><span class="name" title="Vistas de processos, ofícios, notificações e atendimento ao público. Cresce com a comarca e o cargo.">Expediente da promotoria</span><span class="num ${expP?'lo':''}">${exp} · equipe ${expE}${expP?` · você ${expP}`:''}</span></div>
+          ${linhaExpediente()}
           <div class="row"><span class="name">Casos (ajuste em cada pasta)</span><span class="num">${tot}</span></div>
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
@@ -263,9 +256,7 @@ async function fimSemanaMP(){
     S.estresse=clamp(S.estresse+2.2*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*S.agenda.lazer,0,100);
     S.caixa+=C.salario-CUSTO_VIDA_MP;
     const notas=[];
-    // expediente: em dia só com a equipe cobrindo tudo; feito por você mesmo, pesa no estresse
-    if(!expPessoal()){ S.prest=clamp(S.prest+.5,0,100); notas.push('Expediente em dia, todo feito pela equipe: +0,5 reputação.'); }
-    else S.estresse=clamp(S.estresse+1.5*expPessoal(),0,100);
+    notas.push(expedienteMes());
     // diligências e preparo
     for(const c of P.casos){ const n=c.semana||0;
       if(n && c.fase==='inq' && c.inocente && !c.revelado){ for(let i=0;i<n;i++) if(Math.random()<(tem('analise',2)?.35:.2)){ c.revelado=true; break; }
@@ -346,4 +337,3 @@ async function promocaoMP(){
 }
 
 
-{ const l0=livres; livres=function(){ return l0()-expedienteMP(); }; }

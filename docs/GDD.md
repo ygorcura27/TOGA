@@ -151,17 +151,22 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ### 3.4 O mesmo sistema em todas as carreiras
 - **Juiz:** julga um **acervo** de processos da sua vara. A taxa de reforma das sentenças nas instâncias superiores conta para a promoção.
 - **Promotor:** denuncia, arquiva ou propõe acordo. As condenações e a taxa de acerto contam.
-  - **Expediente da promotoria:** vistas, ofícios, notificações e atendimento ao público, todo mês. São 1 + metade do porte da comarca + o cargo, em blocos. A equipe cobre primeiro; o que sobrar sai da agenda do promotor e sobe o estresse. Com tudo coberto pela equipe, +0,5 de reputação por mês.
-  - **Investigações complexas:** inquéritos épicos e lendários sem assessor têm −10 de chance; cada assessor dá +3, até +6.
-  - **Simulação** (`npm run sim:promotor`, 12 partidas de 24 meses em São Paulo, robô com 9 blocos próprios por mês):
-
-| Equipe | Carreiras encerradas | Reputação média |
-|---|---|---|
-| Nenhuma | 9 de 12 | 1 |
-| Inicial (servidor + estagiário) | 0 | 33 |
-| 2 assessores + servidor + estagiário | 0 | 89 |
-
+  - O expediente e a assessoria em casos complexos valem para as três carreiras públicas (ver **Padrão das carreiras públicas**).
 - **Equipe pública:** o acervo grande pesa pouco na moral (teto de −2 por mês) e servidor efetivo raramente pede remoção. Com o orçamento negativo, o cargo em comissão mais caro é exonerado, em vez de derrubar a moral de todos. A tela de contratação mostra se o novo salário cabe no orçamento.
+
+### Padrão das carreiras públicas (juiz, promotor, defensor)
+As três funcionam do mesmo jeito; mudam a gameplay dos casos e os nomes.
+- **Expediente mensal:** 1 + metade do porte da comarca + o cargo, em blocos. No juiz são despachos, urgências e atendimento a advogados; no promotor, vistas, ofícios e atendimento ao público; no defensor, triagem, atendimento e visitas a presídios. A equipe cobre primeiro; o que sobra sai da agenda do titular e sobe o estresse. Com tudo coberto pela equipe, +0,5 de reputação por mês.
+- **Casos complexos** (épicos e lendários): sem assessor, −10 de chance; cada assessor dá +3, até +6.
+- **Atraso** derruba reputação pela mesma regra (0,3 por item, no máximo 4 por mês): processo atrasado (juiz), inquérito atrasado (promotor), audiência sem o atendimento mínimo (defensor).
+- **Reputação por caso:** juiz ganha 15% do ganho da raridade quando a sentença transita e 40% quando é mantida no recurso; defensor ganha 30% com atendimento adequado e 15% com precário; recurso provido do defensor dá 60%.
+- **Simulação** (`npm run sim:publicas`, 10 partidas de 24 meses, robô com 9 blocos próprios por mês), reputação média e carreiras encerradas:
+
+| Equipe | Juiz | Promotor | Defensor |
+|---|---|---|---|
+| Nenhuma | 6 (6 de 10 encerradas) | 10 de 10 encerradas | 34 |
+| Inicial (servidor + estagiário) | 69 | 38 (1 encerrada) | 71 |
+| 2 assessores + servidor + estagiário | 99 | 94 | 95 |
 - **Defensor:** atende, defende e consegue solturas. Os atendimentos e a taxa de vitória contam.
 
 ---

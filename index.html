@@ -1280,6 +1280,7 @@ const PROBATORIO=24;
 const penAtrasoPub=n=>Math.min(4,.3*n*fatorAtraso()); // atraso pesa, mas com teto mensal para não virar espiral sem volta
 function posse(){ S.posseEm=S.semana; S.prest=Math.max(S.prest,30); addLog(`Estágio probatório de ${PROBATORIO} meses: até o mês ${S.semana+PROBATORIO}, reputação zerada não tira você do cargo.`); }
 const probatorio=()=>S.semana-(S.posseEm||-99)<PROBATORIO;
+const GANHO_J={transita:.15,mantida:.4}; // reputação por sentença, em fração do ganho da raridade
 const MIN_SENT={comum:2,incomum:3,raro:4,epico:6,lendario:9}; // blocos de estudo acumulados para poder sentenciar
 const minSent=p=>MIN_SENT[p.rar];
 function novoProcesso(){
@@ -1297,6 +1298,7 @@ function calcAcerto(p){
   const skill=.5*S.skills[p.area]+.3*S.skills.escrita+.2*S.skills.analise;
   const n=(p.estudo||0)+(p.semana||0); add(`Estudo do processo (${n} de ~${prepIdeal(p)} blocos ideais)`,Math.round(prepCaso(p,n)*10)/10);
   if(S.j.cargo>=2) add('Decisão colegiada',5);
+  bonusAssessoria(p,add);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
   if(S.traits.includes('ansioso') && RORD.indexOf(p.rar)>=3) add('Ansiedade',-5);
@@ -1377,8 +1379,8 @@ function procCard(p){ const R=RAR[p.rar], A=AREAS[p.area], cc=calcAcerto(p), apr
       <dt>Partes</dt><dd>${esc(p.cliente)} × ${ADV[p.adv].nome}</dd>
       <dt>Valor da causa</dt><dd class="num">${brl(p.valor)}</dd>
       <dt>No acervo há</dt><dd class="num ${atras?'lo':''}">${p.idade} meses · meta ${p.meta}</dd>
-      <dt>Sem recurso</dt><dd class="hi">${sgn(R.ganho/3)} reputação</dd>
-      <dt>Mantida no recurso</dt><dd class="hi">${sgn(R.ganho)} reputação</dd>
+      <dt>Sem recurso</dt><dd class="hi">${sgn(R.ganho*GANHO_J.transita)} reputação</dd>
+      <dt>Mantida no recurso</dt><dd class="hi">${sgn(R.ganho*GANHO_J.mantida)} reputação</dd>
       <dt>Reformada</dt><dd class="lo">${sgn(-R.perda)} reputação</dd>
       <dt>Chance de recurso</dt><dd class="num">${apr?pct(apr):'sem recurso'}</dd>
       ${p.juri?'<dt>Rito</dt><dd><b>Tribunal do júri</b></dd>':''}
@@ -1400,14 +1402,14 @@ function procCard(p){ const R=RAR[p.rar], A=AREAS[p.area], cc=calcAcerto(p), apr
   </article>`; }
 
 function renderGabinete(){
-  const J=S.j, gab=gabinete(), tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0), gabUsed=Math.min(gab,tot), pessoal=tot-gabUsed;
+  const J=S.j, gab=gabinete(), expP=expPessoal(), tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0), gabUsed=Math.min(gabCasos(),tot), pessoal=tot-gabUsed;
   const free=livres(), atrasados=J.acervo.filter(p=>p.idade>p.meta).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
-  push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
-  push('descanso',Math.max(0,S.disp-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
+  push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
+  push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
-  const gabCells=Array.from({length:gab},(_,i)=>`<div class="blk ${i<gabUsed?'apoio':''}"></div>`).join('');
+  const gabCells=celulasEquipe(gab,gabUsed);
   const ordem=[...J.acervo].sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta));
   app.innerHTML=`${header()}
   <div class="grid">
@@ -1415,16 +1417,17 @@ function renderGabinete(){
       <section class="panel">
         <div class="panel-head"><h2>Agenda do mês</h2><span class="num">${S.disp+gab-free}/${S.disp+gab} blocos</span></div>
         <div class="blocks">${grid}</div>
-        <span class="label">Gabinete · ${gab} blocos de assessores por mês</span>
+        <span class="label">Gabinete · ${gab} blocos de assessores por mês · ${expEquipe()} no expediente</span>
         <div class="blocks">${gabCells}</div>
-        <div class="legend"><span><i style="background:var(--b-case)"></i>Processos (você)</span><span><i style="background:var(--b-apoio)"></i>Processos (gabinete)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
+        <div class="legend">${legendaExp}<span><i style="background:var(--b-case)"></i>Processos (você)</span><span><i style="background:var(--b-apoio)"></i>Processos (gabinete)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
         <div class="rows">
+          ${linhaExpediente()}
           <div class="row"><span class="name">Processos (ajuste em cada pasta)</span><span class="num">${tot}</span></div>
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Todo processo com pelo menos 1 bloco é sentenciado no fim do mês. Os blocos do gabinete são usados primeiro e não gastam sua energia.</p>
+        <p class="label" style="margin:0">Todo processo com pelo menos 1 bloco é sentenciado no fim do mês. A equipe cuida primeiro do expediente e depois dos processos, sem gastar sua energia; o expediente que ela não cobre sai da sua agenda.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraJuiz()}${painelSkills()}${painelDiario()}
@@ -1463,9 +1466,9 @@ async function fimSemanaJuiz(){
   if(ocupado) return; ocupado=true;
   try{
     autoDistribuir();
-    const J=S.j, C=CARGOS[J.cargo], gab=gabinete();
+    const J=S.j, C=CARGOS[J.cargo];
     const tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0);
-    const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
+    const pessoal=Math.max(0,tot-gabCasos())+expPessoal()+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
@@ -1484,28 +1487,28 @@ async function fimSemanaJuiz(){
       const ch=calcAcerto(p).ch, ap=chanceRecursoJ(p), rec=Math.random()<ap;
       J.sentencas++; xpJuiz(p,1);
       if(rec){ J.recursos.push({titulo:p.titulo,rar:p.rar,ch,semanas:rint(3,6),inst:J.cargo>=3?'STF':J.cargo>=2?supNome():'Tribunal'}); sent.push([p,ch,'Recorrida: vai ao tribunal']); }
-      else { const g=RAR[p.rar].ganho/3; S.prest=clamp(S.prest+g,0,100); J.transitadas++; sent.push([p,ch,`Transitou em julgado · ${sgn(g)}`]); }
+      else { const g=RAR[p.rar].ganho*GANHO_J.transita; S.prest=clamp(S.prest+g,0,100); J.transitadas++; sent.push([p,ch,`Transitou em julgado · ${sgn(g)}`]); }
     }
     if(sent.length) addLog(`${sent.length} sentença(s) proferida(s).`);
     // tribunal julga os recursos
     for(const r of J.recursos) r.semanas--;
     for(const r of J.recursos.filter(r=>r.semanas<=0)){
       const ok=Math.random()<r.ch, R=RAR[r.rar];
-      if(ok){ J.mantidas++; S.prest=clamp(S.prest+R.ganho,0,100); xpJuiz({area:'escrita',rar:r.rar},0); }
+      if(ok){ J.mantidas++; S.prest=clamp(S.prest+R.ganho*GANHO_J.mantida,0,100); xpJuiz({area:'escrita',rar:r.rar},0); }
       else { J.reformas++; S.prest=clamp(S.prest-R.perda,0,100); S.estresse=clamp(S.estresse+4,0,100); }
-      dec.push([r,ok]); addLog(`${r.inst} ${ok?'manteve':'reformou'} sua sentença em “${r.titulo}”. ${sgn(ok?R.ganho:-R.perda)} reputação.`,ok?'g':'r');
+      dec.push([r,ok]); addLog(`${r.inst} ${ok?'manteve':'reformou'} sua sentença em “${r.titulo}”. ${sgn(ok?R.ganho*GANHO_J.mantida:-R.perda)} reputação.`,ok?'g':'r');
     }
     J.recursos=J.recursos.filter(r=>r.semanas>0);
     // acervo envelhece e chegam processos novos
     let atras=0; for(const p of J.acervo){ p.idade++; p.semana=0; if(p.idade>p.meta) atras++; }
     if(atras){ S.prest=clamp(S.prest-penAtrasoPub(atras),0,100); S.estresse=clamp(S.estresse+Math.min(10,.5*atras),0,100); }
     const novos=novosPorSemana(J.comarca); for(let i=0;i<novos;i++) J.acervo.push(novoProcesso());
-    const est=semanaEstruturaPub(novos);
+    const est=[expedienteMes(),...semanaEstruturaPub(novos)];
     // resumo
     await modal(`<span class="label">Mês ${S.semana} · ${nomeCargo(J.cargo)} · ${CIDADES[J.comarca].nome}</span><h2>Balanço do gabinete</h2>
       <span class="label">Sentenças (${sent.length})</span>
       ${sent.length?`<ul class="break">${sent.map(([p,ch,t])=>`<li><span>${esc(p.titulo)}${ch!==null?` · ${pct(ch)} de acerto`:''}</span><span class="num">${t}</span></li>`).join('')}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Nenhuma sentença neste mês.</p>'}
-      ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
+      ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho*GANHO_J.mantida):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
       <dl class="meta"><dt>Processos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
         <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_MAG)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
@@ -1612,11 +1615,6 @@ const TEMPLATES_MP=[
 const novosInq=k=>2+CIDADES[k].pop+2*(S&&S.p?S.p.cargo:0);
 const MIN_ATD={comum:1,incomum:2,raro:3,epico:4,lendario:5};
 const dilig=c=>(c.prep||0)+(c.semana||0); // diligência acumulada no inquérito, contando os blocos deste mês // blocos mínimos de diligência/atendimento antes de ir a juízo
-// expediente da promotoria: vistas, ofícios, notificações e atendimento ao público. A equipe absorve primeiro; o que sobrar sai da sua agenda
-const expedienteMP=()=>S&&S.carreira==='promotor'&&S.p?1+Math.floor(CIDADES[S.p.comarca].pop/2)+S.p.cargo:0;
-const expEquipe=()=>Math.min(gabinete(),expedienteMP()), expPessoal=()=>Math.max(0,expedienteMP()-gabinete());
-const gabCasos=()=>Math.max(0,gabinete()-expedienteMP());
-const assessoresMP=()=>S.u?S.u.equipe.filter(f=>f.funcao==='assessor'):[];
 const taxaCond=()=>{const t=S.p.condenacoes+S.p.absolvicoes; return t?S.p.condenacoes/t:0;};
 const comarcaAtual=()=>S.carreira==='juiz'?S.j.comarca:S.carreira==='defensor'?S.d.comarca:S.p.comarca;
 function novoInquerito(){
@@ -1642,9 +1640,7 @@ function calcCondenacao(c){
   if((c.inst||1)===1&&n<MIN_ATD[c.rar]) add(`Investigação insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(c.revelado) add('Indícios de inocência',-25);
   if(S.p.cargo>=2) add('Experiência no tribunal',3);
-  if(RORD.indexOf(c.rar)>=3){ const as=assessoresMP(); // investigação complexa (GAECO) depende de assessoria técnica
-    if(!as.length) add('Sem assessor para investigação complexa',-10);
-    else add(`Assessoria técnica na investigação (${as.length})`,Math.min(6,3*as.length)); }
+  bonusAssessoria(c,add);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
   if(S.traits.includes('orador') && c.juri) add('Orador nato (júri)',5);
@@ -1725,7 +1721,7 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
   </article>`; }
 
 function renderPromotoria(){
-  const P=S.p, gab=gabinete(), exp=expedienteMP(), expE=expEquipe(), expP=expPessoal(), gc=gabCasos(), tot=P.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gc,tot), pessoal=tot-gabUsed;
+  const P=S.p, gab=gabinete(), expP=expPessoal(), gc=gabCasos(), tot=P.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gc,tot), pessoal=tot-gabUsed;
   const free=livres(), inqs=P.casos.filter(c=>c.fase==='inq').sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta)), juizo=P.casos.filter(c=>c.fase==='juizo').sort((a,b)=>a.prazo-b.prazo);
   const atras=inqs.filter(c=>c.idade>c.meta).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
@@ -1733,18 +1729,18 @@ function renderPromotoria(){
   push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
-  const gabCells=Array.from({length:gab},(_,i)=>`<div class="blk ${i<expE?'exp':i<expE+gabUsed?'apoio':''}"></div>`).join('');
+  const gabCells=celulasEquipe(gab,gabUsed);
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
       <section class="panel">
         <div class="panel-head"><h2>Agenda do mês</h2><span class="num">${S.disp+gab-free}/${S.disp+gab} blocos</span></div>
         <div class="blocks">${grid}</div>
-        <span class="label">Equipe da promotoria · ${gab} blocos de servidores por mês · ${expE} no expediente</span>
+        <span class="label">Equipe da promotoria · ${gab} blocos de servidores por mês · ${expEquipe()} no expediente</span>
         <div class="blocks">${gabCells}</div>
-        <div class="legend"><span><i class="exp"></i>Expediente</span><span><i style="background:var(--b-case)"></i>Casos (você)</span><span><i style="background:var(--b-apoio)"></i>Casos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
+        <div class="legend">${legendaExp}<span><i style="background:var(--b-case)"></i>Casos (você)</span><span><i style="background:var(--b-apoio)"></i>Casos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
         <div class="rows">
-          <div class="row"><span class="name" title="Vistas de processos, ofícios, notificações e atendimento ao público. Cresce com a comarca e o cargo.">Expediente da promotoria</span><span class="num ${expP?'lo':''}">${exp} · equipe ${expE}${expP?` · você ${expP}`:''}</span></div>
+          ${linhaExpediente()}
           <div class="row"><span class="name">Casos (ajuste em cada pasta)</span><span class="num">${tot}</span></div>
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
@@ -1847,9 +1843,7 @@ async function fimSemanaMP(){
     S.estresse=clamp(S.estresse+2.2*pessoal*(S.traits.includes('ansioso')?1.25:1)-1.2*desc-6*S.agenda.lazer,0,100);
     S.caixa+=C.salario-CUSTO_VIDA_MP;
     const notas=[];
-    // expediente: em dia só com a equipe cobrindo tudo; feito por você mesmo, pesa no estresse
-    if(!expPessoal()){ S.prest=clamp(S.prest+.5,0,100); notas.push('Expediente em dia, todo feito pela equipe: +0,5 reputação.'); }
-    else S.estresse=clamp(S.estresse+1.5*expPessoal(),0,100);
+    notas.push(expedienteMes());
     // diligências e preparo
     for(const c of P.casos){ const n=c.semana||0;
       if(n && c.fase==='inq' && c.inocente && !c.revelado){ for(let i=0;i<n;i++) if(Math.random()<(tem('analise',2)?.35:.2)){ c.revelado=true; break; }
@@ -1930,7 +1924,6 @@ async function promocaoMP(){
 }
 
 
-{ const l0=livres; livres=function(){ return l0()-expedienteMP(); }; }
 // ===================== SKILLS: NÍVEIS E EFEITOS =====================
 const NIV=[40,60,80];
 const tem=(k,n)=>S&&S.skills[k]>=NIV[n-1];
@@ -2014,6 +2007,7 @@ function calcDefesa(c){
   if(n) add(`Atendimento e preparo (${n} de ~${prepIdeal(c)} blocos ideais)`,Math.round(prepCaso(c,n)*10)/10); else add('Sem atendimento prévio',-8);
   if((c.inst||1)===1&&n&&n<MIN_ATD[c.rar]) add(`Atendimento insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(S.d.cargo>=1) add('Experiência na Defensoria',2*S.d.cargo);
+  bonusAssessoria(c,add);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
   if(S.traits.includes('orador')&&c.juri) add('Orador nato (júri)',5);
@@ -2063,7 +2057,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
       <dt>Assistido</dt><dd>${esc(c.assistido)}</dd>
       <dt>Parte contrária</dt><dd>${c.area==='penal'?'Ministério Público':c.adv==='estado'?'Poder público':ADV[c.adv].nome}</dd>
       <dt>Audiência</dt><dd>${c.prazo<=1?'<b class="mid">neste mês</b>':`em ${c.prazo} meses`}</dd>
-      <dt>Ganhar · perder</dt><dd><span class="hi">${sgn(R.ganho/2)}</span> · <span class="lo">${sgn(-R.perda/2)}</span> reputação</dd>
+      <dt>Ganhar · perder</dt><dd><span class="hi">${sgn(R.ganho*.3)}</span> · <span class="lo">${sgn(-R.perda/2)}</span> reputação</dd>
     </dl>
     <div class="vs">
       <span>Dificuldade</span><div class="bar"><i style="width:${c.d}%;background:var(--loss)"></i></div><span class="num">${c.d}</span>
@@ -2085,31 +2079,32 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
   </article>`; }
 
 function renderDefensoria(){
-  const D=S.d, gab=gabinete(), tot=D.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gab,tot), pessoal=tot-gabUsed;
+  const D=S.d, gab=gabinete(), expP=expPessoal(), tot=D.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gabCasos(),tot), pessoal=tot-gabUsed;
   const free=livres(), ordem=[...D.casos].sort((a,b)=>(a.prazo-b.prazo)||(b.preso-a.preso));
   const presosSem=D.casos.filter(c=>c.preso&&!(c.prep+(c.semana||0))).length, estaSemana=D.casos.filter(c=>c.prazo<=1).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
-  push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
-  push('descanso',Math.max(0,S.disp-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
+  push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
+  push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
-  const gabCells=Array.from({length:gab},(_,i)=>`<div class="blk ${i<gabUsed?'apoio':''}"></div>`).join('');
+  const gabCells=celulasEquipe(gab,gabUsed);
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
       <section class="panel">
         <div class="panel-head"><h2>Agenda do mês</h2><span class="num">${S.disp+gab-free}/${S.disp+gab} blocos</span></div>
         <div class="blocks">${grid}</div>
-        <span class="label">Estagiários e servidores · ${gab} blocos por mês</span>
+        <span class="label">Estagiários e servidores · ${gab} blocos por mês · ${expEquipe()} no expediente</span>
         <div class="blocks">${gabCells}</div>
-        <div class="legend"><span><i style="background:var(--b-case)"></i>Atendimentos (você)</span><span><i style="background:var(--b-apoio)"></i>Atendimentos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
+        <div class="legend">${legendaExp}<span><i style="background:var(--b-case)"></i>Atendimentos (você)</span><span><i style="background:var(--b-apoio)"></i>Atendimentos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
         <div class="rows">
+          ${linhaExpediente()}
           <div class="row"><span class="name">Atendimentos (ajuste em cada pasta)</span><span class="num">${tot}</span></div>
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Todo caso vai à audiência na data marcada, com ou sem preparo. Assistido preso sem atendimento custa reputação extra se perder.</p>
+        <p class="label" style="margin:0">Todo caso vai à audiência na data marcada, com ou sem preparo. Audiência sem o atendimento mínimo custa reputação (como processo atrasado), e assistido preso sem atendimento custa ainda mais se perder.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraDP()}${painelSkills()}${painelDiario()}
@@ -2129,8 +2124,8 @@ function renderDefensoria(){
 function resultadoDP(c,ok){
   const D=S.d, R=RAR[c.rar]; let d;
   // só conta para a promoção o atendimento adequado (com o mínimo de blocos para a complexidade); o precário rende metade da reputação
-  const adequado=(c.prep||0)>=MIN_ATD[c.rar]; if(adequado) D.atendimentos++; else D.precarios=(D.precarios||0)+1;
-  if(ok){ d=(R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0))*(adequado?.5:.25); D.vitorias++; if(c.preso) D.cartas++; }
+  const adequado=(c.prep||0)>=MIN_ATD[c.rar]; if(adequado) D.atendimentos++; else { D.precarios=(D.precarios||0)+1; D.precMes=(D.precMes||0)+1; }
+  if(ok){ d=(R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0))*(adequado?.3:.15); D.vitorias++; if(c.preso) D.cartas++; }
   else { d=-R.perda/2-(c.preso&&!c.prep?.5:0); D.derrotas++; }
   S.prest=clamp(S.prest+d,0,100); ganharXp(c,(ok?1:1.5)*.5);
   return d;
@@ -2182,9 +2177,9 @@ async function fimSemanaDP(){
   if(ocupado) return; ocupado=true;
   try{
     autoDistribuir();
-    const D=S.d, C=CARGOS_DP[D.cargo], gab=gabinete();
+    const D=S.d, C=CARGOS_DP[D.cargo];
     const tot=D.casos.reduce((a,c)=>a+(c.semana||0),0);
-    const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
+    const pessoal=Math.max(0,tot-gabCasos())+expPessoal()+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
@@ -2199,9 +2194,13 @@ async function fimSemanaDP(){
       const ch=calcDefesa(c).ch, ok=Math.random()<ch; lote.push([c,ch,ok,resultadoDP(c,ok)]);
     }
     const notas=[];
+    // audiência sem o atendimento mínimo é o "atraso" da Defensoria: mesma penalidade (com teto) dos processos atrasados do juiz e do promotor
+    const prec=D.precMes||0; D.precMes=0;
+    if(prec){ const pe=penAtrasoPub(prec); S.prest=clamp(S.prest-pe,0,100); S.estresse=clamp(S.estresse+Math.min(10,.5*prec),0,100);
+      notas.push(`<span class="lo">${prec} audiência${prec>1?'s':''} sem o atendimento mínimo: ${sgn(-pe)} reputação.</span>`); }
     for(const r of D.recursos) r.semanas--;
     for(const r of D.recursos.filter(r=>r.semanas<=0)){
-      const ok=Math.random()<r.ch, R=RAR[r.rar], d=ok?R.ganho:-R.perda/4;
+      const ok=Math.random()<r.ch, R=RAR[r.rar], d=ok?R.ganho*.6:-R.perda/4;
       if(ok){ D.vitorias++; D.derrotas--; }
       S.prest=clamp(S.prest+d,0,100);
       notas.push(`${ok?'Tribunal reverteu':'Tribunal manteve'} a decisão em “${esc(r.titulo)}”: ${sgn(d)} reputação.`);
@@ -2209,7 +2208,7 @@ async function fimSemanaDP(){
     }
     D.recursos=D.recursos.filter(r=>r.semanas>0);
     const novos=novosDP(D.comarca); for(let i=0;i<novos;i++) D.casos.push(novoAssistido());
-    const est=semanaEstruturaPub(novos);
+    const est=[expedienteMes(),...semanaEstruturaPub(novos)];
     const vit=lote.filter(x=>x[2]).length;
     if(lote.length) addLog(`${lote.length} audiência(s) no mês: ${vit} êxito(s) e ${lote.length-vit} derrota(s).`,vit>=lote.length/2?'g':'r');
     const soma=lote.reduce((a,x)=>a+x[3],0);
@@ -2256,6 +2255,31 @@ async function promocaoDP(){
   if(prox===3) await modal(`<h2 class="hi">Topo da carreira</h2><p>Em ${S.semana-1} meses você virou ${fem('Defensor Público')}-Geral, com ${D.atendimentos} atendimentos e ${D.cartas} cartas de agradecimento.</p>`,[{t:'Continuar jogando',v:1,cls:'brass'}]);
 }
 
+// ===================== EXPEDIENTE E EQUIPE NAS CARREIRAS PÚBLICAS =====================
+// juiz, promotor e defensor seguem o mesmo padrão: todo mês a unidade gera expediente (rotina que não é caso),
+// a equipe absorve primeiro e o que sobrar sai da agenda do titular; casos épicos e lendários pedem assessor
+const EXPEDIENTE={
+  juiz:{nome:'Expediente do gabinete',desc:'Despachos, decisões de urgência, atendimento a advogados e audiências de rotina',complexo:'processo complexo'},
+  promotor:{nome:'Expediente da promotoria',desc:'Vistas de processos, ofícios, notificações e atendimento ao público',complexo:'investigação complexa'},
+  defensor:{nome:'Expediente da Defensoria',desc:'Triagem, atendimento ao público, ofícios e visitas a presídios',complexo:'caso complexo'},
+};
+const pubAtual=()=>!S?null:S.carreira==='juiz'?S.j:S.carreira==='promotor'?S.p:S.carreira==='defensor'?S.d:null;
+// 1 + metade do porte da comarca + o cargo (cresce com as promoções)
+const expediente=()=>{ const X=EXPEDIENTE[S&&S.carreira]&&pubAtual(); return X?1+Math.floor(CIDADES[X.comarca].pop/2)+X.cargo:0; };
+const expEquipe=()=>Math.min(gabinete(),expediente()), expPessoal=()=>Math.max(0,expediente()-gabinete());
+const gabCasos=()=>Math.max(0,gabinete()-expediente());
+const assessores=()=>S.u?S.u.equipe.filter(f=>f.funcao==='assessor'):[];
+function bonusAssessoria(c,add){ if(RORD.indexOf(c.rar)<3) return; const n=assessores().length, E=EXPEDIENTE[S.carreira];
+  if(!n) add(`Sem assessor para ${E.complexo}`,-10); else add(`Assessoria técnica (${n})`,Math.min(6,3*n)); }
+// fim do mês: em dia só com a equipe cobrindo tudo; feito pelo titular, pesa no estresse
+function expedienteMes(){ const p=expPessoal();
+  if(!p){ S.prest=clamp(S.prest+.5,0,100); return 'Expediente em dia, todo feito pela equipe: +0,5 reputação.'; }
+  S.estresse=clamp(S.estresse+1.5*p,0,100); return `<span class="lo">A equipe não deu conta do expediente: você cobriu ${p} bloco${p>1?'s':''}.</span>`; }
+const legendaExp='<span><i class="exp"></i>Expediente</span>';
+function linhaExpediente(){ const E=EXPEDIENTE[S.carreira], p=expPessoal();
+  return `<div class="row"><span class="name" title="${E.desc}. Cresce com a comarca e o cargo.">${E.nome}</span><span class="num ${p?'lo':''}">${expediente()} · equipe ${expEquipe()}${p?` · você ${p}`:''}</span></div>`; }
+const celulasEquipe=(gab,usados)=>{ const e=expEquipe(); return Array.from({length:gab},(_,i)=>`<div class="blk ${i<e?'exp':i<e+usados?'apoio':''}"></div>`).join(''); };
+{ const l0=livres; livres=function(){ return l0()-expediente(); }; }
 // ===================== EXONERAÇÃO =====================
 async function exonerar(){
   if(ocupado||S.carreira==='adv') return;
@@ -2357,7 +2381,7 @@ function filaPrioridade(){
   return [...S.casos].sort((a,b)=>a.prazo-b.prazo);
 }
 function autoDistribuir(){ const U=S.u, g=gestorAtual(); if(!U.auto||!g) return 0;
-  let livre=Math.max(0,(S.carreira==='promotor'?gabCasos():gabinete())-listaCasos().reduce((a,c)=>a+(c.semana||0),0)); if(!livre) return 0;
+  let livre=Math.max(0,(pubCar()?gabCasos():gabinete())-listaCasos().reduce((a,c)=>a+(c.semana||0),0)); if(!livre) return 0;
   const lista=filaPrioridade(); if(!lista.length) return 0;
   if(Math.random()*100>g.g) lista.sort(()=>Math.random()-.5);
   let n=0; while(livre>0){ const c=lista[n%lista.length]; c.semana=(c.semana||0)+1; livre--; n++; }
@@ -2587,7 +2611,7 @@ function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX(
   app.innerHTML=`${header()}
   <div class="mapgrid">
     <section class="mapbox">
-      <div class="panel-head" style="flex-wrap:wrap"><h2>${imovelAtual().nome}</h2><span class="label">${U.equipe.length}/${mesas()} mesas ocupadas · ${gabinete()} blocos da equipe por mês${S.carreira==='promotor'?` · ${expEquipe()} no expediente`:''}</span></div>
+      <div class="panel-head" style="flex-wrap:wrap"><h2>${imovelAtual().nome}</h2><span class="label">${U.equipe.length}/${mesas()} mesas ocupadas · ${gabinete()} blocos da equipe por mês${pubCar()&&expediente()?` · ${expEquipe()} no expediente`:''}</span></div>
       <svg viewBox="0 0 ${P.W} ${P.H}" role="img" aria-label="Planta da estrutura" style="border-radius:4px">${P.s}</svg>
       <div class="legend"><span><i style="background:#8FE3FF"></i>Equipe</span><span><i style="background:#FFC857"></i>Gestor</span><span><i style="background:#F4F8FF;border:1px solid var(--line)"></i>Você</span><span>Clique num espaço para construir ou trocar o cômodo</span></div>
     </section>
@@ -4045,8 +4069,9 @@ window.claude?.hot?.snapshot?.(()=>({S}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 // gancho para os testes automáticos (tests/): só existe quando a página abre com ?teste na URL
 if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set S(v){ S=v; },
-  calcChance, prepCaso, prepIdeal, expedienteMP, gabCasos, expPessoal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
+  calcChance, prepCaso, prepIdeal, expediente, gabCasos, expPessoal, expEquipe, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
   fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio,
-  mpDenunciar, mpArquivar, mpAcordo, calcCondenacao, chanceAcordoMP, promoOkMP, promocao:()=>promocao(), gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };
+  mpDenunciar, mpArquivar, mpAcordo, calcCondenacao, chanceAcordoMP, promoOkMP, promocao:()=>promocao(),
+  calcAcerto, minSent, concilia, chanceConc, jConciliar, promoOk, calcDefesa, chanceHC, dpHC, dpAcordo, chanceAcordoDP, promoOkDP, gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };
 })();
 </script>

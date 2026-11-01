@@ -45,6 +45,7 @@ function calcDefesa(c){
   if(n) add(`Atendimento e preparo (${n} de ~${prepIdeal(c)} blocos ideais)`,Math.round(prepCaso(c,n)*10)/10); else add('Sem atendimento prévio',-8);
   if((c.inst||1)===1&&n&&n<MIN_ATD[c.rar]) add(`Atendimento insuficiente (mínimo ${MIN_ATD[c.rar]} blocos)`,-5*(MIN_ATD[c.rar]-n));
   if(S.d.cargo>=1) add('Experiência na Defensoria',2*S.d.cargo);
+  bonusAssessoria(c,add);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
   if(S.traits.includes('orador')&&c.juri) add('Orador nato (júri)',5);
@@ -94,7 +95,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
       <dt>Assistido</dt><dd>${esc(c.assistido)}</dd>
       <dt>Parte contrária</dt><dd>${c.area==='penal'?'Ministério Público':c.adv==='estado'?'Poder público':ADV[c.adv].nome}</dd>
       <dt>Audiência</dt><dd>${c.prazo<=1?'<b class="mid">neste mês</b>':`em ${c.prazo} meses`}</dd>
-      <dt>Ganhar · perder</dt><dd><span class="hi">${sgn(R.ganho/2)}</span> · <span class="lo">${sgn(-R.perda/2)}</span> reputação</dd>
+      <dt>Ganhar · perder</dt><dd><span class="hi">${sgn(R.ganho*.3)}</span> · <span class="lo">${sgn(-R.perda/2)}</span> reputação</dd>
     </dl>
     <div class="vs">
       <span>Dificuldade</span><div class="bar"><i style="width:${c.d}%;background:var(--loss)"></i></div><span class="num">${c.d}</span>
@@ -116,31 +117,32 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
   </article>`; }
 
 function renderDefensoria(){
-  const D=S.d, gab=gabinete(), tot=D.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gab,tot), pessoal=tot-gabUsed;
+  const D=S.d, gab=gabinete(), expP=expPessoal(), tot=D.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gabCasos(),tot), pessoal=tot-gabUsed;
   const free=livres(), ordem=[...D.casos].sort((a,b)=>(a.prazo-b.prazo)||(b.preso-a.preso));
   const presosSem=D.casos.filter(c=>c.preso&&!(c.prep+(c.semana||0))).length, estaSemana=D.casos.filter(c=>c.prazo<=1).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
-  push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
-  push('descanso',Math.max(0,S.disp-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
+  push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
+  push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
-  const gabCells=Array.from({length:gab},(_,i)=>`<div class="blk ${i<gabUsed?'apoio':''}"></div>`).join('');
+  const gabCells=celulasEquipe(gab,gabUsed);
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
       <section class="panel">
         <div class="panel-head"><h2>Agenda do mês</h2><span class="num">${S.disp+gab-free}/${S.disp+gab} blocos</span></div>
         <div class="blocks">${grid}</div>
-        <span class="label">Estagiários e servidores · ${gab} blocos por mês</span>
+        <span class="label">Estagiários e servidores · ${gab} blocos por mês · ${expEquipe()} no expediente</span>
         <div class="blocks">${gabCells}</div>
-        <div class="legend"><span><i style="background:var(--b-case)"></i>Atendimentos (você)</span><span><i style="background:var(--b-apoio)"></i>Atendimentos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
+        <div class="legend">${legendaExp}<span><i style="background:var(--b-case)"></i>Atendimentos (você)</span><span><i style="background:var(--b-apoio)"></i>Atendimentos (equipe)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
         <div class="rows">
+          ${linhaExpediente()}
           <div class="row"><span class="name">Atendimentos (ajuste em cada pasta)</span><span class="num">${tot}</span></div>
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Todo caso vai à audiência na data marcada, com ou sem preparo. Assistido preso sem atendimento custa reputação extra se perder.</p>
+        <p class="label" style="margin:0">Todo caso vai à audiência na data marcada, com ou sem preparo. Audiência sem o atendimento mínimo custa reputação (como processo atrasado), e assistido preso sem atendimento custa ainda mais se perder.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraDP()}${painelSkills()}${painelDiario()}
@@ -160,8 +162,8 @@ function renderDefensoria(){
 function resultadoDP(c,ok){
   const D=S.d, R=RAR[c.rar]; let d;
   // só conta para a promoção o atendimento adequado (com o mínimo de blocos para a complexidade); o precário rende metade da reputação
-  const adequado=(c.prep||0)>=MIN_ATD[c.rar]; if(adequado) D.atendimentos++; else D.precarios=(D.precarios||0)+1;
-  if(ok){ d=(R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0))*(adequado?.5:.25); D.vitorias++; if(c.preso) D.cartas++; }
+  const adequado=(c.prep||0)>=MIN_ATD[c.rar]; if(adequado) D.atendimentos++; else { D.precarios=(D.precarios||0)+1; D.precMes=(D.precMes||0)+1; }
+  if(ok){ d=(R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0))*(adequado?.3:.15); D.vitorias++; if(c.preso) D.cartas++; }
   else { d=-R.perda/2-(c.preso&&!c.prep?.5:0); D.derrotas++; }
   S.prest=clamp(S.prest+d,0,100); ganharXp(c,(ok?1:1.5)*.5);
   return d;
@@ -213,9 +215,9 @@ async function fimSemanaDP(){
   if(ocupado) return; ocupado=true;
   try{
     autoDistribuir();
-    const D=S.d, C=CARGOS_DP[D.cargo], gab=gabinete();
+    const D=S.d, C=CARGOS_DP[D.cargo];
     const tot=D.casos.reduce((a,c)=>a+(c.semana||0),0);
-    const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
+    const pessoal=Math.max(0,tot-gabCasos())+expPessoal()+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
@@ -230,9 +232,13 @@ async function fimSemanaDP(){
       const ch=calcDefesa(c).ch, ok=Math.random()<ch; lote.push([c,ch,ok,resultadoDP(c,ok)]);
     }
     const notas=[];
+    // audiência sem o atendimento mínimo é o "atraso" da Defensoria: mesma penalidade (com teto) dos processos atrasados do juiz e do promotor
+    const prec=D.precMes||0; D.precMes=0;
+    if(prec){ const pe=penAtrasoPub(prec); S.prest=clamp(S.prest-pe,0,100); S.estresse=clamp(S.estresse+Math.min(10,.5*prec),0,100);
+      notas.push(`<span class="lo">${prec} audiência${prec>1?'s':''} sem o atendimento mínimo: ${sgn(-pe)} reputação.</span>`); }
     for(const r of D.recursos) r.semanas--;
     for(const r of D.recursos.filter(r=>r.semanas<=0)){
-      const ok=Math.random()<r.ch, R=RAR[r.rar], d=ok?R.ganho:-R.perda/4;
+      const ok=Math.random()<r.ch, R=RAR[r.rar], d=ok?R.ganho*.6:-R.perda/4;
       if(ok){ D.vitorias++; D.derrotas--; }
       S.prest=clamp(S.prest+d,0,100);
       notas.push(`${ok?'Tribunal reverteu':'Tribunal manteve'} a decisão em “${esc(r.titulo)}”: ${sgn(d)} reputação.`);
@@ -240,7 +246,7 @@ async function fimSemanaDP(){
     }
     D.recursos=D.recursos.filter(r=>r.semanas>0);
     const novos=novosDP(D.comarca); for(let i=0;i<novos;i++) D.casos.push(novoAssistido());
-    const est=semanaEstruturaPub(novos);
+    const est=[expedienteMes(),...semanaEstruturaPub(novos)];
     const vit=lote.filter(x=>x[2]).length;
     if(lote.length) addLog(`${lote.length} audiência(s) no mês: ${vit} êxito(s) e ${lote.length-vit} derrota(s).`,vit>=lote.length/2?'g':'r');
     const soma=lote.reduce((a,x)=>a+x[3],0);

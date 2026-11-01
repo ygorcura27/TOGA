@@ -43,6 +43,7 @@ const PROBATORIO=24;
 const penAtrasoPub=n=>Math.min(4,.3*n*fatorAtraso()); // atraso pesa, mas com teto mensal para não virar espiral sem volta
 function posse(){ S.posseEm=S.semana; S.prest=Math.max(S.prest,30); addLog(`Estágio probatório de ${PROBATORIO} meses: até o mês ${S.semana+PROBATORIO}, reputação zerada não tira você do cargo.`); }
 const probatorio=()=>S.semana-(S.posseEm||-99)<PROBATORIO;
+const GANHO_J={transita:.15,mantida:.4}; // reputação por sentença, em fração do ganho da raridade
 const MIN_SENT={comum:2,incomum:3,raro:4,epico:6,lendario:9}; // blocos de estudo acumulados para poder sentenciar
 const minSent=p=>MIN_SENT[p.rar];
 function novoProcesso(){
@@ -60,6 +61,7 @@ function calcAcerto(p){
   const skill=.5*S.skills[p.area]+.3*S.skills.escrita+.2*S.skills.analise;
   const n=(p.estudo||0)+(p.semana||0); add(`Estudo do processo (${n} de ~${prepIdeal(p)} blocos ideais)`,Math.round(prepCaso(p,n)*10)/10);
   if(S.j.cargo>=2) add('Decisão colegiada',5);
+  bonusAssessoria(p,add);
   if(S.energia<30) add('Cansaço',-10);
   if(S.estresse>70) add('Estresse alto',-8);
   if(S.traits.includes('ansioso') && RORD.indexOf(p.rar)>=3) add('Ansiedade',-5);
@@ -140,8 +142,8 @@ function procCard(p){ const R=RAR[p.rar], A=AREAS[p.area], cc=calcAcerto(p), apr
       <dt>Partes</dt><dd>${esc(p.cliente)} × ${ADV[p.adv].nome}</dd>
       <dt>Valor da causa</dt><dd class="num">${brl(p.valor)}</dd>
       <dt>No acervo há</dt><dd class="num ${atras?'lo':''}">${p.idade} meses · meta ${p.meta}</dd>
-      <dt>Sem recurso</dt><dd class="hi">${sgn(R.ganho/3)} reputação</dd>
-      <dt>Mantida no recurso</dt><dd class="hi">${sgn(R.ganho)} reputação</dd>
+      <dt>Sem recurso</dt><dd class="hi">${sgn(R.ganho*GANHO_J.transita)} reputação</dd>
+      <dt>Mantida no recurso</dt><dd class="hi">${sgn(R.ganho*GANHO_J.mantida)} reputação</dd>
       <dt>Reformada</dt><dd class="lo">${sgn(-R.perda)} reputação</dd>
       <dt>Chance de recurso</dt><dd class="num">${apr?pct(apr):'sem recurso'}</dd>
       ${p.juri?'<dt>Rito</dt><dd><b>Tribunal do júri</b></dd>':''}
@@ -163,14 +165,14 @@ function procCard(p){ const R=RAR[p.rar], A=AREAS[p.area], cc=calcAcerto(p), apr
   </article>`; }
 
 function renderGabinete(){
-  const J=S.j, gab=gabinete(), tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0), gabUsed=Math.min(gab,tot), pessoal=tot-gabUsed;
+  const J=S.j, gab=gabinete(), expP=expPessoal(), tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0), gabUsed=Math.min(gabCasos(),tot), pessoal=tot-gabUsed;
   const free=livres(), atrasados=J.acervo.filter(p=>p.idade>p.meta).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
-  push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
-  push('descanso',Math.max(0,S.disp-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
+  push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
+  push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
-  const gabCells=Array.from({length:gab},(_,i)=>`<div class="blk ${i<gabUsed?'apoio':''}"></div>`).join('');
+  const gabCells=celulasEquipe(gab,gabUsed);
   const ordem=[...J.acervo].sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta));
   app.innerHTML=`${header()}
   <div class="grid">
@@ -178,16 +180,17 @@ function renderGabinete(){
       <section class="panel">
         <div class="panel-head"><h2>Agenda do mês</h2><span class="num">${S.disp+gab-free}/${S.disp+gab} blocos</span></div>
         <div class="blocks">${grid}</div>
-        <span class="label">Gabinete · ${gab} blocos de assessores por mês</span>
+        <span class="label">Gabinete · ${gab} blocos de assessores por mês · ${expEquipe()} no expediente</span>
         <div class="blocks">${gabCells}</div>
-        <div class="legend"><span><i style="background:var(--b-case)"></i>Processos (você)</span><span><i style="background:var(--b-apoio)"></i>Processos (gabinete)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
+        <div class="legend">${legendaExp}<span><i style="background:var(--b-case)"></i>Processos (você)</span><span><i style="background:var(--b-apoio)"></i>Processos (gabinete)</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso</span></div>
         <div class="rows">
+          ${linhaExpediente()}
           <div class="row"><span class="name">Processos (ajuste em cada pasta)</span><span class="num">${tot}</span></div>
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Todo processo com pelo menos 1 bloco é sentenciado no fim do mês. Os blocos do gabinete são usados primeiro e não gastam sua energia.</p>
+        <p class="label" style="margin:0">Todo processo com pelo menos 1 bloco é sentenciado no fim do mês. A equipe cuida primeiro do expediente e depois dos processos, sem gastar sua energia; o expediente que ela não cobre sai da sua agenda.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraJuiz()}${painelSkills()}${painelDiario()}
@@ -226,9 +229,9 @@ async function fimSemanaJuiz(){
   if(ocupado) return; ocupado=true;
   try{
     autoDistribuir();
-    const J=S.j, C=CARGOS[J.cargo], gab=gabinete();
+    const J=S.j, C=CARGOS[J.cargo];
     const tot=J.acervo.reduce((a,p)=>a+(p.semana||0),0);
-    const pessoal=Math.max(0,tot-gab)+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
+    const pessoal=Math.max(0,tot-gabCasos())+expPessoal()+S.agenda.estudo+acadBlocos(), desc=Math.max(0,S.disp-pessoal-S.agenda.lazer-vidaBlocos());
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
       for(let i=0;i<S.agenda.estudo;i++) S.skills[k]=clamp(S.skills[k]+1.1*mult*(1-S.skills[k]/110),0,100);
       S.estudoTotal=(S.estudoTotal||0)+S.agenda.estudo; }
@@ -247,28 +250,28 @@ async function fimSemanaJuiz(){
       const ch=calcAcerto(p).ch, ap=chanceRecursoJ(p), rec=Math.random()<ap;
       J.sentencas++; xpJuiz(p,1);
       if(rec){ J.recursos.push({titulo:p.titulo,rar:p.rar,ch,semanas:rint(3,6),inst:J.cargo>=3?'STF':J.cargo>=2?supNome():'Tribunal'}); sent.push([p,ch,'Recorrida: vai ao tribunal']); }
-      else { const g=RAR[p.rar].ganho/3; S.prest=clamp(S.prest+g,0,100); J.transitadas++; sent.push([p,ch,`Transitou em julgado · ${sgn(g)}`]); }
+      else { const g=RAR[p.rar].ganho*GANHO_J.transita; S.prest=clamp(S.prest+g,0,100); J.transitadas++; sent.push([p,ch,`Transitou em julgado · ${sgn(g)}`]); }
     }
     if(sent.length) addLog(`${sent.length} sentença(s) proferida(s).`);
     // tribunal julga os recursos
     for(const r of J.recursos) r.semanas--;
     for(const r of J.recursos.filter(r=>r.semanas<=0)){
       const ok=Math.random()<r.ch, R=RAR[r.rar];
-      if(ok){ J.mantidas++; S.prest=clamp(S.prest+R.ganho,0,100); xpJuiz({area:'escrita',rar:r.rar},0); }
+      if(ok){ J.mantidas++; S.prest=clamp(S.prest+R.ganho*GANHO_J.mantida,0,100); xpJuiz({area:'escrita',rar:r.rar},0); }
       else { J.reformas++; S.prest=clamp(S.prest-R.perda,0,100); S.estresse=clamp(S.estresse+4,0,100); }
-      dec.push([r,ok]); addLog(`${r.inst} ${ok?'manteve':'reformou'} sua sentença em “${r.titulo}”. ${sgn(ok?R.ganho:-R.perda)} reputação.`,ok?'g':'r');
+      dec.push([r,ok]); addLog(`${r.inst} ${ok?'manteve':'reformou'} sua sentença em “${r.titulo}”. ${sgn(ok?R.ganho*GANHO_J.mantida:-R.perda)} reputação.`,ok?'g':'r');
     }
     J.recursos=J.recursos.filter(r=>r.semanas>0);
     // acervo envelhece e chegam processos novos
     let atras=0; for(const p of J.acervo){ p.idade++; p.semana=0; if(p.idade>p.meta) atras++; }
     if(atras){ S.prest=clamp(S.prest-penAtrasoPub(atras),0,100); S.estresse=clamp(S.estresse+Math.min(10,.5*atras),0,100); }
     const novos=novosPorSemana(J.comarca); for(let i=0;i<novos;i++) J.acervo.push(novoProcesso());
-    const est=semanaEstruturaPub(novos);
+    const est=[expedienteMes(),...semanaEstruturaPub(novos)];
     // resumo
     await modal(`<span class="label">Mês ${S.semana} · ${nomeCargo(J.cargo)} · ${CIDADES[J.comarca].nome}</span><h2>Balanço do gabinete</h2>
       <span class="label">Sentenças (${sent.length})</span>
       ${sent.length?`<ul class="break">${sent.map(([p,ch,t])=>`<li><span>${esc(p.titulo)}${ch!==null?` · ${pct(ch)} de acerto`:''}</span><span class="num">${t}</span></li>`).join('')}</ul>`:'<p style="font-size:12.5px;color:var(--muted)">Nenhuma sentença neste mês.</p>'}
-      ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
+      ${dec.length?`<span class="label">Decisões do tribunal</span><ul class="break">${dec.map(([r,ok])=>`<li><span>${esc(r.titulo)}</span><span class="num ${ok?'hi':'lo'}">${ok?'Mantida '+sgn(RAR[r.rar].ganho*GANHO_J.mantida):'Reformada '+sgn(-RAR[r.rar].perda)}</span></li>`).join('')}</ul>`:''}
       ${`<ul class="break">${est.map(n=>`<li><span>${n}</span></li>`).join('')}</ul>`}
       <dl class="meta"><dt>Processos atrasados</dt><dd class="num ${atras?'lo':''}">${atras}${atras?` · ${sgn(-penAtrasoPub(atras))} reputação`:''}</dd>
         <dt>Processos novos</dt><dd class="num">${novos}</dd><dt>Salário menos custo de vida</dt><dd class="num hi">${brl(C.salario-CUSTO_VIDA_MAG)}</dd></dl>`,[{t:'Continuar',v:1,cls:'brass'}]);
