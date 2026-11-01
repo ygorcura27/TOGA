@@ -1,6 +1,9 @@
 // ===================== MODAL =====================
 const mroot=document.getElementById('modal-root');
+const MODO_TESTE=/[?&]teste/.test(location.search);
 function modal(html,botoes,onMount){
+  // simulações rápidas (tests/sim-*.cjs): com ?teste, window.__rapido responde o modal na hora, sem animação
+  if(MODO_TESTE&&window.__rapido){ const v=window.__rapido(html,botoes||[]); if(v!==undefined) return Promise.resolve(v); }
   return new Promise(res=>{
     mroot.innerHTML=`<div class="ov"><div class="modal" role="dialog" aria-modal="true">${html}
       ${botoes&&botoes.length?`<div class="actions">${botoes.map((b,i)=>`<button class="btn ${b.cls||''}" data-mi="${i}" ${b.dis?'disabled':''}>${b.t}</button>`).join('')}</div>`:''}</div></div>`;

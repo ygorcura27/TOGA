@@ -151,6 +151,17 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 ### 3.4 O mesmo sistema em todas as carreiras
 - **Juiz:** julga um **acervo** de processos da sua vara. A taxa de reforma das sentenças nas instâncias superiores conta para a promoção.
 - **Promotor:** denuncia, arquiva ou propõe acordo. As condenações e a taxa de acerto contam.
+  - **Expediente da promotoria:** vistas, ofícios, notificações e atendimento ao público, todo mês. São 1 + metade do porte da comarca + o cargo, em blocos. A equipe cobre primeiro; o que sobrar sai da agenda do promotor e sobe o estresse. Com tudo coberto pela equipe, +0,5 de reputação por mês.
+  - **Investigações complexas:** inquéritos épicos e lendários sem assessor têm −10 de chance; cada assessor dá +3, até +6.
+  - **Simulação** (`npm run sim:promotor`, 12 partidas de 24 meses em São Paulo, robô com 9 blocos próprios por mês):
+
+| Equipe | Carreiras encerradas | Reputação média |
+|---|---|---|
+| Nenhuma | 9 de 12 | 1 |
+| Inicial (servidor + estagiário) | 0 | 33 |
+| 2 assessores + servidor + estagiário | 0 | 89 |
+
+- **Equipe pública:** o acervo grande pesa pouco na moral (teto de −2 por mês) e servidor efetivo raramente pede remoção. Com o orçamento negativo, o cargo em comissão mais caro é exonerado, em vez de derrubar a moral de todos. A tela de contratação mostra se o novo salário cabe no orçamento.
 - **Defensor:** atende, defende e consegue solturas. Os atendimentos e a taxa de vitória contam.
 
 ---

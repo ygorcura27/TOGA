@@ -11,4 +11,5 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 // gancho para os testes automáticos (tests/): só existe quando a página abre com ?teste na URL
 if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set S(v){ S=v; },
   calcChance, prepCaso, prepIdeal, expedienteMP, gabCasos, expPessoal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
-  fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio };
+  fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio,
+  mpDenunciar, mpArquivar, mpAcordo, calcCondenacao, chanceAcordoMP, promoOkMP, promocao:()=>promocao(), gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };

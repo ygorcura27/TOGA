@@ -988,7 +988,10 @@ function renderInicio(){
 
 // ===================== MODAL =====================
 const mroot=document.getElementById('modal-root');
+const MODO_TESTE=/[?&]teste/.test(location.search);
 function modal(html,botoes,onMount){
+  // simulações rápidas (tests/sim-*.cjs): com ?teste, window.__rapido responde o modal na hora, sem animação
+  if(MODO_TESTE&&window.__rapido){ const v=window.__rapido(html,botoes||[]); if(v!==undefined) return Promise.resolve(v); }
   return new Promise(res=>{
     mroot.innerHTML=`<div class="ov"><div class="modal" role="dialog" aria-modal="true">${html}
       ${botoes&&botoes.length?`<div class="actions">${botoes.map((b,i)=>`<button class="btn ${b.cls||''}" data-mi="${i}" ${b.dis?'disabled':''}>${b.t}</button>`).join('')}</div>`:''}</div></div>`;
@@ -2365,10 +2368,10 @@ function removeFunc(id){ const U=S.u; U.equipe=U.equipe.filter(f=>f.id!==id); if
 function semanaEquipe(){ const U=S.u, linhas=[], carga=pendentes()/(trabalhadores().length+1), semGestor=U.equipe.length>4&&!gestorAtual();
   if(temSala('copa')) S.estresse=clamp(S.estresse-3,0,100);
   for(const f of U.equipe){ f.semanas++;
-    let dm=(60-f.moral)*.1+(temSala('copa')?3:0)-Math.max(0,carga-8)*.5-(semGestor?2:0);
+    let dm=(60-f.moral)*.1+(temSala('copa')?3:0)-Math.min(pubCar()?2:99,Math.max(0,carga-8)*.5)-(semGestor?2:0); // no serviço público o acervo grande é a regra: pesa, mas com teto
     if(f.salBase) dm+=(f.sal/f.salBase-1)*20;
     f.moral=clamp(f.moral+dm+rnd(-2,2),0,100); f.q=clamp(f.q+.15,0,95); }
-  for(const f of [...U.equipe]) if(f.moral<25&&f.funcao!=='socio'&&Math.random()<.35){
+  for(const f of [...U.equipe]) if(f.moral<25&&f.funcao!=='socio'&&Math.random()<(f.funcao==='servidor'?.08:.35)){ // servidor efetivo raramente pede remoção
     removeFunc(f.id);
     const t=`${f.nome} (${nomeFuncao(f)}) ${pubCar()?'pediu remoção para outra unidade':'pediu demissão'} por moral baixa.`;
     linhas.push(t); addLog(t,'r');
@@ -2394,7 +2397,10 @@ function semanaEstruturaPub(novos){ const U=S.u, conc=concluidos()-U.lastConcl; 
   const rec=receitaPub(), desp=despesasPub(); U.orc+=rec-desp;
   const linhas=[`Índice de efetividade: <b>${U.efet.toLocaleString('pt-BR')}</b> (${conc} concluídos e ${novos} novos neste mês)`,
     `Orçamento da unidade: +${brl(rec)} do tribunal e −${brl(desp)} com equipe e estrutura. Saldo: ${brl(U.orc)}`];
-  if(U.orc<0){ U.efet=Math.max(0,U.efet-5); for(const f of U.equipe) f.moral=clamp(f.moral-5,0,100); linhas.push('<span class="lo">Orçamento negativo: os cortes derrubaram a moral da equipe e a efetividade.</span>'); }
+  if(U.orc<0){ // sem dinheiro, o cargo em comissão mais caro é exonerado; a equipe sente, mas não desmorona
+    const caro=[...U.equipe].filter(f=>f.sal>0).sort((a,b)=>b.sal-a.sal)[0];
+    if(caro){ removeFunc(caro.id); const t=`Orçamento negativo: ${caro.nome} (${nomeFuncao(caro)}) foi exonerado(a) por falta de verba.`; linhas.push(`<span class="lo">${t}</span>`); addLog(t,'r'); }
+    U.efet=Math.max(0,U.efet-2); for(const f of U.equipe) f.moral=clamp(f.moral-2,0,100); }
   if(U.efet>=80){ const g=Math.round(salarioAtual()*.1); S.caixa+=g; linhas.push(`<span class="hi">Gratificação por desempenho: +${brl(g)}</span>`); }
   linhas.push(...semanaEquipe());
   return linhas; }
@@ -2421,8 +2427,10 @@ async function contratar(funcao){
         return `<button class="opt" data-mv="${k}"><span>${A.nome}</span><b class="num">${mn}–${mx}</b><small>Skill dos candidatos na área · ${'★'.repeat(Math.min(...est))}${Math.max(...est)>Math.min(...est)?' a '+'★'.repeat(Math.max(...est)):''}${at.includes(k)?' · área já atendida':chefe?' · algum pode abrir a área':''}</small></button>`; }).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
     if(!area) return; cands=porArea[area]; }
   else cands=[gerarCandidato(funcao),gerarCandidato(funcao),gerarCandidato(funcao)];
+  const saldoMes=pubCar()?receitaPub()-despesasPub():0;
   const origem=funcao==='associado'?'Sem salário fixo: fica com 10% dos honorários que o escritório recebe (até 30% somando todos os associados)':funcao==='servidor'?'Servidores disponíveis para requisição (pagos pelo tribunal)':pubCar()?'Salário pago pelo orçamento da unidade':'Salário pago pelo caixa do escritório';
   const v=await modal(`<h2>${funcao==='servidor'?'Requisitar':'Contratar'}: ${funcao==='gestor'?nomeGestor():F.nome}</h2><p>${origem}. ${F.bl?`Rende cerca de ${F.bl} blocos por mês, conforme a moral.`:'Não atende casos, mas melhora a organização.'}</p>
+    ${pubCar()&&F.sal?`<p class="${saldoMes-F.sal<0?'lo':''}" style="font-size:12.5px">Hoje o orçamento da unidade fecha o mês em ${brl(saldoMes)} (repasse de ${brl(receitaPub())} menos ${brl(despesasPub())} de despesas). ${saldoMes-F.sal<0?`Com mais este salário fica negativo: quando o saldo acabar, o cargo em comissão mais caro é exonerado.`:'Cabe no orçamento.'}</p>`:''}
     <div class="opts">${cands.map((c,i)=>`<button class="opt" data-mv="${i}"><span>${esc(c.nome)}</span><b class="num">${F.sal?brl(c.sal)+'/mês':'sem custo'}</b><small>Qualidade ${c.q}${F.g?` · gestão ${c.g}`:''} · moral ${c.moral}${c.area?` · ${AREAS[c.area].nome} ${'★'.repeat(estrelasF(c))} (${c.ae})${estrelasF(c)>=3&&RESP_FUNCS.includes(funcao)?' · pode chefiar a área':''}`:''}</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
   if(v===''||v===undefined) return;
   const c=cands[+v]; U.equipe.push(c); if(funcao==='gestor'&&!U.gestorId) U.gestorId=c.id;
@@ -4038,6 +4046,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 // gancho para os testes automáticos (tests/): só existe quando a página abre com ?teste na URL
 if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set S(v){ S=v; },
   calcChance, prepCaso, prepIdeal, expedienteMP, gabCasos, expPessoal, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
-  fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio };
+  fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio,
+  mpDenunciar, mpArquivar, mpAcordo, calcCondenacao, chanceAcordoMP, promoOkMP, promocao:()=>promocao(), gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };
 })();
 </script>

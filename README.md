@@ -40,3 +40,5 @@ npm test                          # confere se o index.html está montado, roda 
 ```
 - `tests/regras.test.cjs`: abre o jogo com `?teste` e confere as regras centrais: chance entre 5% e 95%, honorários de 20%, preparação por porte, manutenção, limite de casos, teto das áreas e retirada.
 - `tests/carreiras.test.cjs`: começa cada carreira, joga alguns meses com um robô e falha se aparecer erro de JavaScript, texto antigo ("semana") ou save perdido. `MESES=24 npm test` joga mais tempo.
+- `npm run sim` (`tests/sim-niveis.cjs`): ganho mensal do escritório em cada nível.
+- `npm run sim:promotor` (`tests/sim-promotor.cjs`): simulação rápida do promotor. O robô chama as funções do jogo direto e os modais respondem na hora (`window.__rapido`, só com `?teste`), então cada partida de 24 meses leva uns 2 segundos. Repete várias partidas por cenário de equipe e mostra médias: `node tests/sim-promotor.cjs 24 20`.
