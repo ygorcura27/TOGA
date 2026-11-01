@@ -101,7 +101,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
       <span>Dificuldade</span><div class="bar"><i style="width:${c.d}%;background:var(--loss)"></i></div><span class="num">${c.d}</span>
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
-    <div class="chance"><span class="label">Chance de êxito</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de êxito</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no caso</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}

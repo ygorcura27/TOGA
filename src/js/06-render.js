@@ -57,7 +57,7 @@ function render(){
 function header(){
   if(S.carreira==='estudante'||S.carreira==='academico'){ const est=S.carreira==='estudante', F=S.fac;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${est?FACS[F.tier].nome+' · '+(F.fase==='oab'?'formado, preparando a OAB':F.semestre+'º semestre'):nomeAcad()} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${est?FACS[F.tier].nome+' · '+(F.fase==='oab'?'formado, preparando a OAB':F.semestre+'º semestre'):nomeAcad()} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Dinheiro</span><b class="${S.caixa<0?'lo':''}">${brl(S.caixa)}</b></div>
     ${est?`<div class="stat"><span class="label">CR</span><b>${crTxt()}</b></div>`:`<div class="stat"><span class="label">Índice de produção</span><b>${S.ac.indice}</b></div><div class="stat"><span class="label">Prestígio</span><b>${Math.round(S.prest)}</b><div class="meter"><i style="width:${S.prest}%"></i></div></div>`}
     <div class="stat"><span class="label">Energia</span><b>${Math.round(S.energia)}</b><div class="meter e"><i style="width:${S.energia}%"></i></div></div>
@@ -71,7 +71,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='defensor'){ const D=S.d, presos=D.casos.filter(c=>c.preso).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_DP[D.cargo].nome)} · ${CIDADES[D.comarca].nome} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_DP[D.cargo].nome)} · ${CIDADES[D.comarca].nome} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/mês</span><b>${brl(CARGOS_DP[D.cargo].salario)}</b></div>
@@ -93,7 +93,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='promotor'){ const P=S.p, atr=P.casos.filter(c=>c.fase==='inq'&&c.idade>c.meta).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_MP[P.cargo].nome)} · ${CIDADES[P.comarca].nome} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_MP[P.cargo].nome)} · ${CIDADES[P.comarca].nome} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/mês</span><b>${brl(CARGOS_MP[P.cargo].salario)}</b></div>
@@ -115,7 +115,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='juiz'){ const J=S.j, atr=J.acervo.filter(p=>p.idade>p.meta).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${nomeCargo(J.cargo)}${J.cargo<2?' · '+VARAS[vara()]:''} · ${CIDADES[J.comarca].nome} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${nomeCargo(J.cargo)}${J.cargo<2?' · '+VARAS[vara()]:''} · ${CIDADES[J.comarca].nome} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/mês</span><b>${brl(CARGOS[J.cargo].salario)}</b></div>
@@ -136,7 +136,7 @@ function header(){
       <button class="tab ${view==='brasil'?'on':''}" data-act="view" data-v="brasil">Brasil</button>
     </nav></header>`; }
   return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · Advocacia · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · Advocacia · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa do escritório</span><b class="${S.caixa<0?'lo':''}">${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Pessoal</span><b class="${S.bolso<0?'lo':''}">${brl(S.bolso)}</b></div>
     <div class="stat"><span class="label">A receber</span><b>${brl(S.aReceber)}</b></div>
@@ -363,7 +363,7 @@ function pasta(c,ativo){
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
     <span class="label" style="text-transform:none;letter-spacing:0;font-weight:400">${skillsTxt}</span>
-    <div class="chance"><span class="label">Chance de vitória</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de vitória</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no caso</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}

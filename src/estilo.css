@@ -1,30 +1,30 @@
 /* Layout: mesa de trabalho do advogado — barra de status no topo, agenda à esquerda, pastas de processo à direita */
 :root{
-  --bg:#E7EAEE; --surface:#F6F7F9; --ink:#1A2130; --muted:#5B6474; --line:#C9CED6;
-  --folder:#EFE3C2; --folder-edge:#D9C893; --brass:#9C7A22; --brass-soft:#E9DDB8;
-  --win:#2E7D4F; --loss:#B23A35; --warn:#B7791F;
-  --r-comum:#7D838D; --r-incomum:#3E8E5A; --r-raro:#2F6DB5; --r-epico:#7B4BB3; --r-lendario:#C27C12;
-  --b-case:#2F6DB5; --b-estudo:#7B4BB3; --b-lazer:#3E8E5A; --b-apoio:#9C7A22; --b-descanso:#D3D8DF; --b-familia:#C2577A; --b-saude:#2A9D8F;
-  --overlay:rgba(16,20,28,.55); --land:#D3DAE3; --land-edge:#A9B3C1; --water:#C3D6E8;
-  --f-display:"Spectral SC", "Cormorant SC", Georgia, serif;
-  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --bg:#F7F5F0; --surface:#FFFFFF; --ink:#14161B; --muted:#5E6470; --line:#E2DED4;
+  --folder:#FFFFFF; --folder-edge:#D6D1C4; --brass:#8E6B1F; --brass-soft:#F6EBD3; --gold:#C9A24A;
+  --win:#1F7A4D; --loss:#B23A35; --warn:#9A6200;
+  --r-comum:#6B717C; --r-incomum:#2E8A5C; --r-raro:#2C5FA8; --r-epico:#7A4BB5; --r-lendario:#A86A00;
+  --b-case:#3A6FB8; --b-estudo:#7A55BF; --b-lazer:#3F9466; --b-apoio:#B08A2E; --b-descanso:#E9E5DC; --b-familia:#B9597A; --b-saude:#2A9D8F;
+  --overlay:rgba(20,22,27,.45); --land:#ECE8DF; --land-edge:#C9C3B5; --water:#D4E2EE; --shadow:0 10px 30px rgba(20,22,27,.07);
+  --f-display:"Cormorant Garamond", Georgia, serif;
+  --f-body:Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#12151B; --surface:#1B2029; --ink:#E6E3DA; --muted:#9AA2B0; --line:#2E3542;
-  --folder:#2A2619; --folder-edge:#4A4125; --brass:#D7B357; --brass-soft:#3A331C;
-  --win:#5DBB85; --loss:#E2716B; --warn:#E0A84A;
-  --r-comum:#9BA1AB; --r-incomum:#5DBB85; --r-raro:#6EA2E6; --r-epico:#A985DA; --r-lendario:#E6A53C;
-  --b-case:#4F8BD6; --b-estudo:#9670CC; --b-lazer:#4FA874; --b-apoio:#C9A440; --b-descanso:#2E3542; --b-familia:#D9789A; --b-saude:#46BBAA;
-  --overlay:rgba(0,0,0,.65); --land:#232A35; --land-edge:#3B4554; --water:#1D2D3E; color-scheme:dark;
+  --bg:#0D1016; --surface:#141922; --ink:#ECE5D5; --muted:#A3A9B6; --line:#262B36;
+  --folder:#151A24; --folder-edge:#343B49; --brass:#D4B061; --brass-soft:#3A3220; --gold:#C9A24A;
+  --win:#6FB38A; --loss:#E2716B; --warn:#E7B45A;
+  --r-comum:#A3A9B6; --r-incomum:#6FB38A; --r-raro:#8DB4E8; --r-epico:#B49AE6; --r-lendario:#E7B45A;
+  --b-case:#4C7FC2; --b-estudo:#8C6BC9; --b-lazer:#5FA67D; --b-apoio:#B8913E; --b-descanso:#2A303C; --b-familia:#C8728F; --b-saude:#46BBAA;
+  --overlay:rgba(0,0,0,.65); --land:#1C222D; --land-edge:#343B49; --water:#16253A; --shadow:0 20px 40px rgba(0,0,0,.35); color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --bg:#12151B; --surface:#1B2029; --ink:#E6E3DA; --muted:#9AA2B0; --line:#2E3542;
-  --folder:#2A2619; --folder-edge:#4A4125; --brass:#D7B357; --brass-soft:#3A331C;
-  --win:#5DBB85; --loss:#E2716B; --warn:#E0A84A;
-  --r-comum:#9BA1AB; --r-incomum:#5DBB85; --r-raro:#6EA2E6; --r-epico:#A985DA; --r-lendario:#E6A53C;
-  --b-case:#4F8BD6; --b-estudo:#9670CC; --b-lazer:#4FA874; --b-apoio:#C9A440; --b-descanso:#2E3542; --b-familia:#D9789A; --b-saude:#46BBAA;
-  --overlay:rgba(0,0,0,.65); --land:#232A35; --land-edge:#3B4554; --water:#1D2D3E; color-scheme:dark;
+  --bg:#0D1016; --surface:#141922; --ink:#ECE5D5; --muted:#A3A9B6; --line:#262B36;
+  --folder:#151A24; --folder-edge:#343B49; --brass:#D4B061; --brass-soft:#3A3220; --gold:#C9A24A;
+  --win:#6FB38A; --loss:#E2716B; --warn:#E7B45A;
+  --r-comum:#A3A9B6; --r-incomum:#6FB38A; --r-raro:#8DB4E8; --r-epico:#B49AE6; --r-lendario:#E7B45A;
+  --b-case:#4C7FC2; --b-estudo:#8C6BC9; --b-lazer:#5FA67D; --b-apoio:#B8913E; --b-descanso:#2A303C; --b-familia:#C8728F; --b-saude:#46BBAA;
+  --overlay:rgba(0,0,0,.65); --land:#1C222D; --land-edge:#343B49; --water:#16253A; --shadow:0 20px 40px rgba(0,0,0,.35); color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{min-height:100%}
@@ -229,3 +229,64 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .trib-head b{font-family:var(--f-display);font-size:14px}
 .ret{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:5px}
 .ret-row{display:flex;gap:8px;flex-wrap:wrap} .ret-row input{flex:1;min-width:120px;font:inherit;font-family:var(--f-mono);padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
+
+/* ===== Direção de arte A · Tribunal Noturno (vale para o modo claro e o noturno) ===== */
+body{font-size:14px;transition:background-color .3s,color .3s}
+h1,h2,h3{font-weight:600;letter-spacing:.01em}
+.top{border-bottom:1px solid var(--line);padding:14px 0 16px;gap:12px 26px}
+.brand{align-items:center;gap:12px}
+.brand .logo{width:32px;height:32px;fill:none;stroke:var(--gold);stroke-width:1.4;flex:none}
+.brand h1{font-size:30px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.brand span{letter-spacing:.04em}
+.tema{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line);border-radius:22px;padding:5px 12px 5px 5px;font-size:12px;color:var(--ink)}
+.tema .sw{width:38px;height:22px;border-radius:11px;background:var(--b-descanso);position:relative;display:block;flex:none}
+.tema .sw i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--gold);transition:left .25s}
+.tema[aria-pressed="true"] .sw i{left:19px}
+.stat .label{letter-spacing:.12em}
+.stat b{font-size:16px}
+.spark{width:64px;height:18px;display:block} .spark polyline{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.meter{height:6px;border-radius:3px;background:var(--line)} .meter i{border-radius:3px;background:var(--gold);transition:width .6s ease}
+.meter.e i{background:var(--win)} .meter.s i{background:var(--warn)}
+.panel{border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+.panel-head h2{font-size:22px}
+.blocks{gap:4px} .blk{height:20px;border-radius:4px;transition:background-color .25s}
+.btn{border-radius:8px;padding:10px 16px;transition:transform .12s,filter .15s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.brass{background:linear-gradient(180deg,#D9B868,#B8913E);border-color:#B8913E;color:#15110A;letter-spacing:.03em}
+.step{border-radius:8px} .step button{width:32px;height:30px}
+select,.field input{border-radius:6px}
+.tab{border-radius:6px;padding:8px 16px;font-weight:500;transition:background-color .2s,color .2s}
+.tab.on{background:var(--gold);border-color:var(--gold);color:#15110A;font-weight:600}
+.tab:hover:not(.on){border-color:var(--gold)}
+/* cartões de caso no lugar da pasta de papel */
+.cases{gap:18px}
+.folder{border-radius:14px;padding:20px 18px 18px;margin-top:0;gap:12px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s,border-color .2s;animation:surge .35s ease-out both}
+.folder:hover{transform:translateY(-2px);border-color:var(--gold)}
+.folder::before{position:static;order:-1;height:auto;padding:0;background:none;border:0;font-size:10.5px;letter-spacing:.16em;line-height:1.2;margin-bottom:-4px;padding-right:90px}
+.stamp{transform:none;top:16px;right:16px;border-width:1px;border-radius:999px;padding:3px 10px;font-family:var(--f-body);font-size:10.5px;letter-spacing:.14em}
+.folder h3{font-size:22px;line-height:1.12;padding-right:0}
+.chance{border-top:1px solid var(--line);padding-top:10px}
+.ctl{border-top:1px solid var(--line)}
+.chip{border-color:var(--line);background:var(--b-descanso);border-radius:999px;padding:4px 11px;font-size:12px}
+.chip.on{background:var(--brass-soft);color:var(--brass);border-color:var(--gold)}
+.gauge{position:relative;display:inline-block;width:112px;height:64px;flex:none}
+.gauge svg{width:112px;height:64px;display:block;overflow:visible}
+.gauge path{fill:none;stroke-width:9;stroke-linecap:round}
+.gauge .tr{stroke:var(--b-descanso)} .gauge .vl{stroke:currentColor;transition:stroke-dasharray .7s cubic-bezier(.2,.8,.2,1)}
+.gauge strong{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1;color:var(--ink)}
+.bar{background:var(--b-descanso)}
+.modal{border-radius:14px;border-top:3px solid var(--gold);padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:abre .25s ease-out}
+.modal h2{font-size:28px}
+.opt{border-radius:10px;padding:12px 14px;transition:border-color .15s,background-color .15s}
+.opt:hover{border-color:var(--gold)}
+.scale{height:50px;border-radius:10px}
+.verdict{border-radius:10px}
+.ticker{border-radius:10px;border-left:1px solid var(--line);padding:9px 14px}
+.ticker>.label{color:var(--gold);letter-spacing:.16em}
+.tut{border-radius:12px}
+.toast{border-radius:10px}
+.grid{gap:24px}
+.col{gap:22px}
+.grid>.col{animation:surge .3s ease-out both}
+@keyframes surge{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes abre{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}

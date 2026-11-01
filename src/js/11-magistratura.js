@@ -153,7 +153,7 @@ function procCard(p){ const R=RAR[p.rar], A=AREAS[p.area], cc=calcAcerto(p), apr
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
     <span class="label" style="text-transform:none;letter-spacing:0;font-weight:400">${A.nome} 50% · Escrita 30% · Análise 20%</span>
-    <div class="chance"><span class="label">Chance de acerto</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de acerto</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no processo</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}

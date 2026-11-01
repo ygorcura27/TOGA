@@ -1,7 +1,7 @@
 // ===================== INÍCIO =====================
 let escolha={genero:'f',nome:'Ana Ribeiro',inicio:'faculdade',facul:'publica',carreira:'adv',espec:'trabalho',sede:'sp',traits:['orador','workaholic']};
 function renderInicio(){
-  app.innerHTML=`<header class="top"><div class="brand"><h1>Toga</h1><span>Protótipo · sistema de casos</span></div></header>
+  app.innerHTML=`<header class="top"><div class="brand">${LOGO}<h1>Toga</h1><span>Protótipo · sistema de casos</span></div>${temaBtn()}</header>
   <section class="panel" style="max-width:560px;margin:0 auto">
     <h2>Uma vida no Direito</h2>
     ${contaHtml()}

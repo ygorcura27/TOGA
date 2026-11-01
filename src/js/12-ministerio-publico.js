@@ -115,7 +115,7 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
     <span class="label" style="text-transform:none;letter-spacing:0;font-weight:400">${A.nome} 50% · Análise 30% · Oratória 20%</span>
-    <div class="chance"><span class="label">Chance de condenação</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de condenação</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no caso</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}

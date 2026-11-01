@@ -2,35 +2,35 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral+SC:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
 /* Layout: mesa de trabalho do advogado — barra de status no topo, agenda à esquerda, pastas de processo à direita */
 :root{
-  --bg:#E7EAEE; --surface:#F6F7F9; --ink:#1A2130; --muted:#5B6474; --line:#C9CED6;
-  --folder:#EFE3C2; --folder-edge:#D9C893; --brass:#9C7A22; --brass-soft:#E9DDB8;
-  --win:#2E7D4F; --loss:#B23A35; --warn:#B7791F;
-  --r-comum:#7D838D; --r-incomum:#3E8E5A; --r-raro:#2F6DB5; --r-epico:#7B4BB3; --r-lendario:#C27C12;
-  --b-case:#2F6DB5; --b-estudo:#7B4BB3; --b-lazer:#3E8E5A; --b-apoio:#9C7A22; --b-descanso:#D3D8DF; --b-familia:#C2577A; --b-saude:#2A9D8F;
-  --overlay:rgba(16,20,28,.55); --land:#D3DAE3; --land-edge:#A9B3C1; --water:#C3D6E8;
-  --f-display:"Spectral SC", "Cormorant SC", Georgia, serif;
-  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --bg:#F7F5F0; --surface:#FFFFFF; --ink:#14161B; --muted:#5E6470; --line:#E2DED4;
+  --folder:#FFFFFF; --folder-edge:#D6D1C4; --brass:#8E6B1F; --brass-soft:#F6EBD3; --gold:#C9A24A;
+  --win:#1F7A4D; --loss:#B23A35; --warn:#9A6200;
+  --r-comum:#6B717C; --r-incomum:#2E8A5C; --r-raro:#2C5FA8; --r-epico:#7A4BB5; --r-lendario:#A86A00;
+  --b-case:#3A6FB8; --b-estudo:#7A55BF; --b-lazer:#3F9466; --b-apoio:#B08A2E; --b-descanso:#E9E5DC; --b-familia:#B9597A; --b-saude:#2A9D8F;
+  --overlay:rgba(20,22,27,.45); --land:#ECE8DF; --land-edge:#C9C3B5; --water:#D4E2EE; --shadow:0 10px 30px rgba(20,22,27,.07);
+  --f-display:"Cormorant Garamond", Georgia, serif;
+  --f-body:Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#12151B; --surface:#1B2029; --ink:#E6E3DA; --muted:#9AA2B0; --line:#2E3542;
-  --folder:#2A2619; --folder-edge:#4A4125; --brass:#D7B357; --brass-soft:#3A331C;
-  --win:#5DBB85; --loss:#E2716B; --warn:#E0A84A;
-  --r-comum:#9BA1AB; --r-incomum:#5DBB85; --r-raro:#6EA2E6; --r-epico:#A985DA; --r-lendario:#E6A53C;
-  --b-case:#4F8BD6; --b-estudo:#9670CC; --b-lazer:#4FA874; --b-apoio:#C9A440; --b-descanso:#2E3542; --b-familia:#D9789A; --b-saude:#46BBAA;
-  --overlay:rgba(0,0,0,.65); --land:#232A35; --land-edge:#3B4554; --water:#1D2D3E; color-scheme:dark;
+  --bg:#0D1016; --surface:#141922; --ink:#ECE5D5; --muted:#A3A9B6; --line:#262B36;
+  --folder:#151A24; --folder-edge:#343B49; --brass:#D4B061; --brass-soft:#3A3220; --gold:#C9A24A;
+  --win:#6FB38A; --loss:#E2716B; --warn:#E7B45A;
+  --r-comum:#A3A9B6; --r-incomum:#6FB38A; --r-raro:#8DB4E8; --r-epico:#B49AE6; --r-lendario:#E7B45A;
+  --b-case:#4C7FC2; --b-estudo:#8C6BC9; --b-lazer:#5FA67D; --b-apoio:#B8913E; --b-descanso:#2A303C; --b-familia:#C8728F; --b-saude:#46BBAA;
+  --overlay:rgba(0,0,0,.65); --land:#1C222D; --land-edge:#343B49; --water:#16253A; --shadow:0 20px 40px rgba(0,0,0,.35); color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --bg:#12151B; --surface:#1B2029; --ink:#E6E3DA; --muted:#9AA2B0; --line:#2E3542;
-  --folder:#2A2619; --folder-edge:#4A4125; --brass:#D7B357; --brass-soft:#3A331C;
-  --win:#5DBB85; --loss:#E2716B; --warn:#E0A84A;
-  --r-comum:#9BA1AB; --r-incomum:#5DBB85; --r-raro:#6EA2E6; --r-epico:#A985DA; --r-lendario:#E6A53C;
-  --b-case:#4F8BD6; --b-estudo:#9670CC; --b-lazer:#4FA874; --b-apoio:#C9A440; --b-descanso:#2E3542; --b-familia:#D9789A; --b-saude:#46BBAA;
-  --overlay:rgba(0,0,0,.65); --land:#232A35; --land-edge:#3B4554; --water:#1D2D3E; color-scheme:dark;
+  --bg:#0D1016; --surface:#141922; --ink:#ECE5D5; --muted:#A3A9B6; --line:#262B36;
+  --folder:#151A24; --folder-edge:#343B49; --brass:#D4B061; --brass-soft:#3A3220; --gold:#C9A24A;
+  --win:#6FB38A; --loss:#E2716B; --warn:#E7B45A;
+  --r-comum:#A3A9B6; --r-incomum:#6FB38A; --r-raro:#8DB4E8; --r-epico:#B49AE6; --r-lendario:#E7B45A;
+  --b-case:#4C7FC2; --b-estudo:#8C6BC9; --b-lazer:#5FA67D; --b-apoio:#B8913E; --b-descanso:#2A303C; --b-familia:#C8728F; --b-saude:#46BBAA;
+  --overlay:rgba(0,0,0,.65); --land:#1C222D; --land-edge:#343B49; --water:#16253A; --shadow:0 20px 40px rgba(0,0,0,.35); color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{min-height:100%}
@@ -235,6 +235,67 @@ details summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .trib-head b{font-family:var(--f-display);font-size:14px}
 .ret{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:5px}
 .ret-row{display:flex;gap:8px;flex-wrap:wrap} .ret-row input{flex:1;min-width:120px;font:inherit;font-family:var(--f-mono);padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink)}
+
+/* ===== Direção de arte A · Tribunal Noturno (vale para o modo claro e o noturno) ===== */
+body{font-size:14px;transition:background-color .3s,color .3s}
+h1,h2,h3{font-weight:600;letter-spacing:.01em}
+.top{border-bottom:1px solid var(--line);padding:14px 0 16px;gap:12px 26px}
+.brand{align-items:center;gap:12px}
+.brand .logo{width:32px;height:32px;fill:none;stroke:var(--gold);stroke-width:1.4;flex:none}
+.brand h1{font-size:30px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.brand span{letter-spacing:.04em}
+.tema{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--line);border-radius:22px;padding:5px 12px 5px 5px;font-size:12px;color:var(--ink)}
+.tema .sw{width:38px;height:22px;border-radius:11px;background:var(--b-descanso);position:relative;display:block;flex:none}
+.tema .sw i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--gold);transition:left .25s}
+.tema[aria-pressed="true"] .sw i{left:19px}
+.stat .label{letter-spacing:.12em}
+.stat b{font-size:16px}
+.spark{width:64px;height:18px;display:block} .spark polyline{fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.meter{height:6px;border-radius:3px;background:var(--line)} .meter i{border-radius:3px;background:var(--gold);transition:width .6s ease}
+.meter.e i{background:var(--win)} .meter.s i{background:var(--warn)}
+.panel{border-radius:12px;padding:18px;box-shadow:var(--shadow)}
+.panel-head h2{font-size:22px}
+.blocks{gap:4px} .blk{height:20px;border-radius:4px;transition:background-color .25s}
+.btn{border-radius:8px;padding:10px 16px;transition:transform .12s,filter .15s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.brass{background:linear-gradient(180deg,#D9B868,#B8913E);border-color:#B8913E;color:#15110A;letter-spacing:.03em}
+.step{border-radius:8px} .step button{width:32px;height:30px}
+select,.field input{border-radius:6px}
+.tab{border-radius:6px;padding:8px 16px;font-weight:500;transition:background-color .2s,color .2s}
+.tab.on{background:var(--gold);border-color:var(--gold);color:#15110A;font-weight:600}
+.tab:hover:not(.on){border-color:var(--gold)}
+/* cartões de caso no lugar da pasta de papel */
+.cases{gap:18px}
+.folder{border-radius:14px;padding:20px 18px 18px;margin-top:0;gap:12px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s,border-color .2s;animation:surge .35s ease-out both}
+.folder:hover{transform:translateY(-2px);border-color:var(--gold)}
+.folder::before{position:static;order:-1;height:auto;padding:0;background:none;border:0;font-size:10.5px;letter-spacing:.16em;line-height:1.2;margin-bottom:-4px;padding-right:90px}
+.stamp{transform:none;top:16px;right:16px;border-width:1px;border-radius:999px;padding:3px 10px;font-family:var(--f-body);font-size:10.5px;letter-spacing:.14em}
+.folder h3{font-size:22px;line-height:1.12;padding-right:0}
+.chance{border-top:1px solid var(--line);padding-top:10px}
+.ctl{border-top:1px solid var(--line)}
+.chip{border-color:var(--line);background:var(--b-descanso);border-radius:999px;padding:4px 11px;font-size:12px}
+.chip.on{background:var(--brass-soft);color:var(--brass);border-color:var(--gold)}
+.gauge{position:relative;display:inline-block;width:112px;height:64px;flex:none}
+.gauge svg{width:112px;height:64px;display:block;overflow:visible}
+.gauge path{fill:none;stroke-width:9;stroke-linecap:round}
+.gauge .tr{stroke:var(--b-descanso)} .gauge .vl{stroke:currentColor;transition:stroke-dasharray .7s cubic-bezier(.2,.8,.2,1)}
+.gauge strong{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1;color:var(--ink)}
+.bar{background:var(--b-descanso)}
+.modal{border-radius:14px;border-top:3px solid var(--gold);padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:abre .25s ease-out}
+.modal h2{font-size:28px}
+.opt{border-radius:10px;padding:12px 14px;transition:border-color .15s,background-color .15s}
+.opt:hover{border-color:var(--gold)}
+.scale{height:50px;border-radius:10px}
+.verdict{border-radius:10px}
+.ticker{border-radius:10px;border-left:1px solid var(--line);padding:9px 14px}
+.ticker>.label{color:var(--gold);letter-spacing:.16em}
+.tut{border-radius:12px}
+.toast{border-radius:10px}
+.grid{gap:24px}
+.col{gap:22px}
+.grid>.col{animation:surge .3s ease-out both}
+@keyframes surge{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes abre{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
 </style>
 
 <div id="app"></div>
@@ -645,7 +706,7 @@ function render(){
 function header(){
   if(S.carreira==='estudante'||S.carreira==='academico'){ const est=S.carreira==='estudante', F=S.fac;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${est?FACS[F.tier].nome+' · '+(F.fase==='oab'?'formado, preparando a OAB':F.semestre+'º semestre'):nomeAcad()} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${est?FACS[F.tier].nome+' · '+(F.fase==='oab'?'formado, preparando a OAB':F.semestre+'º semestre'):nomeAcad()} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Dinheiro</span><b class="${S.caixa<0?'lo':''}">${brl(S.caixa)}</b></div>
     ${est?`<div class="stat"><span class="label">CR</span><b>${crTxt()}</b></div>`:`<div class="stat"><span class="label">Índice de produção</span><b>${S.ac.indice}</b></div><div class="stat"><span class="label">Prestígio</span><b>${Math.round(S.prest)}</b><div class="meter"><i style="width:${S.prest}%"></i></div></div>`}
     <div class="stat"><span class="label">Energia</span><b>${Math.round(S.energia)}</b><div class="meter e"><i style="width:${S.energia}%"></i></div></div>
@@ -659,7 +720,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='defensor'){ const D=S.d, presos=D.casos.filter(c=>c.preso).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_DP[D.cargo].nome)} · ${CIDADES[D.comarca].nome} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_DP[D.cargo].nome)} · ${CIDADES[D.comarca].nome} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/mês</span><b>${brl(CARGOS_DP[D.cargo].salario)}</b></div>
@@ -681,7 +742,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='promotor'){ const P=S.p, atr=P.casos.filter(c=>c.fase==='inq'&&c.idade>c.meta).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_MP[P.cargo].nome)} · ${CIDADES[P.comarca].nome} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${fem(CARGOS_MP[P.cargo].nome)} · ${CIDADES[P.comarca].nome} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/mês</span><b>${brl(CARGOS_MP[P.cargo].salario)}</b></div>
@@ -703,7 +764,7 @@ function header(){
     </nav></header>`; }
   if(S.carreira==='juiz'){ const J=S.j, atr=J.acervo.filter(p=>p.idade>p.meta).length;
     return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${nomeCargo(J.cargo)}${J.cargo<2?' · '+VARAS[vara()]:''} · ${CIDADES[J.comarca].nome} · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · ${nomeCargo(J.cargo)}${J.cargo<2?' · '+VARAS[vara()]:''} · ${CIDADES[J.comarca].nome} · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa</span><b>${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Efetividade</span><b>${S.u.efet.toLocaleString('pt-BR')}</b><div class="meter"><i style="width:${S.u.efet}%"></i></div></div>
     <div class="stat"><span class="label">Salário/mês</span><b>${brl(CARGOS[J.cargo].salario)}</b></div>
@@ -724,7 +785,7 @@ function header(){
       <button class="tab ${view==='brasil'?'on':''}" data-act="view" data-v="brasil">Brasil</button>
     </nav></header>`; }
   return `<header class="top">
-    <div class="brand"><h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · Advocacia · Mês ${S.semana}</span></div>
+    <div class="brand">${LOGO}<h1>Toga</h1><span>${esc(S.nome)}, ${idade()} anos · Advocacia · Mês ${S.semana}</span></div>
     <div class="stat"><span class="label">Caixa do escritório</span><b class="${S.caixa<0?'lo':''}">${brl(S.caixa)}</b></div>
     <div class="stat"><span class="label">Pessoal</span><b class="${S.bolso<0?'lo':''}">${brl(S.bolso)}</b></div>
     <div class="stat"><span class="label">A receber</span><b>${brl(S.aReceber)}</b></div>
@@ -951,7 +1012,7 @@ function pasta(c,ativo){
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
     <span class="label" style="text-transform:none;letter-spacing:0;font-weight:400">${skillsTxt}</span>
-    <div class="chance"><span class="label">Chance de vitória</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de vitória</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no caso</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}
@@ -965,7 +1026,7 @@ function pasta(c,ativo){
 // ===================== INÍCIO =====================
 let escolha={genero:'f',nome:'Ana Ribeiro',inicio:'faculdade',facul:'publica',carreira:'adv',espec:'trabalho',sede:'sp',traits:['orador','workaholic']};
 function renderInicio(){
-  app.innerHTML=`<header class="top"><div class="brand"><h1>Toga</h1><span>Protótipo · sistema de casos</span></div></header>
+  app.innerHTML=`<header class="top"><div class="brand">${LOGO}<h1>Toga</h1><span>Protótipo · sistema de casos</span></div>${temaBtn()}</header>
   <section class="panel" style="max-width:560px;margin:0 auto">
     <h2>Uma vida no Direito</h2>
     ${contaHtml()}
@@ -1390,7 +1451,7 @@ function procCard(p){ const R=RAR[p.rar], A=AREAS[p.area], cc=calcAcerto(p), apr
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
     <span class="label" style="text-transform:none;letter-spacing:0;font-weight:400">${A.nome} 50% · Escrita 30% · Análise 20%</span>
-    <div class="chance"><span class="label">Chance de acerto</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de acerto</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no processo</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}
@@ -1702,7 +1763,7 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
     <span class="label" style="text-transform:none;letter-spacing:0;font-weight:400">${A.nome} 50% · Análise 30% · Oratória 20%</span>
-    <div class="chance"><span class="label">Chance de condenação</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de condenação</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no caso</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}
@@ -2063,7 +2124,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
       <span>Dificuldade</span><div class="bar"><i style="width:${c.d}%;background:var(--loss)"></i></div><span class="num">${c.d}</span>
       <span>Sua skill</span><div class="bar"><i style="width:${cc.skill}%;background:var(--win)"></i></div><span class="num">${Math.round(cc.skill)}</span>
     </div>
-    <div class="chance"><span class="label">Chance de êxito</span><strong class="${cls(cc.ch)}">${pct(cc.ch)}</strong></div>
+    <div class="chance"><span class="label">Chance de êxito</span>${medidor(cc.ch)}</div>
     <details><summary>Ver detalhes da chance</summary><ul class="break">
       <li><span>Sua skill no caso</span><span class="num">${Math.round(cc.skill)}</span></li>
       ${cc.items.map(([l,v])=>`<li><span>${esc(l)}</span><span class="num ${v>0?'hi':'lo'}">${sgn(v)}</span></li>`).join('')}
@@ -4057,6 +4118,30 @@ new MutationObserver(ms=>{ for(const m of ms){ const el=m.target; if(el.classLis
   .observe(document.getElementById('modal-root'),{subtree:true,attributes:true,attributeFilter:['hidden']});
 { const t0=toastCq; toastCq=function(c){ t0(c); tocar('conquista'); }; }
 
+// ===================== VISUAL: TEMA NOTURNO/CLARO, MARCA, MEDIDOR DE CHANCE E CURVA DE PRESTÍGIO =====================
+const TEMA_K='toga-tema';
+const temaAtual=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+const aplicarTema=t=>{ if(t==='dark'||t==='light') document.documentElement.dataset.theme=t; };
+try{ aplicarTema(localStorage.getItem(TEMA_K)); }catch(e){}
+const temaBtn=()=>{ const n=temaAtual()==='dark';
+  return `<button class="tema" data-act="tema" aria-pressed="${n}" title="Ligar ou desligar o modo noturno"><span class="sw" aria-hidden="true"><i></i></span><span class="tema-t">${n?'Noturno':'Claro'}</span></button>`; };
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=tema]'); if(!b) return;
+  const t=temaAtual()==='dark'?'light':'dark'; aplicarTema(t); try{ localStorage.setItem(TEMA_K,t); }catch(_){}
+  document.querySelectorAll('.tema').forEach(x=>{ x.setAttribute('aria-pressed',t==='dark'); x.querySelector('.tema-t').textContent=t==='dark'?'Noturno':'Claro'; }); });
+// marca: balança estilizada ao lado do nome
+const LOGO='<svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M6 21h12M12 5l-7 3m7-3l7 3M5 8l-2.5 6a3 3 0 0 0 5 0L5 8zm14 0l-2.5 6a3 3 0 0 0 5 0L19 8z"/></svg>';
+// chance como medidor em arco: a cor segue a faixa (alta, média, baixa)
+const medidor=ch=>`<span class="gauge ${cls(ch)}"><svg viewBox="0 0 110 62" aria-hidden="true"><path class="tr" d="M8 56 A47 47 0 0 1 102 56" pathLength="100"/><path class="vl" d="M8 56 A47 47 0 0 1 102 56" pathLength="100" style="stroke-dasharray:${Math.max(1,Math.round(ch*100))} 100"/></svg><strong>${pct(ch)}</strong></span>`;
+// curva do prestígio nos últimos 24 meses, ao lado do número no cabeçalho
+function curvaPrest(){ const h=(S&&S.hp)||[]; if(h.length<2) return '';
+  const W=64,H=18, ps=h.map(x=>x.p), mn=Math.min(...ps), mx=Math.max(...ps), d=Math.max(1,mx-mn);
+  const pts=h.map((x,i)=>`${(i/(h.length-1)*W).toFixed(1)},${(H-1-(x.p-mn)/d*(H-2)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Prestígio nos últimos ${h.length} meses: de ${ps[0]} para ${ps[ps.length-1]}"><polyline points="${pts}"/></svg>`; }
+{ const h0=header; header=function(){
+    if(S){ const h=S.hp||(S.hp=[]), p=Math.round(S.prest), u=h[h.length-1];
+      if(!u||u.s!==S.semana) h.push({s:S.semana,p}); else u.p=p; if(h.length>24) h.shift(); }
+    return h0().replace(/(<div class="brand">[\s\S]*?<\/span><\/div>)/,`$1${temaBtn()}`)
+      .replace(/(<span class="label">(?:Prestígio|Reputação)<\/span><b>[^<]*<\/b>)/,`$1${curvaPrest()}`); }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
