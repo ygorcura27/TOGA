@@ -15,9 +15,10 @@ function renderInicio(){
       <select id="espec">${Object.entries(AREAS).map(([k,a])=>`<option value="${k}" ${escolha.espec===k?'selected':''}>${a.nome}</option>`).join('')}</select></div>
     <div class="field"><label class="label" for="sede">Cidade da sede ou comarca</label>
       <select id="sede">${Object.entries(CIDADES).map(([k,c])=>`<option value="${k}" ${escolha.sede===k?'selected':''}>${c.nome} (${c.uf}) · causas ×${c.fator.toLocaleString('pt-BR')}</option>`).join('')}</select></div>
-    <div class="field"><span class="label">Traços (escolha 2)</span>
-      <div class="start-traits">${Object.entries(TRAITS).map(([k,t])=>`<button class="chip ${escolha.traits.includes(k)?'on':''}" data-act="trait" data-v="${k}"><b>${t.nome}</b><br><span style="font-size:11px">${t.desc}</span></button>`).join('')}</div></div>
-    <button class="btn brass" data-act="comecar" ${escolha.traits.length!==2?'disabled':''}>Começar</button>
+    <div class="field"><span class="label">Traços</span>
+      <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">${(()=>{ const n=escolha.traits.filter(tracoNeg).length, p=escolha.traits.length-n; return `Positivos ${p} de ${2+n}${n?` · negativos ${n} de 2`:' · cada traço negativo libera +1 positivo'}`; })()}</p>
+      <div class="start-traits">${Object.entries(TRAITS).map(([k,t])=>`<button class="chip ${escolha.traits.includes(k)?'on':''} ${t.neg?'neg':''}" data-act="trait" data-v="${k}"><b>${t.nome}</b><br><span style="font-size:11px">${t.desc}</span></button>`).join('')}</div></div>
+    <button class="btn brass" data-act="comecar" ${tracosOk(escolha.traits)?'':'disabled'}>Começar</button>
   </section>
   <div class="hall-inicio" style="max-width:560px;margin:14px auto 0">${hallLer().vidas.length||ON()?painelHall(5):''}</div>`;
 }

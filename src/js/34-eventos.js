@@ -3,7 +3,7 @@ app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
   if(['SELECT','INPUT','OPTION','TEXTAREA'].includes(b.tagName)) return; // campos usam 'change'; redesenhar aqui fechava o seletor aberto
   const a=b.dataset.act, id=+b.dataset.id, v=b.dataset.v;
-  if(a==='trait'){ const t=escolha.traits; if(t.includes(v)) escolha.traits=t.filter(x=>x!==v); else if(t.length<2) t.push(v); else { t.shift(); t.push(v);}
+  if(a==='trait'){ const t=escolha.traits; if(t.includes(v)) escolha.traits=t.filter(x=>x!==v); else { const neg=t.filter(tracoNeg).length, pos=t.length-neg; if(tracoNeg(v)){ if(neg<2) t.push(v); } else if(pos<2+neg) t.push(v); else { const i=t.findIndex(x=>!tracoNeg(x)); t.splice(i,1); t.push(v); } }
     escolha.nome=document.getElementById('nome').value; escolha.espec=document.getElementById('espec').value; escolha.sede=document.getElementById('sede').value; escolha.carreira=document.getElementById('carreira').value; escolha.inicio=document.getElementById('inicio').value; escolha.facul=document.getElementById('facul').value; escolha.genero=document.getElementById('genero').value; render(); return; }
   if(a==='comecar'){ escolha.nome=document.getElementById('nome').value.trim()||'Ana Ribeiro'; escolha.espec=document.getElementById('espec').value;
     escolha.sede=document.getElementById('sede').value;

@@ -152,7 +152,7 @@ function renderJornal(){ const J=JN(), ult=Math.max(1,S.semana-1); if(edJornal==
 const TEMAS_COL={penal:['O excesso de prisões preventivas','A delação premiada tem limites?'],civel:['O Judiciário e os contratos de adesão','Quem paga a conta da demora processual?'],trabalho:['O trabalho por aplicativo precisa de regras','Horas extras na era do celular'],familia:['Guarda compartilhada na prática','O afeto como vínculo jurídico'],empresarial:['Recuperação judicial não é calote','Startups e insegurança jurídica'],tributario:['Reforma tributária: quem ganha?','O contribuinte e o confisco disfarçado']};
 function escreverColuna(){ const J=JN(); if((J.coluna||0)>=S.semana||S.energia<8) return; J.coluna=S.semana; S.energia=clamp(S.energia-8,0,100);
   const area=S.carreira==='juiz'?(S.j.vara||'civel'):S.carreira==='adv'?S.espec:'penal', t=pick(TEMAS_COL[area]||TEMAS_COL.civel);
-  const ok=Math.random()<clamp(sig((S.skills.escrita-50)/10),.15,.9);
+  const ok=Math.random()<clamp(sig((S.skills.escrita-50)/10)+(vip('pena')?.2:0),.15,.95);
   if(ok){ S.prest=clamp(S.prest+2,0,100); if(S.carreira!=='adv') S.pol=clamp((S.pol??10)+2,0,100); noticia('opiniao',`“${t}”, por ${S.nome}`,'O artigo circula entre colegas e chega a ser citado em sessão.',2); addLog(`Sua coluna “${t}” foi bem recebida: +2 prestígio.`,'g'); }
   else { S.prest=clamp(S.prest-1,0,100); noticia('opiniao',`Coluna de ${S.nome} gera polêmica`,`O texto “${t}” recebeu críticas duras de colegas.`,1); addLog(`Sua coluna “${t}” gerou polêmica: −1 prestígio.`,'r'); }
   salvar(); render(); }

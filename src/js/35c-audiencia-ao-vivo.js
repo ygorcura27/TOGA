@@ -118,7 +118,7 @@ function audienciaAoVivo(c){
   const R={adv:['Você',papel==='adv'?ADV[c.adv].nome:''],mp:['Acusação · você','Defesa'],dp:['Defesa · você',c.area==='penal'?'Ministério Público':'Parte contrária']}[papel];
   const cartas=avCartas(c);
   const s={pre:true,escolha:[],min:0,rodando:false,vel:1,conv:ch0*100,ini:Math.round(ch0*100),postura:'equilibrada',foco:Object.keys(NOS).sort((a,b)=>NOS[b]-NOS[a])[0],advPostura:'equilibrada',
-    objecoes:2,recessos:1,folego:S.energia,combo:0,juizVisto:false,sondou:false,acordoEm:0,usadas:{},
+    objecoes:2,recessos:1,folego:vip('nervos')?100:S.energia,combo:0,juizVisto:false,sondou:false,acordoEm:0,usadas:{},
     advCartas:[{t:'Prova surpresa da outra parte',forca:6,quando:rint(30,44)},{t:'Testemunha de última hora',forca:5,quando:rint(12,28)}].slice(0,RORD.indexOf(c.rar)>=3?2:1),
     feed:[{m:0,t:`${quem} abre${c.juri?'m':''} a audiência.`,l:'neutro'}],barras:[],ultimo:null,momento:null,feitos:{},fim:false,res:null};
   const lim=v=>Math.max(5,Math.min(95,v)), fase=m=>{ let f='Abertura'; for(const [a,n] of AV_FASES) if(m>=a) f=n; return f; };
@@ -166,7 +166,7 @@ function audienciaAoVivo(c){
     desenhar(); }
   function agendar(){ clearTimeout(timer); timer=setTimeout(()=>{ passo(); if(!s.fim) agendar(); },700/s.vel); }
   function acao(a,v){
-    if(a==='testemunha'){ const i=s.escolha.indexOf(v); if(i>=0) s.escolha.splice(i,1); else if(s.escolha.length<2) s.escolha.push(v); }
+    if(a==='testemunha'){ const i=s.escolha.indexOf(v); if(i>=0) s.escolha.splice(i,1); else if(s.escolha.length<(vip('ouro')?3:2)) s.escolha.push(v); }
     else if(a==='comecar'){ comecar(); s.rodando=true; }
     else if(a==='play'){ if(!s.fim&&!s.momento) s.rodando=!s.rodando; }
     else if(a==='vel'){ s.vel=+v; agendar(); }
@@ -196,7 +196,7 @@ function audienciaAoVivo(c){
     if(s.pre){ box.innerHTML=`<div class="av"><header class="av-placar"><div class="av-lado"><span class="label">${R[0]}</span><b>${esc(S.nome)}</b></div>
       <div class="av-centro"><span class="label av-fase">Pré-audiência · ${esc(c.titulo)}</span><div class="av-relogio">Escalação</div><small>Chance de partida: <b>${s.ini}%</b> · ${quem}${c.juri?' · júri':''}</small></div>
       <div class="av-lado dir"><span class="label">${R[1]||'Outra parte'}</span><b>Dificuldade ${d}</b></div></header>
-      <section class="panel"><div class="panel-head"><h2>Quem você leva para depor?</h2><span class="label">até 2 · ${s.escolha.length} escolhida${s.escolha.length===1?'':'s'}</span></div>
+      <section class="panel"><div class="panel-head"><h2>Quem você leva para depor?</h2><span class="label">até ${vip('ouro')?3:2} · ${s.escolha.length} escolhida${s.escolha.length===1?'':'s'}</span></div>
         <div class="av-cartas">${TESTEMUNHAS.map(w=>`<button class="av-carta ${s.escolha.includes(w.id)?'agora':''}" data-av="testemunha" data-v="${w.id}" aria-pressed="${s.escolha.includes(w.id)}"><b>${w.t}</b><small>${w.q}</small><small class="hi">${w.ef}</small></button>`).join('')}</div></section>
       <section class="panel"><div class="panel-head"><h2>Seus trunfos</h2><span class="label">vêm do preparo · use na fase certa</span></div>
         <div class="av-cartas">${cartas.map(k=>`<div class="av-carta"><b>${k.t}</b><small>${k.q}</small><small>${AV_NOMES[k.tipo]} · +${k.forca} · melhor em ${k.fase.toLowerCase()}</small></div>`).join('')}</div></section>

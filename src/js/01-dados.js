@@ -109,11 +109,24 @@ const JNOMES = ['Dra. Helena Rocha','Dr. Paulo Mattos','Dra. Inês Carvalho','Dr
 const TRAITS = {
   orador:{nome:'Orador nato',desc:'+5 em casos com júri; +8 de Oratória nos momentos decisivos'},
   rato:{nome:'Rato de biblioteca',desc:'Estudo rende 50% mais'},
-  ansioso:{nome:'Ansioso',desc:'−5 em casos Épicos e Lendários; estresse sobe 25% mais rápido'},
+  ansioso:{nome:'Ansioso',neg:true,desc:'−5 em casos Épicos e Lendários; estresse sobe 25% mais rápido. Negativo: libera +1 traço positivo'},
   carismatico:{nome:'Carismático',desc:'+10 na chance de acordo'},
   workaholic:{nome:'Workaholic',desc:'Trabalho gasta 30% menos energia'},
   sortudo:{nome:'Sortudo',desc:'+3 de chance em todo caso'},
+  memoria:{nome:'Memória fotográfica',desc:'+3 em casos Raros ou maiores'},
+  tecnico:{nome:'Técnico',desc:'+4 em casos de Tributário e Empresarial'},
+  calmo:{nome:'Sangue frio',desc:'Estresse alto não tira chance dos seus casos'},
+  networker:{nome:'Bom de rede',desc:'Advocacia: 1 oferta a mais por mês. Carreira pública: +1 de capital político por mês'},
+  resiliente:{nome:'Resiliente',desc:'Estresse cai 3 pontos por mês'},
+  perfeccionista:{nome:'Perfeccionista',desc:'+4 em casos com o preparo ideal completo; estresse sobe 2 por mês'},
+  procrastinador:{nome:'Procrastinador',neg:true,desc:'−3 em todo caso. Negativo: libera +1 traço positivo'},
+  briguento:{nome:'Briguento',neg:true,desc:'−15% na chance de acordo; +3 em júri e casos penais. Negativo: libera +1 traço positivo'},
+  gastador:{nome:'Gastador',neg:true,desc:'Gasta R$ 600 a mais por mês. Negativo: libera +1 traço positivo'},
+  insone:{nome:'Insone',neg:true,desc:'Energia nunca passa de 85. Negativo: libera +1 traço positivo'},
 };
+// cada traço negativo libera um positivo a mais: 2 positivos sem negativos, até 4 positivos com 2 negativos
+const tracoNeg=k=>!!(TRAITS[k]&&TRAITS[k].neg);
+const tracosOk=L=>{ const n=L.filter(tracoNeg).length; return n<=2&&L.length-n===2+n; };
 const TESES = {
   penal:[['Nulidade de prova ilícita',8],['In dubio pro reo',5],['Cadeia de custódia quebrada',10]],
   civel:[['Responsabilidade objetiva',6],['Inversão do ônus da prova',8],['Teoria da perda de uma chance',10]],

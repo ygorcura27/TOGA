@@ -19,8 +19,8 @@ function audienciaJuiz(p){ return new Promise(fim=>{
   const P={a:{rot:penal?'Acusação':'Autor',nome:penal?'Ministério Público':p.cliente,sk:p.partes.a},b:{rot:penal?'Defesa':'Réu',nome:penal?p.cliente:ADV[p.adv].nome,sk:p.partes.b}};
   const sentA=penal?'Condenação':'Procedente', sentB=penal?'Absolvição':'Improcedente';
   const estudo=(p.estudo||0)+(p.semana||0);
-  const acc=clamp(sig((S.skills.analise+prepCaso(p,estudo)*1.5-p.d+20)/12),.55,.93), sabeArea=clamp(sig((S.skills[p.area]-50)/10),.4,.9);
-  const s={min:0,rodando:false,vel:1,autos:50,logOdds:0,folego:S.energia,nulidade:0,diligencia:1,feed:[{m:0,t:'Você abre a audiência. As partes não fazem acordo.',l:''}],lances:[],pistas:[],barras:[],decisao:null,feitos:{},fim:false,fund:'tecnica',extra:0,res:null};
+  const acc=clamp(sig((S.skills.analise+prepCaso(p,estudo)*1.5-p.d+20)/12)+(vip('faro')?.1:0),.55,.96), sabeArea=clamp(sig((S.skills[p.area]-50)/10),.4,.9);
+  const s={min:0,rodando:false,vel:1,autos:50,logOdds:0,folego:vip('nervos')?100:S.energia,nulidade:0,diligencia:1,folego0:0,feed:[{m:0,t:'Você abre a audiência. As partes não fazem acordo.',l:''}],lances:[],pistas:[],barras:[],decisao:null,feitos:{},fim:false,fund:'tecnica',extra:0,res:null};
   const lado=x=>P[x].rot.toLowerCase(), lim=(v,a,b)=>Math.max(a,Math.min(b,v));
   const TX={a:['A testemunha do {a} descreve os fatos com detalhes.','O {a} junta um documento que confirma a sua versão.','O {a} expõe uma contradição da outra parte.','A testemunha do {a} confirma datas e horários.'],
             b:['A testemunha do {b} contradiz a versão do {a}.','O {b} apresenta um documento que complica a versão do {a}.','O {b} levanta dúvida sobre os fatos.','A testemunha do {b} diz que tudo foi diferente.']};
