@@ -675,3 +675,17 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 | Fim de jogo vazio | Promoções altas, filiais internacionais, academia, dinastia, conquistas e Hall da Fama |
 | Imprecisão jurídica | Aviso de "simplificação lúdica"; dados por país revisados por consultor local |
 | Temas sensíveis | Tratamento respeitoso; classificação 12+ |
+
+## Audiência ao vivo (todas as carreiras)
+- Cada caso escolhe como vai à audiência. Cabem **3 audiências ao vivo por mês**; casos raros ou maiores vão ao vivo por padrão e os demais vão com a equipe (ou pela audiência rápida, a balança de sempre).
+- **Advocacia, promotor e defensor:** partida de 60 minutos. A convicção começa na chance do caso e cada lance é disputado pela skill do tipo (testemunha: Oratória; prova: Análise; tese: a área) contra a da outra parte.
+  - Postura em duelo: cautelosa vence agressiva, agressiva vence equilibrada, equilibrada vence cautelosa (±8% por lance).
+  - Foco +10 na skill escolhida e −4 nas outras. Quem julga valoriza um tipo de lance (sondar revela); o foco nele faz seus lances pesarem 50% mais.
+  - Fôlego é a energia do personagem; cansado, as skills caem. Embalo de até +9%. Trunfos vêm dos apoios e do preparo; a outra parte também tem trunfos.
+  - Três momentos decisivos, objeção (indeferida custa 2), recesso e, na advocacia, acordo no meio da audiência.
+  - **Enviar advogado** (assessor nas carreiras públicas): a chance usa a skill do substituto no caso, sem o momento decisivo.
+- **Juiz:** preside em vez de disputar. Um lado tem razão em segredo; as partes jogam sozinhas e o melhor advogado pode convencer sem ter razão.
+  - Perguntar às testemunhas revela se um lance é verdadeiro (precisão pela Análise e pelo estudo do processo). Perícia dá pista forte (88%) e envelhece o processo 1 mês.
+  - Objeções mal decididas e falso testemunho apurado sem mentira aumentam o risco de nulidade.
+  - Incidentes: testemunha que muda a versão, pedido urgente (±1 de reputação) e propina.
+  - Sentença técnica ou curta (+5 de energia). Acertar a verdade: o tribunal mantém em 82–93%; errar: reforma em 70–85%; a nulidade reduz tudo.

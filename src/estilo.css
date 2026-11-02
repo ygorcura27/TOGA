@@ -327,3 +327,8 @@ select,.field input{border-radius:6px}
 .av .lnk{background:none;border:0;padding:4px 0;color:var(--muted);font-size:12px;text-decoration:underline;text-align:left}
 @media (max-width:1080px){.av-corpo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.av-feed{grid-column:1/-1}}
 @media (max-width:720px){.av-placar,.av-faixa,.av-corpo{grid-template-columns:minmax(0,1fr)}.av-lado.dir{text-align:left;align-items:flex-start}.av-centro{min-width:0}}
+.av-cabo.jz{background:var(--b-familia)} .av-cabo.jz i{background:var(--b-case)} .av-cabo.jz::after{background:var(--surface)}
+.av-ev.pa{background:color-mix(in srgb,var(--b-case) 16%,var(--surface))} .av-ev.pb{background:color-mix(in srgb,var(--b-familia) 16%,var(--surface))}
+.av-ev .hi{color:var(--win)} .av-ev .lo{color:var(--loss)}
+.av-pista{padding:7px 10px;border-radius:8px;background:var(--b-descanso);border-left:3px solid var(--line);font-size:13px}
+.av-instr .btn{width:100%}

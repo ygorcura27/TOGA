@@ -245,9 +245,10 @@ async function fimSemanaJuiz(){
     const pauta=J.acervo.filter(p=>(p.semana||0)>0);
     J.acervo=J.acervo.filter(p=>!((p.semana||0)>0));
     for(const p of pauta){
-      if(RORD.indexOf(p.rar)>=2 && Math.random()<.35) await eventoJuiz(p);
+      const vivo=await audienciaJuizSe(p); // audiência ao vivo: a chance de manter vem do que você decidiu nela
+      if(!vivo && RORD.indexOf(p.rar)>=2 && Math.random()<.35) await eventoJuiz(p);
       if(p.adiado){ p.adiado=false; p.semana=0; J.acervo.push(p); sent.push([p,null,'Nova perícia: volta ao acervo']); continue; }
-      const ch=calcAcerto(p).ch, ap=chanceRecursoJ(p), rec=Math.random()<ap;
+      const ch=vivo?vivo.ch:calcAcerto(p).ch, ap=vivo&&chanceRecursoJ(p)?Math.min(.95,chanceRecursoJ(p)+vivo.recMais):chanceRecursoJ(p), rec=Math.random()<ap;
       J.sentencas++; xpJuiz(p,1);
       if(rec){ J.recursos.push({titulo:p.titulo,rar:p.rar,ch,semanas:rint(3,6),inst:J.cargo>=3?'STF':J.cargo>=2?supNome():'Tribunal'}); sent.push([p,ch,'Recorrida: vai ao tribunal']); }
       else { const g=RAR[p.rar].ganho*GANHO_J.transita; S.prest=clamp(S.prest+g,0,100); J.transitadas++; sent.push([p,ch,`Transitou em julgado · ${sgn(g)}`]); }
