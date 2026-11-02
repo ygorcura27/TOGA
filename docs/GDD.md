@@ -702,3 +702,7 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 ## Traços e Habilidades VIP
 - **Traços:** 15 opções. Escolha 2 positivos; cada negativo (Ansioso, Procrastinador, Briguento, Gastador, Insone, no máximo 2) libera +1 positivo. Novos positivos: Memória fotográfica (+3 em Raros ou maiores), Técnico (+4 em Tributário e Empresarial), Sangue frio (estresse alto não tira chance), Bom de rede (+1 oferta por mês ou +1 de capital político por mês), Resiliente (−3 de estresse por mês), Perfeccionista (+4 com preparo ideal; +2 de estresse por mês).
 - **Habilidades VIP:** desbloqueadas jogando e guardadas no navegador; valem para todas as partidas seguintes. Faro para mentira, Testemunha de ouro (3 testemunhas), Nervos de aço (fôlego 100 ao vivo), Lábia de corredor (+50% ao articular), Pena de ouro (+20% na coluna), Carteira de elite (+1 oferta), Memória institucional (+5 nas áreas no início) e Nome de família (+10 de prestígio para herdeiros). Ficam na aba Conquistas, com o progresso.
+
+## Equilíbrio atual (simulações rápidas)
+- **Escritório** (`npm run sim`, 12 partidas de 24 meses por nível, robô que aceita casos com 40%+ e manda os comuns com a equipe): iniciante R$ 4,7 mil, local R$ 10,1 mil, regional R$ 23,5 mil, regional com equipe de nacional R$ 39 mil, High Tier R$ 193 mil por mês. Juiz substituto: R$ 25 mil.
+- **Defensoria:** o expediente tem +2 blocos (triagem do balcão). Sem equipe, metade das carreiras termina em 24 meses (reputação média 5); com a equipe inicial, 58; com equipe grande, 80.

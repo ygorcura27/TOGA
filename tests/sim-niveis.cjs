@@ -1,10 +1,11 @@
 // Simulação econômica por nível do escritório: monta um escritório em cada nível, um robô joga N meses
 // e mede o ganho líquido mensal (honorários e partido menos salários, aluguel e custo de vida), comparando com o juiz.
-// Rodar: node tests/sim-niveis.cjs [meses]   (demora alguns minutos)
+// Rodar: node tests/sim-niveis.cjs [meses] [partidas]   ex.: node tests/sim-niveis.cjs 24 10 (modais respondem na hora: segundos por partida)
 const { chromium } = require('playwright');
 const path = require('path');
 const URL = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?teste';
-const MESES = +(process.argv[2] || 24);
+const MESES = +(process.argv[2] || 24), PARTIDAS = +(process.argv[3] || 6);
+const POLITICA = `(h,b)=>{ const op=[...h.matchAll(/<button class="opt"[^>]*data-mv="([^"]*)"[^>]*>/g)].filter(m=>!/disabled/.test(m[0])); if(op.length) return op[0][1]; return b.length?b[b.length-1].v:0; }`;
 const PERFIS_TODOS = [
   { nivel: 0, imovel: 0, advs: 0, estag: 0, filiais: [], clientes: 0, prest: 30, anos: 0, skill: 55, areas: null },
   { nivel: 1, imovel: 1, advs: 2, estag: 1, filiais: [], clientes: 1, prest: 40, anos: 2, skill: 62, areas: 2 },
@@ -19,9 +20,11 @@ const drenar = async p => { for (let k = 0; k < 4000; k++) { const fim = await p
   const bs = await p.$$('.ov [data-mi]:not([disabled])'); if (bs.length) await bs[bs.length - 1].click().catch(() => {}); else await p.waitForTimeout(30); } };
 (async () => {
   const b = await chromium.launch(), res = [];
-  for (const P of PERFIS) {
+  for (const P of PERFIS) { const L = [];
+   for (let k = 0; k < PARTIDAS; k++) {
     const p = await b.newPage({ reducedMotion: 'reduce' }); const erros = []; p.on('pageerror', e => erros.push(e.message));
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.reload();
+    await p.evaluate(src => { window.__rapido = new Function('return ' + src)(); }, POLITICA);
     await p.selectOption('#inicio', 'formado'); await p.click('[data-act=comecar]'); await p.waitForTimeout(300);
     await p.evaluate(P => { const T = window.__toga, S = T.S; S.tut = { off: true, t: {} }; S.semResumo = true; S.semana = 12 * P.anos + 13; S.u.fundado = 1; S.prest = P.prest;
       const AR = ['penal', 'civel', 'trabalho', 'familia', 'empresarial', 'tributario'];
@@ -33,11 +36,11 @@ const drenar = async p => { for (let k = 0; k < 4000; k++) { const fim = await p
       S.filiais = P.filiais.slice(); S.u.full = P.areas === 'full'; S.u.areas = P.areas === 'full' ? AR.slice() : AR.slice(0, P.areas || 1);
       S.clientes = Array.from({ length: P.clientes }, (_, i) => ({ id: 9000 + i, nome: 'Cliente ' + i, area: AR[i % 6], satisf: 70, partido: 3000, casos: 2, desde: 1 }));
       S.caixa = 300000; S.bolso = 50000; T.salvar(); }, P);
-    await p.reload(); await p.waitForTimeout(300);
+    await p.reload(); await p.waitForTimeout(300); await p.evaluate(src => { window.__rapido = new Function('return ' + src)(); }, POLITICA);
     const t = await p.evaluate(() => window.__toga.TIERS[window.__toga.tierEscritorio()].nome);
     const ini = await p.evaluate(() => { const S = window.__toga.S; return S.caixa + S.bolso; });
-    for (let m = 0; m < MESES; m++) {
-      await p.evaluate(() => { const T = window.__toga, S = T.S;
+    await p.evaluate(async MESES => { const T = window.__toga;
+      for (let m = 0; m < MESES && T.S; m++) { const S = T.S;
         // aceita casos com chance de pelo menos 40% enquanto houver vaga
         for (const c of [...S.ofertas].sort((a, b) => T.calcChance(b).ch - T.calcChance(a).ch)) if (T.casos1() < T.maxCasos() && T.calcChance(c).ch >= .4) { S.casos.push(c); S.ofertas = S.ofertas.filter(x => x !== c); }
         // reparte os blocos livres entre os casos, priorizando a manutenção e os prazos curtos
@@ -45,13 +48,13 @@ const drenar = async p => { for (let k = 0; k < 4000; k++) { const fim = await p
         while (livre > 0 && L.length) { const c = L.reduce((a, x) => ((x.semana || 0) - T.manut(x) - (x.prep || 0) / 4 < (a.semana || 0) - T.manut(a) - (a.prep || 0) / 4 ? x : a)); c.semana = (c.semana || 0) + 1; livre--; }
         // retirada mensal para pagar o custo de vida
         if (S.caixa > 20000) { S.bolso += 15000; S.caixa -= 15000; }
-        window.__fim = false; T.fimSemana().finally(() => { window.__fim = true; }); });
-      await drenar(p);
-    }
+        await T.fimSemana(); } }, MESES);
     const r = await p.evaluate(ini => { const T = window.__toga, S = T.S; return S && { ganhoMes: Math.round((S.caixa + S.bolso - ini) / 1), equipe: S.u.equipe.length, clientes: (S.clientes || []).length, prest: Math.round(S.prest), vit: S.vitorias, der: S.derrotas, nivel: T.TIERS[T.tierEscritorio()].nome }; }, ini);
-    r.ganhoMes = Math.round(r.ganhoMes / MESES); res.push({ perfil: t, ...r, erros: erros.length });
-    console.log(`${t.padEnd(22)} ganho líquido ≈ ${('R$ ' + r.ganhoMes.toLocaleString('pt-BR')).padStart(12)}/mês · ${r.vit}V ${r.der}D · equipe ${r.equipe} · clientes ${r.clientes} · prestígio ${r.prest}${erros.length ? ' · ERROS: ' + erros[0] : ''}`);
+    if (r) { r.ganhoMes = Math.round(r.ganhoMes / MESES); r.tier = t; L.push(r); } if (erros.length) console.log('ERRO:', erros[0]);
     await p.close();
+   }
+    const m = k => L.length ? L.reduce((a, x) => a + x[k], 0) / L.length : 0, G = L.map(x => x.ganhoMes).sort((a, b) => a - b);
+    console.log(`${(L[0] ? L[0].tier : '?').padEnd(22)} ganho líquido médio ≈ ${('R$ ' + Math.round(m('ganhoMes')).toLocaleString('pt-BR')).padStart(12)}/mês · faixa R$ ${(G[0] || 0).toLocaleString('pt-BR')} a R$ ${(G[G.length - 1] || 0).toLocaleString('pt-BR')} · ${Math.round(m('vit'))}V ${Math.round(m('der'))}D · clientes ${m('clientes').toFixed(1)} · ${L.length} partidas`);
   }
   const j = await (async () => { const p = await b.newPage(); await p.goto(URL); const v = await p.evaluate(() => { const T = window.__toga; return T.CARGOS.map(c => [c.nome, c.salario - T.CUSTO_VIDA_MAG]); }); await p.close(); return v; })();
   console.log('\nJuiz, líquido por mês (salário menos custo de vida): ' + j.map(([n, v]) => `${n} R$ ${v.toLocaleString('pt-BR')}`).join(' · '));
