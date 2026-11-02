@@ -389,6 +389,7 @@ select,.field input{border-radius:6px}
 .sj-acao.on{border-color:var(--gold);background:var(--brass-soft)}
 @media (max-width:720px){.sj-corpo{grid-template-columns:minmax(0,1fr)}}
 .filtro-of{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-4px 0 4px} .filtro-of select{min-height:36px}
+.trab-casos{margin-bottom:20px} .trab-casos .row .name{white-space:normal}
 </style>
 
 <div id="app"></div>
@@ -790,7 +791,8 @@ function render(){
         ${gabA?`<span class="label">Equipe do escritório · ${gabA} blocos por mês</span><div class="blocks">${gabCellsA}</div>`:'<span class="label">Sem equipe: contrate gente na aba Estrutura e equipe</span>'}
         <div class="legend"><span><i style="background:var(--b-case)"></i>Casos</span><span><i style="background:var(--b-apoio)"></i>Apoios</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso (${free})</span></div>
         <div class="rows">
-          ${S.casos.map(c=>`<div class="row"><span class="name" title="${esc(c.titulo)}">${esc(c.titulo)}</span>${stepper('case',c.id,c.semana||0,free)}</div>`).join('')}
+          ${S.casos.length?`<div class="row"><span class="name" title="Os blocos vão primeiro para a manutenção e para os prazos mais curtos. Para escolher caso a caso, use a aba Estrutura e equipe.">Trabalho nos casos <small style="color:var(--muted)">· ${S.casos.length} caso${S.casos.length>1?'s':''}</small></span>${stepper('trabalho',0,S.casos.reduce((a,c)=>a+(c.semana||0),0),free)}</div>
+          <button class="lnk" data-act="view" data-v="estrutura" style="align-self:flex-start;font-size:12px">Ajustar os blocos caso a caso</button>`:''}
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
@@ -4022,6 +4024,7 @@ app.addEventListener('click',e=>{
   if(a==='recusar'){ S.ofertas=S.ofertas.filter(x=>x.id!==id); }
   if(a==='inc'||a==='dec'){ const d=a==='inc'?1:-1; if(d>0&&livres()<=0) return;
     if(b.dataset.k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
+    else if(b.dataset.k==='trabalho'){ const c=d>0?casoQuePrecisa():casoQueSobra(); if(!c) return; c.semana=Math.max(0,(c.semana||0)+d); }
     else if(b.dataset.k==='dp'){ const c=S.d.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
     else if(b.dataset.k==='inq'){ const c=S.p.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
     else if(b.dataset.k==='proc'){ const p=S.j.acervo.find(x=>x.id===id); p.semana=Math.max(0,(p.semana||0)+d); }
@@ -5108,6 +5111,45 @@ document.addEventListener('change',e=>{ const k=e.target.dataset&&e.target.datas
   if(k==='aud'){ G.aud=e.target.value; for(const c of S.casos) delete c.modoAud; } // volta todos os casos para a regra nova
   if(k==='dist') S.u.auto=e.target.checked;
   salvar(); render(); });
+// ===================== GESTÃO E IDIOMAS: SKILLS DO TITULAR PARA CRESCER =====================
+// abrir filial exige que você saiba administrar: 2★ em Gestão para outro bairro, 3★ para outra cidade,
+// 4★ para outro país (e 3★ em Idiomas, menos em país de língua portuguesa). Estrelas como nas áreas: 40 · 55 · 70 · 82 · 92.
+SKILLS.gestao='Gestão'; SKILLS.idiomas='Idiomas';
+const SK5=['gestao','idiomas'];
+const estrelasSk=k=>NIV_AREA.filter(x=>(S.skills[k]||0)>=x).length;
+function reqFilial(C){ if(!C) return null; const pt=C.pais==='Portugal';
+  const g=C.nivel==='regional'?2:C.nivel==='global'?4:3, i=C.nivel==='global'&&!pt?3:0;
+  return {g,i}; }
+function faltaFilial(C){ const r=reqFilial(C); if(!r) return '';
+  const fg=estrelasSk('gestao')<r.g, fi=r.i&&estrelasSk('idiomas')<r.i;
+  if(fg&&fi) return `Exige ${r.g}★ em Gestão e ${r.i}★ em Idiomas`;
+  if(fg) return `Exige ${r.g}★ em Gestão (${C.nivel==='regional'?'outro bairro':C.nivel==='global'?'outro país':'outra cidade'})`;
+  if(fi) return `Exige ${r.i}★ em Idiomas`;
+  return ''; }
+{ const m0=motivoAbrir; motivoAbrir=function(k){ return m0(k)||faltaFilial(LOC[k]); }; }
+// Gestão ajuda a organizar a equipe; Idiomas ajudam nos casos no exterior
+{ const o0=organizacao; organizacao=function(){ const o=o0(); return S.carreira==='adv'?clamp(Math.round(o+(S.skills.gestao-40)/4),0,100):o; }; }
+{ const b0=bonusPerks; bonusPerks=function(c,add){ b0(c,add); const L=LOC[c.cidade];
+    if(L&&L.nivel==='global'&&L.pais!=='Portugal'){ const e=estrelasSk('idiomas'); add(e>=3?`Idiomas ${'★'.repeat(e)}`:'Idioma estrangeiro fraco',e>=3?2*(e-2):-4); } }; }
+// 5 estrelas na tela de skills, sem cadeado (não dependem de título)
+{ const e0=estrelasHtml; estrelasHtml=function(k){ if(!SK5.includes(k)) return e0(k); const e=estrelasSk(k); return `${'★'.repeat(e)}<span style="opacity:.35">${'☆'.repeat(5-e)}</span>`; }; }
+// saves antigos e jogos novos começam com as duas skills
+{ const r0=render; render=function(){ if(S&&S.skills){ if(S.skills.gestao===undefined) S.skills.gestao=25; if(S.skills.idiomas===undefined) S.skills.idiomas=20; } r0(); }; }
+// ===================== TRABALHO NOS CASOS: UMA LINHA NA AGENDA, DISTRIBUIÇÃO NA ESTRUTURA =====================
+// na agenda você decide quanto trabalha nos casos; os blocos vão para quem mais precisa (manutenção, depois prazo curto,
+// depois o que está longe do preparo ideal). Na aba Estrutura e equipe dá para mexer caso a caso.
+const falta=c=>{ const m=manut(c), s=c.semana||0, prep=(c.prep||0)+Math.max(0,s-m); return s<m?100+(m-s):Math.max(0,prepIdeal(c)-prep)/Math.max(1,c.prazo); };
+const casoQuePrecisa=()=>[...S.casos].sort((a,b)=>falta(b)-falta(a)||a.prazo-b.prazo)[0]||null;
+const casoQueSobra=()=>[...S.casos].filter(c=>(c.semana||0)>0).sort((a,b)=>falta(a)-falta(b)||b.prazo-a.prazo)[0]||null;
+function painelTrabalhoCasos(){ if(S.carreira!=='adv'||!S.casos.length) return ''; const free=livres();
+  return `<section class="panel trab-casos"><div class="panel-head"><h2>Trabalho nos casos</h2><span class="label">${S.casos.reduce((a,c)=>a+(c.semana||0),0)} blocos seus neste mês · ${livres()} livres</span></div>
+    <div class="rows">${[...S.casos].sort((a,b)=>a.prazo-b.prazo).map(c=>{ const m=manut(c), s=c.semana||0;
+      return `<div class="row"><span class="name" title="${esc(c.titulo)}">${icoArea(c.area)}${esc(c.titulo)} <small style="color:var(--muted)">· ${(c.inst||1)>1?INST[c.inst]:`audiência em ${c.prazo} ${c.prazo>1?'meses':'mês'}`} · manutenção ${m}${s<m?' <b class="lo">em falta</b>':''} · chance ${pct(calcChance(c).ch)}</small></span>${stepper('case',c.id,s,free)}</div>`; }).join('')}</div>
+    <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Os blocos da equipe entram por cima destes${gestorAtual()&&S.u.auto?', distribuídos pelo gestor':''}. Na agenda do escritório você vê só o total.</p></section>`; }
+{ const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelTrabalhoCasos(); if(!h) return;
+    const alvo=[...app.children].find(el=>!el.matches('header.top,.ticker,.tut')); if(alvo) alvo.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
+// tutorial: o passo de preparar o caso aponta para a linha nova
+for(const p of TUT.adv) if(p.alvo==='[data-act=inc][data-k=case]'){ p.alvo='[data-act=inc][data-k=trabalho]'; p.txt='Agora prepare os casos: coloque <b>blocos em Trabalho nos casos</b>. Eles vão primeiro para a manutenção e para os prazos mais curtos; na aba Estrutura e equipe você ajusta caso a caso. Cada bloco aumenta a chance, com retorno decrescente.'; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
@@ -5123,6 +5165,6 @@ if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set 
   calcChance, prepCaso, prepIdeal, expediente, gabCasos, expPessoal, expEquipe, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
   fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio,
   mpDenunciar, mpArquivar, mpAcordo, calcCondenacao, chanceAcordoMP, promoOkMP, promocao:()=>promocao(),
-  calcAcerto, minSent, concilia, chanceConc, jConciliar, promoOk, calcDefesa, chanceHC, dpHC, dpAcordo, chanceAcordoDP, promoOkDP, gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };
+  motivoAbrir, calcAcerto, minSent, concilia, chanceConc, jConciliar, promoOk, calcDefesa, chanceHC, dpHC, dpAcordo, chanceAcordoDP, promoOkDP, gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };
 })();
 </script>

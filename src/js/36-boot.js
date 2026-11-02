@@ -13,4 +13,4 @@ if(/[?&]teste/.test(location.search)) window.__toga={ get S(){ return S; }, set 
   calcChance, prepCaso, prepIdeal, expediente, gabCasos, expPessoal, expEquipe, manut, maxCasos, cargaCaso, estrelas, tetoArea, novoCaso, partidoDe, divisaoRetirada, ANO, MIN_SENT, MIN_ATD, render, salvar,
   fimSemana:()=>fimSemana(), livres, casos1, tierEscritorio, TIERS, gerarCandidato, IMOVEIS, LOC, CARGOS, CUSTO_VIDA_MAG, patrimonio,
   mpDenunciar, mpArquivar, mpAcordo, calcCondenacao, chanceAcordoMP, promoOkMP, promocao:()=>promocao(),
-  calcAcerto, minSent, concilia, chanceConc, jConciliar, promoOk, calcDefesa, chanceHC, dpHC, dpAcordo, chanceAcordoDP, promoOkDP, gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };
+  motivoAbrir, calcAcerto, minSent, concilia, chanceConc, jConciliar, promoOk, calcDefesa, chanceHC, dpHC, dpAcordo, chanceAcordoDP, promoOkDP, gabinete, organizacao, receitaPub, despesasPub, dilig, RAR, CARGOS_MP };

@@ -16,7 +16,7 @@ let falhas = 0;
     let jogados = 0;
     for (let m = 0; m < MESES; m++) {
       await drenar(p); const a = await p.$('[data-act=aceitar]:not([disabled])'); if (a) { await a.click({ timeout: 2000 }).catch(() => {}); await drenar(p); }
-      for (let t = 0; t < 10; t++) { await drenar(p); const i = await p.$('[data-act=inc][data-k=case]:not([disabled]), [data-act=inc][data-k=proc]:not([disabled]), [data-act=inc][data-k=inq]:not([disabled]), [data-act=inc][data-k=dp]:not([disabled])'); if (!i) break; await i.click({ timeout: 2000 }).catch(() => {}); }
+      for (let t = 0; t < 10; t++) { await drenar(p); const i = await p.$('[data-act=inc][data-k=case]:not([disabled]), [data-act=inc][data-k=trabalho]:not([disabled]), [data-act=inc][data-k=proc]:not([disabled]), [data-act=inc][data-k=inq]:not([disabled]), [data-act=inc][data-k=dp]:not([disabled])'); if (!i) break; await i.click({ timeout: 2000 }).catch(() => {}); }
       await drenar(p); if (!await p.$('[data-act=fimSemana]')) break; await p.click('[data-act=fimSemana]', { timeout: 3000 }).catch(() => {}); await drenar(p); jogados++;
     }
     const texto = (await p.evaluate(() => document.body.innerText)).replace(/fim de semana/gi, '');

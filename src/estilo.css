@@ -383,3 +383,4 @@ select,.field input{border-radius:6px}
 .sj-acao.on{border-color:var(--gold);background:var(--brass-soft)}
 @media (max-width:720px){.sj-corpo{grid-template-columns:minmax(0,1fr)}}
 .filtro-of{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-4px 0 4px} .filtro-of select{min-height:36px}
+.trab-casos{margin-bottom:20px} .trab-casos .row .name{white-space:normal}

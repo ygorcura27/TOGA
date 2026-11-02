@@ -32,6 +32,7 @@ app.addEventListener('click',e=>{
   if(a==='recusar'){ S.ofertas=S.ofertas.filter(x=>x.id!==id); }
   if(a==='inc'||a==='dec'){ const d=a==='inc'?1:-1; if(d>0&&livres()<=0) return;
     if(b.dataset.k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
+    else if(b.dataset.k==='trabalho'){ const c=d>0?casoQuePrecisa():casoQueSobra(); if(!c) return; c.semana=Math.max(0,(c.semana||0)+d); }
     else if(b.dataset.k==='dp'){ const c=S.d.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
     else if(b.dataset.k==='inq'){ const c=S.p.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
     else if(b.dataset.k==='proc'){ const p=S.j.acervo.find(x=>x.id===id); p.semana=Math.max(0,(p.semana||0)+d); }

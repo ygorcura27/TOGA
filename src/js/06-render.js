@@ -35,7 +35,8 @@ function render(){
         ${gabA?`<span class="label">Equipe do escritório · ${gabA} blocos por mês</span><div class="blocks">${gabCellsA}</div>`:'<span class="label">Sem equipe: contrate gente na aba Estrutura e equipe</span>'}
         <div class="legend"><span><i style="background:var(--b-case)"></i>Casos</span><span><i style="background:var(--b-apoio)"></i>Apoios</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso (${free})</span></div>
         <div class="rows">
-          ${S.casos.map(c=>`<div class="row"><span class="name" title="${esc(c.titulo)}">${esc(c.titulo)}</span>${stepper('case',c.id,c.semana||0,free)}</div>`).join('')}
+          ${S.casos.length?`<div class="row"><span class="name" title="Os blocos vão primeiro para a manutenção e para os prazos mais curtos. Para escolher caso a caso, use a aba Estrutura e equipe.">Trabalho nos casos <small style="color:var(--muted)">· ${S.casos.length} caso${S.casos.length>1?'s':''}</small></span>${stepper('trabalho',0,S.casos.reduce((a,c)=>a+(c.semana||0),0),free)}</div>
+          <button class="lnk" data-act="view" data-v="estrutura" style="align-self:flex-start;font-size:12px">Ajustar os blocos caso a caso</button>`:''}
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
