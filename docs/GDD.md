@@ -712,6 +712,6 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 - Mesa fixa por cargo: câmara de 3, turma de 5, plenário de 11. Cada colega tem uma linha (garantista, punitivista, legalista, pragmático, consequencialista) e uma afinidade com você que muda conforme vocês votam juntos.
 - Você é relator em 1 a cada 3 sessões (lê o voto, que puxa a mesa pela Escrita). Fases: sustentação oral, seu voto, 3 rodadas de debate com 2 ações (convencer, articular com −12 de capital político, suavizar a tese, pedir vista, reajustar o voto até 2 vezes) e votação um a um.
 - No STF, a opinião pública (TV Justiça) pesa nos colegas consequencialistas, votar contra ela custa 1 de reputação e o resultado vale em dobro.
-- Reputação: relator vencedor +4 (+2 com tese suavizada), vogal na maioria +1, vencido −1. Voto vencido não conta como sentença sua no tribunal.
+- Reputação: relator vencedor +4 (+2 com tese suavizada), vogal na maioria +1, vencido −1. Voto vencido conta na produção, mas não vai a recurso nem entra na taxa de reforma (a decisão é da maioria).
 - Consequências futuras: maioria contra a prova pode cair em ação rescisória em 6 a 18 meses (−3); voto vencido de acordo com a prova pode virar maioria em 18 a 36 meses (+4). Relator vencedor soma ao índice de liderança e vira notícia.
 - **Promotor:** condenação rende 30% mais reputação; com a equipe inicial a reputação média em 24 meses passou de 36 para 56, no padrão do juiz e do defensor.
