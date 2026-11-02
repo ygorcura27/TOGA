@@ -90,7 +90,7 @@ function calcChance(c,extra=0){
   if(S.traits.includes('ansioso') && RORD.indexOf(c.rar)>=3) add('Ansiedade',-5);
   if(S.traits.includes('sortudo')) add('Sortudo',3);
   for(const t of tesesDoCaso(c)) add('Tese: '+t.nome,t.bonus);
-  if(c.inst>1){ add(INST[c.inst],-10*(c.inst-1)); add(c.lado==='recorrido'?'Decisão a seu favor':'Decisão contrária',c.lado==='recorrido'?10:-10); }
+  if(c.inst>1){ add(INST[c.inst],-13*(c.inst-1)); add(c.lado==='recorrido'?'Decisão a seu favor':'Decisão contrária',c.lado==='recorrido'?10:-10); }
   bonusNPC(c,add);
   if(S.ex&&S.semana<S.ex.ate&&c.cidade===S.ex.comarca) add('Quarentena de ex-'+S.ex.cargo.toLowerCase(),-5);
   bonusPerks(c,add); add('Audiência',c.mod); add('Esta jogada',extra);

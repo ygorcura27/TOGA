@@ -59,7 +59,7 @@ function calcCondenacao(c){
   if(S.traits.includes('orador') && c.juri) add('Orador nato (júri)',5);
   if(S.traits.includes('ansioso') && RORD.indexOf(c.rar)>=3) add('Ansiedade',-5);
   if(S.traits.includes('sortudo')) add('Sortudo',3);
-  if(c.inst>1){ add(INST[c.inst],-10*(c.inst-1)); add(c.lado==='recorrido'?'Condenação já obtida':'Absolvição anterior',c.lado==='recorrido'?10:-10); }
+  if(c.inst>1){ add(INST[c.inst],-13*(c.inst-1)); add(c.lado==='recorrido'?'Condenação já obtida':'Absolvição anterior',c.lado==='recorrido'?10:-10); }
   bonusPerks(c,add); add('Audiência',c.mod);
   const bonus=items.reduce((a,x)=>a+x[1],0);
   let ch=sig((skill+bonus-c.d)/12); if(c.juri) ch=.5+(ch-.5)*.8;
