@@ -42,6 +42,7 @@ function render(){
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
         <p class="label" style="margin:0">Blocos livres viram descanso e recuperam energia.</p>
+        ${previsaoEnergia()}
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelSkills()}${painelClientes()}${painelCarreiraAdv()}${painelDiario()}
@@ -376,3 +377,8 @@ function pasta(c,ativo){
   </article>`;
 }
 
+
+// previsão da energia no fim do mês, com a mesma conta do fechamento (trabalho gasta, descanso e lazer recuperam)
+function previsaoEnergia(){ const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
+  const fim=clamp(Math.round(S.energia-3.2*trab*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*lazer),0,traco('insone')?85:100), d=fim-Math.round(S.energia);
+  return `<p class="num" style="margin:0;font-size:12.5px">Energia: ${Math.round(S.energia)} hoje → <b class="${fim<30?'lo':d>=0?'hi':''}">${fim}</b> no fim do mês (${trab} bloco${trab===1?'':'s'} seu${trab===1?'':'s'} de trabalho, ${desc} de descanso, ${lazer} de lazer)${fim<30?' · abaixo de 30 você perde 10 de chance nos casos':''}</p>`; }

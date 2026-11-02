@@ -9,7 +9,7 @@ const vivoUsadas=()=>S.vivo&&S.vivo.mes===S.semana?S.vivo.n:0;
 const usarVivo=()=>{ if(!S.vivo||S.vivo.mes!==S.semana) S.vivo={mes:S.semana,n:0}; S.vivo.n++; };
 const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'adv';
 // quem pode ir no seu lugar: advogados com área no escritório; nas carreiras públicas, assessores
-function substitutos(c){ const eq=S.u?S.u.equipe:[];
+function substitutos(c){ const eq=[...(S.u?S.u.equipe:[]),...(papelAud()==='adv'&&S.filU&&S.filU[c.cidade]?S.filU[c.cidade].equipe:[])];
   if(papelAud()==='adv') return eq.filter(f=>f.ae&&podeIr(f,c)).map(f=>({f,sk:Math.round(f.area===c.area?f.ae:f.q*.85)}));
   return eq.filter(f=>f.funcao==='assessor').map(f=>({f,sk:Math.round(f.q*.9)})); }
 // hierarquia: caso épico ou lendário só o titular ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado

@@ -384,3 +384,8 @@ select,.field input{border-radius:6px}
 @media (max-width:720px){.sj-corpo{grid-template-columns:minmax(0,1fr)}}
 .filtro-of{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-4px 0 4px} .filtro-of select{min-height:36px}
 .trab-casos{margin-bottom:20px} .trab-casos .row .name{white-space:normal}
+/* filiais */
+.filiais-eq{margin-top:20px} .fil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.fil-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--b-descanso)}
+.fil-card h3{font-size:18px} .fil-card small{color:var(--muted);font-size:12px}
+.fil-eq{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px} .fil-eq li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px} .fil-eq b{display:block}

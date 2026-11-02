@@ -390,6 +390,11 @@ select,.field input{border-radius:6px}
 @media (max-width:720px){.sj-corpo{grid-template-columns:minmax(0,1fr)}}
 .filtro-of{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-4px 0 4px} .filtro-of select{min-height:36px}
 .trab-casos{margin-bottom:20px} .trab-casos .row .name{white-space:normal}
+/* filiais */
+.filiais-eq{margin-top:20px} .fil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.fil-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--b-descanso)}
+.fil-card h3{font-size:18px} .fil-card small{color:var(--muted);font-size:12px}
+.fil-eq{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px} .fil-eq li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px} .fil-eq b{display:block}
 </style>
 
 <div id="app"></div>
@@ -643,7 +648,7 @@ function carregar(){try{const r=localStorage.getItem('toga-proto'); return r?JSO
 // ===================== CASOS =====================
 function temEscritorio(k){ const C=LOC[k]; if(!C) return false; if(S.carreira!=='adv') return k===comarcaAtual(); if(C.centro) return temEscritorio(C.parent); return k===S.sede||S.filiais.includes(k); }
 function longe(c){ const C=LOC[c.cidade]; return !temEscritorio(c.cidade) && !(C.nivel==='regional' && temEscritorio(C.parent)); }
-const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length;
+const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length+(S.carreira==='adv'?advsFil():0); // advsFil: equipe das filiais
 const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
@@ -798,6 +803,7 @@ function render(){
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
         <p class="label" style="margin:0">Blocos livres viram descanso e recuperam energia.</p>
+        ${previsaoEnergia()}
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelSkills()}${painelClientes()}${painelCarreiraAdv()}${painelDiario()}
@@ -1132,6 +1138,11 @@ function pasta(c,ativo){
   </article>`;
 }
 
+
+// previsão da energia no fim do mês, com a mesma conta do fechamento (trabalho gasta, descanso e lazer recuperam)
+function previsaoEnergia(){ const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
+  const fim=clamp(Math.round(S.energia-3.2*trab*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*lazer),0,traco('insone')?85:100), d=fim-Math.round(S.energia);
+  return `<p class="num" style="margin:0;font-size:12.5px">Energia: ${Math.round(S.energia)} hoje → <b class="${fim<30?'lo':d>=0?'hi':''}">${fim}</b> no fim do mês (${trab} bloco${trab===1?'':'s'} seu${trab===1?'':'s'} de trabalho, ${desc} de descanso, ${lazer} de lazer)${fim<30?' · abaixo de 30 você perde 10 de chance nos casos':''}</p>`; }
 // ===================== INÍCIO =====================
 let escolha={genero:'f',nome:'Ana Ribeiro',inicio:'faculdade',facul:'publica',carreira:'adv',espec:'trabalho',sede:'sp',traits:['orador','workaholic']};
 function renderInicio(){
@@ -1353,6 +1364,7 @@ async function fimSemana(){
   try{
     autoDistribuir();
     const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
+    blocosFiliais(); // a equipe de cada filial trabalha nos casos da cidade dela (não gasta a sua energia)
     // agenda → preparação
     for(const c of S.casos){ cargaCaso(c,true); for(const k in c.apoios) if(c.apoios[k]===1) c.apoios[k]=2; }
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);
@@ -4269,7 +4281,7 @@ const vivoUsadas=()=>S.vivo&&S.vivo.mes===S.semana?S.vivo.n:0;
 const usarVivo=()=>{ if(!S.vivo||S.vivo.mes!==S.semana) S.vivo={mes:S.semana,n:0}; S.vivo.n++; };
 const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'adv';
 // quem pode ir no seu lugar: advogados com área no escritório; nas carreiras públicas, assessores
-function substitutos(c){ const eq=S.u?S.u.equipe:[];
+function substitutos(c){ const eq=[...(S.u?S.u.equipe:[]),...(papelAud()==='adv'&&S.filU&&S.filU[c.cidade]?S.filU[c.cidade].equipe:[])];
   if(papelAud()==='adv') return eq.filter(f=>f.ae&&podeIr(f,c)).map(f=>({f,sk:Math.round(f.area===c.area?f.ae:f.q*.85)}));
   return eq.filter(f=>f.funcao==='assessor').map(f=>({f,sk:Math.round(f.q*.9)})); }
 // hierarquia: caso épico ou lendário só o titular ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado
@@ -5150,6 +5162,56 @@ function painelTrabalhoCasos(){ if(S.carreira!=='adv'||!S.casos.length) return '
     const alvo=[...app.children].find(el=>!el.matches('header.top,.ticker,.tut')); if(alvo) alvo.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
 // tutorial: o passo de preparar o caso aponta para a linha nova
 for(const p of TUT.adv) if(p.alvo==='[data-act=inc][data-k=case]'){ p.alvo='[data-act=inc][data-k=trabalho]'; p.txt='Agora prepare os casos: coloque <b>blocos em Trabalho nos casos</b>. Eles vão primeiro para a manutenção e para os prazos mais curtos; na aba Estrutura e equipe você ajusta caso a caso. Cada bloco aumenta a chance, com retorno decrescente.'; }
+// ===================== FILIAIS COM IMÓVEL E EQUIPE PRÓPRIOS =====================
+// cada filial tem o seu imóvel e a sua equipe. A equipe da filial trabalha nos casos daquela cidade ou país, pode ir às
+// audiências de lá (com a mesma hierarquia) e soma no limite de casos ativos. Salários e aluguel saem do caixa do escritório.
+const IMOVEL_FIL=[{nome:'Sala comercial',mesas:3,aluguel:0,custo:0},{nome:'Conjunto comercial',mesas:8,aluguel:2000,custo:15000},{nome:'Andar corporativo',mesas:15,aluguel:5000,custo:50000}];
+const FUNC_FIL=['estagiario','junior','pleno','senior'];
+function filU(k){ const F=S.filU||(S.filU={}); if(!F[k]) F[k]={imovel:0,equipe:[],desde:S.semana}; return F[k]; }
+const unidades=()=>S.carreira==='adv'?S.filiais.map(k=>[k,filU(k)]):[];
+const blocosFil=U=>Math.floor(U.equipe.reduce((a,f)=>a+FUNCOES.adv[f.funcao].bl*(.6+f.moral/250),0));
+const advsFil=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length+Math.floor(U.equipe.filter(f=>f.funcao==='estagiario').length/2),0);
+const despFil=()=>unidades().reduce((a,[,U])=>a+IMOVEL_FIL[U.imovel].aluguel+U.equipe.reduce((x,f)=>x+f.sal,0),0);
+const estrangeiro=k=>LOC[k]&&LOC[k].nivel==='global'&&LOC[k].pais!=='Portugal';
+// limite de casos e despesas
+{ const d0=despesasEscritorio; despesasEscritorio=function(){ const d=d0(), f=despFil(); return {...d,filEq:f,total:d.total+f}; }; }
+// a equipe de cada filial põe os blocos nos casos da cidade dela, primeiro onde falta manutenção
+function blocosFiliais(){ for(const [k,U] of unidades()){ let b=blocosFil(U); const L=S.casos.filter(c=>c.cidade===k);
+    while(b>0&&L.length){ const c=L.reduce((a,x)=>falta(x)>falta(a)?x:a); c.semana=(c.semana||0)+1; b--; } } }
+// a filial no exterior abre com um sócio local que fala o idioma do país
+{ const ev0=e=>{}; document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=abrirFilial]'); if(!b||!S) return; const k=b.dataset.v;
+    setTimeout(()=>{ if(S&&S.filiais.includes(k)&&!(S.filU&&S.filU[k])){ const U=filU(k);
+        if(LOC[k].nivel==='global'){ const c=gerarCandidato('senior',S.espec); c.funcao='socio'; c.sal=0; c.salBase=0; c.part=.05; c.local=true; c.moral=75; U.equipe.push(c); addLog(`${c.nome} é o sócio local da filial em ${nomeLocal(k)}.`,'g'); } salvar(); render(); } },60); },true); }
+// moral e skill da equipe das filiais evoluem como a da sede
+{ const s0=semanaEstruturaAdv; semanaEstruturaAdv=function(){ s0(); for(const [k,U] of unidades()) for(const f of [...U.equipe]){ f.semanas=(f.semanas||0)+1;
+      f.moral=clamp(f.moral+(60-f.moral)*.1+rnd(-2,2),0,100); f.q=clamp(f.q+.15,0,95); if(f.ae!==undefined&&f.ae<95) f.ae=clamp(f.ae+.2,0,95);
+      if(f.moral<25&&f.funcao!=='socio'&&Math.random()<.35){ U.equipe=U.equipe.filter(x=>x!==f); addLog(`${f.nome} pediu demissão da filial em ${nomeLocal(k)}.`,'r'); } } }; }
+async function contratarFil(k,funcao){ if(ocupado) return; const U=filU(k), F=FUNCOES.adv[funcao];
+  if(U.equipe.length>=IMOVEL_FIL[U.imovel].mesas) return modal(`<h2>Sem mesa livre</h2><p>A ${IMOVEL_FIL[U.imovel].nome.toLowerCase()} de ${esc(nomeLocal(k))} tem ${IMOVEL_FIL[U.imovel].mesas} mesas. Mude para um imóvel maior.</p>`,[{t:'Ok',v:1}]);
+  const areas=Object.entries(LOC[k].areas||{}).sort((a,b)=>b[1]-a[1]).map(x=>x[0]).filter(a=>AREAS[a]);
+  const cands=[0,1,2].map(i=>{ const c=gerarCandidato(funcao,AE_FAIXA[funcao]?(areas[i%Math.max(1,areas.length)]||S.espec):undefined); if(estrangeiro(k)) c.local=true; return c; });
+  const v=await modal(`<h2>Contratar em ${esc(nomeLocal(k))}: ${F.nome}</h2><p>Rende cerca de ${F.bl} blocos por mês nos casos daqui. Salário pago pelo caixa do escritório.${estrangeiro(k)?' Contratação local: fala o idioma do país.':''}</p>
+    <div class="opts">${cands.map((c,i)=>`<button class="opt" data-mv="${i}"><span>${esc(c.nome)}</span><b class="num">${brl(c.sal)}/mês</b><small>Qualidade ${c.q} · moral ${c.moral}${c.area?` · ${AREAS[c.area].nome} ${Math.round(c.ae)}`:''}</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
+  if(v===''||v===undefined) return; const c=cands[+v]; U.equipe.push(c); addLog(`${c.nome} entrou na filial de ${nomeLocal(k)} como ${F.nome.toLowerCase()}.`,'g'); salvar(); render(); }
+function painelFiliais(){ const L=unidades(); if(!L.length) return '';
+  return `<section class="panel filiais-eq"><div class="panel-head"><h2>Filiais</h2><span class="label">${L.length} unidade${L.length>1?'s':''} · ${brl(despFil())}/mês de equipe e imóvel</span></div>
+    <div class="fil-grid">${L.map(([k,U])=>{ const I=IMOVEL_FIL[U.imovel], prox=IMOVEL_FIL[U.imovel+1], casos=S.casos.filter(c=>c.cidade===k);
+      return `<div class="fil-card"><div class="panel-head"><h3>${esc(nomeLocal(k))}</h3><span class="label">${LOC[k].nivel==='global'?LOC[k].pais:LOC[k].nivel==='regional'?'bairro':'cidade'}</span></div>
+        <small>${I.nome} · ${U.equipe.length}/${I.mesas} mesas · ${blocosFil(U)} blocos por mês · ${casos.length} caso${casos.length===1?'':'s'} ativo${casos.length===1?'':'s'} aqui</small>
+        ${U.equipe.length?`<ul class="fil-eq">${U.equipe.map(f=>`<li>${retrato(f.nome,{size:30})}<span><b>${esc(f.nome)}</b><small>${nomeFuncao(f)}${f.area?` · ${AREAS[f.area].nome} ${Math.round(f.ae)}`:''} · moral ${Math.round(f.moral)}${f.local?' · local':''}</small></span>${f.funcao==='socio'?'':`<button class="lnk" data-fildem="${k}" data-id="${f.id}">Demitir</button>`}</li>`).join('')}</ul>`
+          :'<p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Sem equipe: os casos daqui dependem dos seus blocos e da equipe da sede.</p>'}
+        <div class="chips">${FUNC_FIL.map(fn=>`<button class="chip" data-filcon="${k}" data-v="${fn}">+ ${FUNCOES.adv[fn].nome}</button>`).join('')}</div>
+        ${prox?`<button class="btn ghost" data-filimo="${k}" ${S.caixa<prox.custo?'disabled':''}>Mudar para ${prox.nome.toLowerCase()} · ${brl(prox.custo)} (+${brl(prox.aluguel-I.aluguel)}/mês)</button>`:''}</div>`; }).join('')}</div>
+    <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">A equipe de cada filial trabalha nos casos da cidade dela, pode ir às audiências de lá (com a mesma hierarquia) e cada advogado dela soma 1 vaga de caso ativo.</p></section>`; }
+{ const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelFiliais(); if(h) app.insertAdjacentHTML('beforeend',h); }; }
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-filcon],[data-fildem],[data-filimo]'); if(!b||b.disabled||!S) return;
+  if(b.dataset.filcon) return contratarFil(b.dataset.filcon,b.dataset.v);
+  if(b.dataset.fildem){ const U=filU(b.dataset.fildem), f=U.equipe.find(x=>x.id===+b.dataset.id); if(!f) return; const multa=f.sal*2;
+    modal(`<h2>Demitir ${esc(f.nome)}?</h2><p>Custa ${brl(multa)} de rescisão.</p>`,[{t:'Cancelar',v:0,cls:'ghost'},{t:'Demitir',v:1}]).then(v=>{ if(!v) return; U.equipe=U.equipe.filter(x=>x!==f); S.caixa-=multa; addLog(`${f.nome} saiu da filial.`,'r'); salvar(); render(); }); return; }
+  if(b.dataset.filimo){ const U=filU(b.dataset.filimo), prox=IMOVEL_FIL[U.imovel+1]; if(!prox||S.caixa<prox.custo) return; S.caixa-=prox.custo; U.imovel++; addLog(`A filial de ${nomeLocal(b.dataset.filimo)} mudou para ${prox.nome.toLowerCase()}.`,'g'); salvar(); render(); } });
+// no cartão do caso: a equipe da filial que cuida dele
+{ const p0=pasta; pasta=function(c,ativo){ const h=p0(c,ativo); const U=S.filU&&S.filU[c.cidade]; if(!ativo||!U||!U.equipe.length) return h;
+    return h.replace('<dl class="meta">',`<dl class="meta"><dt>Filial</dt><dd>equipe de ${esc(nomeLocal(c.cidade))} · +${blocosFil(U)} blocos/mês</dd>`); }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;

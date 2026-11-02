@@ -10,6 +10,7 @@ async function fimSemana(){
   try{
     autoDistribuir();
     const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
+    blocosFiliais(); // a equipe de cada filial trabalha nos casos da cidade dela (não gasta a sua energia)
     // agenda → preparação
     for(const c of S.casos){ cargaCaso(c,true); for(const k in c.apoios) if(c.apoios[k]===1) c.apoios[k]=2; }
     if(S.agenda.estudo){ const k=S.agenda.estudoSkill, mult=(S.traits.includes('rato')?1.5:1)*(tem('pesquisa',3)?1.5:1)*multAtual(k);

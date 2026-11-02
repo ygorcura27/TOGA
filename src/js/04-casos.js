@@ -1,7 +1,7 @@
 // ===================== CASOS =====================
 function temEscritorio(k){ const C=LOC[k]; if(!C) return false; if(S.carreira!=='adv') return k===comarcaAtual(); if(C.centro) return temEscritorio(C.parent); return k===S.sede||S.filiais.includes(k); }
 function longe(c){ const C=LOC[c.cidade]; return !temEscritorio(c.cidade) && !(C.nivel==='regional' && temEscritorio(C.parent)); }
-const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length;
+const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length+(S.carreira==='adv'?advsFil():0); // advsFil: equipe das filiais
 const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
