@@ -49,7 +49,8 @@ function render(){
       ${painelCasosAtivos()}
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Novos casos deste mês</h2><span class="label">Renovam todo mês</span></div>
-        <div class="cases">${S.ofertas.length?S.ofertas.map(c=>pasta(c,false)).join(''):'<p class="empty">Sem ofertas restantes neste mês.</p>'}</div>
+        ${filtroOfertasHtml()}
+        <div class="cases">${S.ofertas.length?(ofertasFiltradas().map(c=>pasta(c,false)).join('')||'<p class="empty">Nenhum caso passa nesse filtro. Mude o filtro para ver os outros.</p>'):'<p class="empty">Sem ofertas restantes neste mês.</p>'}</div>
       </section>
     </div>
   </div>`;

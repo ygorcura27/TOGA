@@ -388,6 +388,7 @@ select,.field input{border-radius:6px}
 .sj-acao{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;width:100%} .sj-acao small{font-weight:400;color:var(--muted);font-size:11.5px}
 .sj-acao.on{border-color:var(--gold);background:var(--brass-soft)}
 @media (max-width:720px){.sj-corpo{grid-template-columns:minmax(0,1fr)}}
+.filtro-of{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-4px 0 4px} .filtro-of select{min-height:36px}
 </style>
 
 <div id="app"></div>
@@ -803,7 +804,8 @@ function render(){
       ${painelCasosAtivos()}
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Novos casos deste mês</h2><span class="label">Renovam todo mês</span></div>
-        <div class="cases">${S.ofertas.length?S.ofertas.map(c=>pasta(c,false)).join(''):'<p class="empty">Sem ofertas restantes neste mês.</p>'}</div>
+        ${filtroOfertasHtml()}
+        <div class="cases">${S.ofertas.length?(ofertasFiltradas().map(c=>pasta(c,false)).join('')||'<p class="empty">Nenhum caso passa nesse filtro. Mude o filtro para ver os outros.</p>'):'<p class="empty">Sem ofertas restantes neste mês.</p>'}</div>
       </section>
     </div>
   </div>`;
@@ -5037,6 +5039,22 @@ TUT.pub.push(
   {txt:'O <b>expediente</b> (rotina da unidade que não é caso) é coberto primeiro pela equipe; o que sobra sai da sua agenda e aumenta o estresse. Com a equipe cobrindo tudo, você ganha +0,5 de reputação por mês.',alvo:'.rows',man:true},
   {txt:'Casos raros ou maiores podem ir <b>ao vivo</b>: o promotor e o defensor conduzem a partida; o juiz preside e investiga quem tem razão, e nos tribunais vota em colegiado tentando formar maioria. Cabem 3 por mês; os outros vão pela equipe ou pelo gabinete.',alvo:'.modo-aud',man:true},
   TUT_JORNAL,TUT_METAS);
+// ===================== FILTRO E ORDEM DOS CASOS NOVOS DO MÊS =====================
+// a escolha fica salva na partida: vale para os meses seguintes até você mudar
+const OF_ORDEM={padrao:'Ordem de chegada',chance:'Maior chance',honorario:'Maior honorário',facil:'Menor dificuldade',dificil:'Maior dificuldade'};
+const OF_FILTRO={todos:'Todos',ch50:'Chance de 50% ou mais',ch70:'Chance de 70% ou mais',valor50:'Causa de R$ 50 mil ou mais',raro:'Raros ou maiores',area:'Só da área de especialização'};
+const filtroOf=()=>S.filtroOf||(S.filtroOf={ordem:'padrao',filtro:'todos'});
+function ofertasFiltradas(){ const F=filtroOf(), ch=c=>calcChance(c).ch;
+  const passa={todos:()=>true,ch50:c=>ch(c)>=.5,ch70:c=>ch(c)>=.7,valor50:c=>c.valor>=50000,raro:c=>RORD.indexOf(c.rar)>=2,area:c=>c.area===S.espec}[F.filtro]||(()=>true);
+  const L=S.ofertas.filter(passa);
+  const ord={chance:(a,b)=>ch(b)-ch(a),honorario:(a,b)=>b.valor-a.valor,facil:(a,b)=>a.d-b.d,dificil:(a,b)=>b.d-a.d}[F.ordem];
+  return ord?[...L].sort(ord):L; }
+function filtroOfertasHtml(){ if(!S.ofertas.length) return ''; const F=filtroOf(), n=ofertasFiltradas().length;
+  const sel=(id,opts,v)=>`<select id="${id}" data-filtro-of="${id}">${Object.entries(opts).map(([k,t])=>`<option value="${k}" ${v===k?'selected':''}>${t}</option>`).join('')}</select>`;
+  return `<div class="filtro-of"><label class="label" for="of-ordem">Ordenar</label>${sel('of-ordem',OF_ORDEM,F.ordem)}<label class="label" for="of-filtro">Mostrar</label>${sel('of-filtro',OF_FILTRO,F.filtro)}
+    <span class="label">${n===S.ofertas.length?`${n} caso${n>1?'s':''}`:`${n} de ${S.ofertas.length} casos`}</span></div>`; }
+document.addEventListener('change',e=>{ const id=e.target.dataset&&e.target.dataset.filtroOf; if(!id||!S) return;
+  const F=filtroOf(); if(id==='of-ordem') F.ordem=e.target.value; else F.filtro=e.target.value; salvar(); render(); });
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
