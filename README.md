@@ -42,3 +42,5 @@ npm test                          # confere se o index.html está montado, roda 
 - `tests/carreiras.test.cjs`: começa cada carreira, joga alguns meses com um robô e falha se aparecer erro de JavaScript, texto antigo ("semana") ou save perdido. `MESES=24 npm test` joga mais tempo.
 - `npm run sim` (`tests/sim-niveis.cjs`): ganho mensal médio do escritório em cada nível, com os modais respondidos na hora (cerca de 2 segundos por partida): `node tests/sim-niveis.cjs 24 12` roda 12 partidas de 24 meses por nível.
 - `npm run sim:publicas` (`tests/sim-publicas.cjs`): simulação rápida de juiz, promotor e defensor. O robô chama as funções do jogo direto e os modais respondem na hora (`window.__rapido`, só com `?teste`), então cada partida de 24 meses leva 1 a 2 segundos. Repete várias partidas por cenário de equipe e mostra médias: `node tests/sim-publicas.cjs 24 20`, ou `CARREIRAS=juiz` para uma só.
+
+- **Ajuda**: aba com perguntas frequentes (estrelas das skills, níveis do escritório, casos épicos, filiais, energia, recursos), com os números do jogo atual.

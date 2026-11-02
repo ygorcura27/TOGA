@@ -389,3 +389,13 @@ select,.field input{border-radius:6px}
 .fil-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--b-descanso)}
 .fil-card h3{font-size:18px} .fil-card small{color:var(--muted);font-size:12px}
 .fil-eq{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px} .fil-eq li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px} .fil-eq b{display:block}
+/* ajuda */
+.aj-q{border-top:1px solid var(--line);padding:8px 0}
+.aj-q summary{font-size:14px;color:var(--ink);font-weight:600}
+.aj-r{display:grid;gap:8px;padding:8px 0 4px;font-size:13.5px;line-height:1.5}
+.aj-r p{margin:0}
+.aj-lista{margin:0;padding-left:18px;display:grid;gap:4px}
+.aj-tab{width:100%;border-collapse:collapse;font-size:13px}
+.aj-tab th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:4px 8px 4px 0}
+.aj-tab td{border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);padding:5px 8px 5px 0;vertical-align:top}
+@media (max-width:600px){.aj-tab{font-size:12px}}
