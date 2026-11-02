@@ -10,8 +10,12 @@ const usarVivo=()=>{ if(!S.vivo||S.vivo.mes!==S.semana) S.vivo={mes:S.semana,n:0
 const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'adv';
 // quem pode ir no seu lugar: advogados com área no escritório; nas carreiras públicas, assessores
 function substitutos(c){ const eq=S.u?S.u.equipe:[];
-  if(papelAud()==='adv') return eq.filter(f=>f.ae).map(f=>({f,sk:f.area===c.area?f.ae:Math.round(f.q*.85)}));
+  if(papelAud()==='adv') return eq.filter(f=>f.ae&&podeIr(f,c)).map(f=>({f,sk:f.area===c.area?f.ae:Math.round(f.q*.85)}));
   return eq.filter(f=>f.funcao==='assessor').map(f=>({f,sk:Math.round(f.q*.9)})); }
+// hierarquia: caso épico ou lendário só o titular ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado
+const RANK_ADV={associado:1,junior:1,pleno:2,senior:3,socio:4}, RANK_CASO={comum:1,incomum:2,raro:3,epico:4,lendario:4};
+const NOME_RANK={1:'júnior ou associado',2:'pleno',3:'sênior',4:'sócio'};
+const podeIr=(f,c)=>(RANK_ADV[f.funcao]||0)>=RANK_CASO[c.rar];
 const melhorSub=c=>substitutos(c).sort((a,b)=>b.sk-a.sk)[0]||null;
 const skillTitular=c=>papelAud()==='adv'?skillCaso(c):papelAud()==='mp'?.5*S.skills[c.area]+.3*S.skills.analise+.2*S.skills.oratoria:skillCaso(c);
 const vivoPermitido=c=>papelAud()!=='dp'||RORD.indexOf(c.rar)>=2; // na Defensoria, comuns e incomuns vão em lote
@@ -29,7 +33,7 @@ function seletorModo(c){ const m=modoDe(c), sub=melhorSub(c), cheio=vivoUsadas()
   return `<div class="modo-aud"><span class="label">Audiência</span><div class="chips">
     ${vivoPermitido(c)?b('vivo','Ao vivo',false,`Você conduz a audiência. Cabem ${VIVO_MES} por mês.`):''}
     ${b('rapida','Rápida',false,'A balança de sempre, com o momento decisivo.')}
-    ${b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:'Contrate advogados para enviar à audiência.')}
+    ${b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:papelAud()==='adv'?`Enviar · precisa de ${NOME_RANK[RANK_CASO[c.rar]]}+`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:(papelAud()==='adv'?`Este caso pede advogado ${NOME_RANK[RANK_CASO[c.rar]]} ou acima${RANK_CASO[c.rar]===4?' (só você ou um sócio)':''}.`:'Contrate assessores para enviar à audiência.'))}
   </div>${cheio?`<small class="lo">Você já tem ${VIVO_MES} audiências ao vivo neste mês: esta vai ${sub?'com '+esc(sub.f.nome.split(' ')[0]):'rápida'}.</small>`:''}</div>`; }
 { const p0=pasta; pasta=function(c,ativo){ const h=p0(c,ativo); if(!ativo||!S.casos.includes(c)) return h;
     const sel=(c.inst||1)>1?seletorModo(c).replace('<span class="label">Audiência</span>','<span class="label">Sustentação oral no tribunal</span>'):seletorModo(c);

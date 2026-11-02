@@ -718,3 +718,9 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 - **Relações na mesa:** articular nos bastidores cria um favor; na próxima sessão esse colega cobra e diz como espera que você vote. Pagar o favor melhora a relação (+6); não pagar derruba 20 de afinidade. Colegas com afinidade 75 ou mais são aliança e puxam a mesa para o seu voto no início do debate; com 20 ou menos viram desafeto e trabalham outros colegas contra você a cada rodada.
 - **Sustentação oral nos recursos (advocacia):** recursos também podem ir ao vivo, numa sessão de 30 minutos sem testemunhas (abertura e debates), com um momento decisivo sobre o precedente da outra parte. Conta no limite de 3 por mês.
 - **Quem vai aprende:** quando você envia um advogado (ou assessor), é ele quem ganha a experiência do caso (skill da área, ou qualidade se a área não for a dele) e a moral sobe na vitória; você não ganha a experiência de uma audiência a que não foi.
+
+## Gestão do escritório
+- **Aceitar casos:** manual pelo botão Aceitar, ou automático no painel Gestão do escritório: todo mês aceita os casos novos que passam no filtro e na chance mínima (40% a 70%), do maior para o menor chance, até encher as vagas (recursos não ocupam vaga).
+- **Blocos da equipe:** com um gestor administrativo, a distribuição automática coloca os blocos da equipe nos casos mais urgentes. Os seus blocos continuam manuais.
+- **Audiências:** regra padrão escolhida no painel (você vai às raras ou maiores, só às épicas e lendárias, ou a equipe vai sempre que puder); cada caso ainda pode ser trocado no cartão.
+- **Hierarquia de quem pode ir:** épico e lendário só você ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado ou associado. Estagiário não vai. A chance usa a skill de quem for, por isso o automático costuma render menos que você indo.

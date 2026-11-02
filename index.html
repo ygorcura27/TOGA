@@ -4015,7 +4015,7 @@ app.addEventListener('click',e=>{
         if(r && S && !motivoAbrir(v)){ S.caixa-=custo; S.filiais.push(v);
           addLog(`Nova ${tipo} em ${nomeLocal(v)} por ${brl(custo)}.`,'g'); salvar(); render(); } });
     return; }
-  if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&casos1()<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&S.casos.length<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
+  if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&casos1()<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&casos1()<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
   if(a==='recusar'){ S.ofertas=S.ofertas.filter(x=>x.id!==id); }
   if(a==='inc'||a==='dec'){ const d=a==='inc'?1:-1; if(d>0&&livres()<=0) return;
     if(b.dataset.k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
@@ -4264,8 +4264,12 @@ const usarVivo=()=>{ if(!S.vivo||S.vivo.mes!==S.semana) S.vivo={mes:S.semana,n:0
 const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'adv';
 // quem pode ir no seu lugar: advogados com área no escritório; nas carreiras públicas, assessores
 function substitutos(c){ const eq=S.u?S.u.equipe:[];
-  if(papelAud()==='adv') return eq.filter(f=>f.ae).map(f=>({f,sk:f.area===c.area?f.ae:Math.round(f.q*.85)}));
+  if(papelAud()==='adv') return eq.filter(f=>f.ae&&podeIr(f,c)).map(f=>({f,sk:f.area===c.area?f.ae:Math.round(f.q*.85)}));
   return eq.filter(f=>f.funcao==='assessor').map(f=>({f,sk:Math.round(f.q*.9)})); }
+// hierarquia: caso épico ou lendário só o titular ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado
+const RANK_ADV={associado:1,junior:1,pleno:2,senior:3,socio:4}, RANK_CASO={comum:1,incomum:2,raro:3,epico:4,lendario:4};
+const NOME_RANK={1:'júnior ou associado',2:'pleno',3:'sênior',4:'sócio'};
+const podeIr=(f,c)=>(RANK_ADV[f.funcao]||0)>=RANK_CASO[c.rar];
 const melhorSub=c=>substitutos(c).sort((a,b)=>b.sk-a.sk)[0]||null;
 const skillTitular=c=>papelAud()==='adv'?skillCaso(c):papelAud()==='mp'?.5*S.skills[c.area]+.3*S.skills.analise+.2*S.skills.oratoria:skillCaso(c);
 const vivoPermitido=c=>papelAud()!=='dp'||RORD.indexOf(c.rar)>=2; // na Defensoria, comuns e incomuns vão em lote
@@ -4283,7 +4287,7 @@ function seletorModo(c){ const m=modoDe(c), sub=melhorSub(c), cheio=vivoUsadas()
   return `<div class="modo-aud"><span class="label">Audiência</span><div class="chips">
     ${vivoPermitido(c)?b('vivo','Ao vivo',false,`Você conduz a audiência. Cabem ${VIVO_MES} por mês.`):''}
     ${b('rapida','Rápida',false,'A balança de sempre, com o momento decisivo.')}
-    ${b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:'Contrate advogados para enviar à audiência.')}
+    ${b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:papelAud()==='adv'?`Enviar · precisa de ${NOME_RANK[RANK_CASO[c.rar]]}+`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:(papelAud()==='adv'?`Este caso pede advogado ${NOME_RANK[RANK_CASO[c.rar]]} ou acima${RANK_CASO[c.rar]===4?' (só você ou um sócio)':''}.`:'Contrate assessores para enviar à audiência.'))}
   </div>${cheio?`<small class="lo">Você já tem ${VIVO_MES} audiências ao vivo neste mês: esta vai ${sub?'com '+esc(sub.f.nome.split(' ')[0]):'rápida'}.</small>`:''}</div>`; }
 { const p0=pasta; pasta=function(c,ativo){ const h=p0(c,ativo); if(!ativo||!S.casos.includes(c)) return h;
     const sel=(c.inst||1)>1?seletorModo(c).replace('<span class="label">Audiência</span>','<span class="label">Sustentação oral no tribunal</span>'):seletorModo(c);
@@ -5062,6 +5066,38 @@ function filtroOfertasHtml(){ if(!S.ofertas.length) return ''; const F=filtroOf(
     <span class="label">${n===S.ofertas.length?`${n} caso${n>1?'s':''}`:`${n} de ${S.ofertas.length} casos`}</span></div>`; }
 document.addEventListener('change',e=>{ const id=e.target.dataset&&e.target.dataset.filtroOf; if(!id||!S) return;
   const F=filtroOf(); if(id==='of-ordem') F.ordem=e.target.value; else F.filtro=e.target.value; salvar(); render(); });
+// ===================== GESTÃO AUTOMÁTICA DO ESCRITÓRIO =====================
+// o escritório pode andar sozinho: aceitar casos com chance mínima, mandar a equipe às audiências e distribuir os blocos dela.
+// Automático é mais confortável, mas a skill dos advogados costuma ser menor que a sua: a chance cai nos casos que eles levam.
+const GESTAO_AUD={raras:'Eu vou às raras ou maiores',epicas:'Eu vou só às épicas e lendárias',nenhuma:'A equipe vai sempre que puder'};
+const gestao=()=>S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'raras'});
+// quem vai à audiência por padrão segue a regra escolhida; a hierarquia de quem pode ir continua valendo
+{ const m0=modoPadrao; modoPadrao=function(c){ if(papelAud()!=='adv') return m0(c); const G=gestao(), r=RORD.indexOf(c.rar);
+    const eu=G.aud==='raras'?r>=2:G.aud==='epicas'?r>=3:false;
+    if(eu&&vivoPermitido(c)) return 'vivo'; return melhorSub(c)?'enviar':'rapida'; }; }
+function aceitarAutomatico(){ if(S.carreira!=='adv'||!gestao().aceitar) return 0; let n=0;
+  const L=ofertasFiltradas().filter(c=>!(c.npcJuiz&&npcTipo(npcPor(c.npcJuiz))==='amigo')&&calcChance(c).ch>=gestao().minCh).sort((a,b)=>calcChance(b).ch-calcChance(a).ch);
+  for(const c of L){ if(casos1()>=maxCasos()) break; S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x!==c); n++;
+    addLog(`Gestão automática aceitou “${c.titulo}” (${RAR[c.rar].nome}, chance ${pct(calcChance(c).ch)}).`); }
+  return n; }
+{ const g0=gerarOfertas; gerarOfertas=function(){ g0(); aceitarAutomatico(); }; }
+function painelGestao(){ if(S.carreira!=='adv') return ''; const G=gestao(), U=S.u, g=gestorAtual();
+  const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
+  return `<section class="panel gestao"><div class="panel-head"><h2>Gestão do escritório</h2><span class="label">${G.aceitar||(U.auto&&g)?'automática':'manual'}</span></div>
+    <label class="row"><input type="checkbox" data-gestao="aceitar" ${G.aceitar?'checked':''}> <span>Aceitar casos sozinho, do maior para o menor chance</span></label>
+    <div class="row"><span class="name">Chance mínima</span><select data-gestao="minCh" ${G.aceitar?'':'disabled'}>${opt({'0.4':'40%','0.5':'50%','0.6':'60%','0.7':'70%'},G.minCh)}</select></div>
+    <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Respeita o filtro dos casos novos e as vagas livres (recursos não ocupam vaga).</p>
+    <label class="field"><span class="label">Audiências</span><select data-gestao="aud">${opt(GESTAO_AUD,G.aud)}</select></label>
+    <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Quem vai no seu lugar: épicas e lendárias só um sócio; raras a partir de sênior; incomuns a partir de pleno; comuns qualquer advogado. A chance usa a skill de quem for.</p>
+    <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:'Distribuir os blocos da equipe: contrate um gestor administrativo'}</span></label>
+  </section>`; }
+{ const d0=painelDiario; painelDiario=function(){ return painelGestao()+d0(); }; }
+document.addEventListener('change',e=>{ const k=e.target.dataset&&e.target.dataset.gestao; if(!k||!S) return; const G=gestao();
+  if(k==='aceitar'){ G.aceitar=e.target.checked; if(G.aceitar) aceitarAutomatico(); }
+  if(k==='minCh'){ G.minCh=+e.target.value; aceitarAutomatico(); }
+  if(k==='aud'){ G.aud=e.target.value; for(const c of S.casos) delete c.modoAud; } // volta todos os casos para a regra nova
+  if(k==='dist') S.u.auto=e.target.checked;
+  salvar(); render(); });
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
