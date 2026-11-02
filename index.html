@@ -4771,14 +4771,21 @@ function edicao(m){ const J=JN(), n=J.n.filter(x=>x.m===m).sort((a,b)=>b.peso-a.
   const ep=(S.epoca&&S.epoca.hist||[]).filter(h=>h.s===m).map(h=>({cat:'brasil',titulo:h.t,txt:'',peso:1,ico:'predio'}));
   const pubs=(S.ac&&S.ac.pubs||[]).filter(p=>p.semana===m).map(p=>({cat:'academia',titulo:`Publicado: “${p.titulo}”`,txt:`${p.tipo==='artigo'?`Artigo${p.qualis?' Qualis '+p.qualis:''}`:p.tipo[0].toUpperCase()+p.tipo.slice(1)} de ${S.nome}.`,peso:p.tipo==='artigo'?1:2,ico:'livro'}));
   return [...n,...pubs,...ep]; }
-function renderJornal(){ const J=JN(), ult=Math.max(1,S.semana-1); if(edJornal===null||edJornal>ult) edJornal=ult; const m=edJornal; J.lido=Math.max(J.lido||0,m);
+function renderJornal(){ const J=JN(), ult=S.semana; if(edJornal===null||edJornal>ult) edJornal=Math.max(1,S.semana-1); const m=edJornal; J.lido=Math.max(J.lido||0,m);
   const L=edicao(m), man=L[0], resto=L.slice(1);
   const col=(t,cats)=>{ const it=resto.filter(x=>cats.includes(x.cat)); return it.length?`<section class="jn-col"><h3>${t}</h3>${it.map(x=>`<article class="jn-nota">${svgIco(x.ico,'jn-ico')}<div><b>${esc(x.titulo)}</b>${x.txt?`<p>${esc(x.txt)}</p>`:''}</div></article>`).join('')}</section>`:''; };
   const R=S.carreira==='adv'&&S.rivais?S.rivais:null, RP=rivalPub();
   const podeColuna=(J.coluna||0)<S.semana;
+  const U=J.colunaUlt&&J.colunaUlt.m===S.semana?J.colunaUlt:null;
+  const coluna=`<section class="panel jn-coluna"><div class="panel-head"><h2>Sua coluna de opinião</h2><span class="label">uma por mês · custa 8 de energia</span></div>
+      ${U?`<p style="margin:0;font-size:13px">Coluna deste mês: <b>“${esc(U.t)}”</b> · <span class="${U.ok?'hi':'lo'}">${U.ok?`bem recebida, +2 de prestígio${S.carreira!=='adv'?' e +2 de capital político':''}`:'gerou polêmica, −1 de prestígio'}</span>. Está na edição deste mês; a próxima coluna pode ser escrita no mês que vem.</p>
+        <button class="btn ghost" data-act="jornalVer" data-v="${S.semana}">Ver na edição deste mês</button>`
+      :`<p style="margin:0;font-size:13px">Escreva um artigo de opinião para a edição deste mês. Usa a sua Escrita (${Math.round(S.skills.escrita)}): bem escrito, rende prestígio${S.carreira!=='adv'?' e capital político':''}; mal escrito, vira polêmica. <b>Chance de ser bem recebida: ${pct(chanceColuna())}</b>${chanceColuna()<.4?' (estude Escrita para melhorar)':''}.</p>
+        ${S.energia<8?`<p class="lo" style="margin:0;font-size:12.5px">Você está sem energia para escrever (tem ${Math.round(S.energia)}, precisa de 8). Descanse ou tire lazer neste mês.</p>`:''}
+        <button class="btn brass" data-act="coluna" ${S.energia>=8?'':'disabled'}>Escrever coluna</button>`}</section>`;
   app.innerHTML=`${header()}
-  <div class="jornal">
-    <div class="jn-nav"><button class="btn ghost" data-act="jornalEd" data-v="-1" ${m<=1?'disabled':''}>◀ Edição anterior</button><span class="label">Edição nº ${m} · ${mesNome(m)}</span><button class="btn ghost" data-act="jornalEd" data-v="1" ${m>=ult?'disabled':''}>Próxima ▶</button></div>
+  <div class="jornal">${coluna}
+    <div class="jn-nav"><button class="btn ghost" data-act="jornalEd" data-v="-1" ${m<=1?'disabled':''}>◀ Edição anterior</button><span class="label">Edição nº ${m} · ${mesNome(m)}${m===S.semana?' · em andamento, fecha no fim do mês':''}</span><button class="btn ghost" data-act="jornalEd" data-v="1" ${m>=ult?'disabled':''}>Próxima ▶</button></div>
     <article class="jn-papel">
       <header class="jn-cab"><span class="jn-meta">Ano ${Math.floor((m-1)/12)+1} · Edição ${m}</span><h1>Gazeta Forense</h1><span class="jn-meta">${mesNome(m)} · R$ 4,50</span></header>
       ${man?`<section class="jn-manchete"><div class="jn-foto">${['caso','carreira','perfil','meta','opiniao','escandalo'].includes(man.cat)?retrato(S.nome,{g:S.genero,size:170,cls:'jn-retrato',toga:S.carreira==='juiz'}):svgIco(man.ico,'jn-ico-g')}</div><div><span class="label">${({caso:'Tribunais',carreira:'Carreiras',perfil:'Perfil',brasil:'Brasil',escandalo:'Escândalo',opiniao:'Opinião',academia:'Academia',rival:'Duelo',meta:'Perfil'})[man.cat]||'Destaque'}</span><h2>${esc(man.titulo)}</h2>${man.txt?`<p>${esc(man.txt)}</p>`:''}</div></section>`
@@ -4789,19 +4796,19 @@ function renderJornal(){ const J=JN(), ult=Math.max(1,S.semana-1); if(edJornal==
         ${RP?`<section class="jn-col"><h3>Concorrência na carreira</h3><p>${esc(RP.nome)} disputa as mesmas vagas: reputação <b class="num">${Math.round(RP.rep)}</b> contra a sua <b class="num">${Math.round(S.prest)}</b>. Quem tiver mais reputação na hora da promoção leva vantagem.</p></section>`:''}
       </div>
     </article>
-    <section class="panel jn-coluna"><div class="panel-head"><h2>Sua coluna de opinião</h2><span class="label">uma por mês</span></div>
-      <p style="margin:0;font-size:13px">Escreva um artigo para a próxima edição. Usa a sua Escrita (${Math.round(S.skills.escrita)}) e custa 8 de energia. Bem escrito, rende prestígio${S.carreira!=='adv'?' e capital político':''}; mal escrito, vira polêmica.</p>
-      <button class="btn brass" data-act="coluna" ${podeColuna&&S.energia>=8?'':'disabled'}>${podeColuna?'Escrever coluna':'Coluna deste mês enviada'}</button></section>
   </div>`; }
 const TEMAS_COL={penal:['O excesso de prisões preventivas','A delação premiada tem limites?'],civel:['O Judiciário e os contratos de adesão','Quem paga a conta da demora processual?'],trabalho:['O trabalho por aplicativo precisa de regras','Horas extras na era do celular'],familia:['Guarda compartilhada na prática','O afeto como vínculo jurídico'],empresarial:['Recuperação judicial não é calote','Startups e insegurança jurídica'],tributario:['Reforma tributária: quem ganha?','O contribuinte e o confisco disfarçado']};
-function escreverColuna(){ const J=JN(); if((J.coluna||0)>=S.semana||S.energia<8) return; J.coluna=S.semana; S.energia=clamp(S.energia-8,0,100);
+const chanceColuna=()=>clamp(sig((S.skills.escrita-50)/10)+(vip('pena')?.2:0),.15,.95);
+function escreverColuna(){ const J=JN(); if((J.coluna||0)>=S.semana||S.energia<8) return; J.coluna=S.semana; S.energia=clamp(S.energia-8,0,100); edJornal=S.semana;
   const area=S.carreira==='juiz'?(S.j.vara||'civel'):S.carreira==='adv'?S.espec:'penal', t=pick(TEMAS_COL[area]||TEMAS_COL.civel);
-  const ok=Math.random()<clamp(sig((S.skills.escrita-50)/10)+(vip('pena')?.2:0),.15,.95);
+  const ok=Math.random()<chanceColuna();
+  J.colunaUlt={m:S.semana,t,ok};
   if(ok){ S.prest=clamp(S.prest+2,0,100); if(S.carreira!=='adv') S.pol=clamp((S.pol??10)+2,0,100); noticia('opiniao',`“${t}”, por ${S.nome}`,'O artigo circula entre colegas e chega a ser citado em sessão.',2); addLog(`Sua coluna “${t}” foi bem recebida: +2 prestígio.`,'g'); }
   else { S.prest=clamp(S.prest-1,0,100); noticia('opiniao',`Coluna de ${S.nome} gera polêmica`,`O texto “${t}” recebeu críticas duras de colegas.`,1); addLog(`Sua coluna “${t}” gerou polêmica: −1 prestígio.`,'r'); }
   salvar(); render(); }
-document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=jornalEd],[data-act=coluna]'); if(!b||b.disabled||!S) return;
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=jornalEd],[data-act=coluna],[data-act=jornalVer]'); if(!b||b.disabled||!S) return;
   if(b.dataset.act==='coluna') return escreverColuna();
+  if(b.dataset.act==='jornalVer'){ edJornal=+b.dataset.v; return render(); }
   edJornal=(edJornal||1)+(+b.dataset.v); render(); });
 // aba Jornal em todas as carreiras, com aviso de edição nova
 { const h0=header; header=function(){ const h=h0(); if(!S) return h; const nova=(JN().lido||0)<S.semana-1&&S.semana>1;
