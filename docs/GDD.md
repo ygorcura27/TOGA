@@ -122,6 +122,8 @@ chance = sigmoide((skill do caso + soma dos bônus − dificuldade) / 12), limit
 | Local | conjunto comercial, 2 advogados | épico | ×1,15 | ×1,2 |
 | Regional | 4 advogados, 1 filial, 2 clientes fixos, prestígio 45, 3 anos | épico | ×1,2 | ×1,4 |
 | Nacional | andar corporativo, 8 advogados, filial em outro estado, 4 clientes, 3 áreas, prestígio 65, 6 anos | lendário | ×1 | ×1,6 |
+
+Os advogados das filiais contam para os requisitos de nível e para o porte dos casos épicos e lendários (estagiários não contam).
 | High Tier | 15 advogados, filiais em 3 estados, 6 clientes, full service, prestígio 80, 10 anos | lendário | ×1,7 | ×2,5 |
 
    - **Valor da causa:** 5.000 × 1,06^dificuldade × fator da cidade × multiplicador do nível. Uma causa comum vale cerca de R$ 16 mil, uma épica R$ 300 mil e uma lendária R$ 1 milhão.

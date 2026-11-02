@@ -11,7 +11,9 @@ const manut=c=>(c.inst||1)>1?1:MANUT[c.rar];
 const PORTE={epico:1,lendario:2}; // advogados na equipe para atender o porte do caso
 const advsEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>['associado','junior','pleno','senior','socio'].includes(f.funcao)).length:0;
 const estagEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>f.funcao==='estagiario').length:0;
-const faltaPorte=c=>Math.max(0,(PORTE[c.rar]||0)-advsEquipe());
+// advogados da sede + advogados das filiais (estagiários não contam)
+const advsTotal=()=>advsEquipe()+(S.carreira==='adv'?advsFilAdv():0);
+const faltaPorte=c=>Math.max(0,(PORTE[c.rar]||0)-advsTotal());
 // aplica os blocos do mês: primeiro a manutenção, depois o atraso acumulado, o resto vira preparação
 function cargaCaso(c,aplicar){ let s=c.semana||0, at=c.atraso||0, prep=c.prep||0; const m=manut(c);
   if(s<m){ at+=m-s; s=0; } else { s-=m; const q=Math.min(s,at); at-=q; s-=q; prep+=s; }

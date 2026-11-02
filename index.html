@@ -657,15 +657,15 @@ function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>
 const TIERS=[
   {nome:'Escritório iniciante',rarMax:2,valor:.85,partido:1},
   {nome:'Escritório local',rarMax:3,valor:1.25,partido:1.2,req:{imovel:1,advs:2}},
-  {nome:'Escritório regional',rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:3}},
-  {nome:'Escritório nacional',rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:6}},
+  {nome:'Escritório regional',rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:2}},
+  {nome:'Escritório nacional',rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:5}},
   {nome:'Escritório High Tier',rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
 ];
 const anosEscritorio=()=>S.u?Math.floor((S.semana-(S.u.fundado||S.semanaFormatura||1))/ANO):0;
 function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].nivel==='nacional'||LOC[f].nivel==='global')).length;
   const it=[];
   if(r.imovel!=null) it.push({l:`Imóvel: ${IMOVEIS.adv[r.imovel].nome} ou maior`,ok:(U.imovel||0)>=r.imovel,v:IMOVEIS.adv[U.imovel||0].nome});
-  if(r.advs) it.push({l:`${r.advs} advogados na equipe`,ok:advsEquipe()>=r.advs,v:advsEquipe()});
+  if(r.advs){ const n=advsTotal(); it.push({l:`${r.advs} advogados na equipe (sede e filiais)`,ok:n>=r.advs,v:n}); }
   if(r.filiais) it.push({l:`${r.filiais} filial em bairro ou cidade`,ok:S.filiais.length>=r.filiais,v:S.filiais.length});
   if(r.estados) it.push({l:`Filiais em ${r.estados} estado${r.estados>1?'s':''} fora da sede`,ok:est>=r.estados,v:est});
   if(r.clientes) it.push({l:`${r.clientes} clientes fixos`,ok:(S.clientes||[]).length>=r.clientes,v:(S.clientes||[]).length});
@@ -1118,7 +1118,7 @@ function pasta(c,ativo){
       <dt>Se perder</dt><dd class="lo">${sgn(-perda)} prestígio</dd>
       <dt>Audiência</dt><dd>${c.prazo<=1?'<b class="mid">no próximo mês</b>':`em ${c.prazo} meses`}${c.juri?' · <b>com júri</b>':''}</dd>
        <dt>Manutenção</dt><dd>${manut(c)} bloco${manut(c)>1?'s':''}/mês${c.atraso?` · <b class="lo">${c.atraso} atrasado${c.atraso>1?'s':''}</b>`:''}</dd>
-       ${PORTE[c.rar]?`<dt>Porte</dt><dd class="${faltaPorte(c)?'lo':'hi'}">exige ${PORTE[c.rar]} advogado${PORTE[c.rar]>1?'s':''} na equipe${faltaPorte(c)?` · você tem ${advsEquipe()}`:''}</dd>`:''}
+       ${PORTE[c.rar]?`<dt>Porte</dt><dd class="${faltaPorte(c)?'lo':'hi'}">exige ${PORTE[c.rar]} advogado${PORTE[c.rar]>1?'s':''} na equipe${faltaPorte(c)?` · você tem ${advsTotal()}`:''}</dd>`:''}
       <dt>Juiz</dt><dd title="${JUIZES[c.juiz].desc}">${c.juizNome} · ${JUIZES[c.juiz].nome}${c.npcJuiz?npcTag(c.npcJuiz):''}</dd>
       <dt>Recurso do adversário</dt><dd class="num">${c.inst<maxInst(c)?pct(apelo):'sem recurso'}</dd>
     </dl>
@@ -3859,7 +3859,9 @@ const manut=c=>(c.inst||1)>1?1:MANUT[c.rar];
 const PORTE={epico:1,lendario:2}; // advogados na equipe para atender o porte do caso
 const advsEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>['associado','junior','pleno','senior','socio'].includes(f.funcao)).length:0;
 const estagEquipe=()=>S&&S.u&&S.carreira==='adv'?S.u.equipe.filter(f=>f.funcao==='estagiario').length:0;
-const faltaPorte=c=>Math.max(0,(PORTE[c.rar]||0)-advsEquipe());
+// advogados da sede + advogados das filiais (estagiários não contam)
+const advsTotal=()=>advsEquipe()+(S.carreira==='adv'?advsFilAdv():0);
+const faltaPorte=c=>Math.max(0,(PORTE[c.rar]||0)-advsTotal());
 // aplica os blocos do mês: primeiro a manutenção, depois o atraso acumulado, o resto vira preparação
 function cargaCaso(c,aplicar){ let s=c.semana||0, at=c.atraso||0, prep=c.prep||0; const m=manut(c);
   if(s<m){ at+=m-s; s=0; } else { s-=m; const q=Math.min(s,at); at-=q; s-=q; prep+=s; }
@@ -5176,6 +5178,7 @@ const FUNC_FIL=['estagiario','junior','pleno','senior'];
 function filU(k){ const F=S.filU||(S.filU={}); if(!F[k]) F[k]={imovel:0,equipe:[],desde:S.semana}; return F[k]; }
 const unidades=()=>S.carreira==='adv'?S.filiais.map(k=>[k,filU(k)]):[];
 const blocosFil=U=>Math.floor(U.equipe.reduce((a,f)=>a+FUNCOES.adv[f.funcao].bl*(.6+f.moral/250),0));
+const advsFilAdv=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length,0);
 const advsFil=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length+Math.floor(U.equipe.filter(f=>f.funcao==='estagiario').length/2),0);
 const despFil=()=>unidades().reduce((a,[,U])=>a+IMOVEL_FIL[U.imovel].aluguel+U.equipe.reduce((x,f)=>x+f.sal,0),0);
 const estrangeiro=k=>LOC[k]&&LOC[k].nivel==='global'&&LOC[k].pais!=='Portugal';

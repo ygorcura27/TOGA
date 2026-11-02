@@ -357,7 +357,7 @@ function pasta(c,ativo){
       <dt>Se perder</dt><dd class="lo">${sgn(-perda)} prestígio</dd>
       <dt>Audiência</dt><dd>${c.prazo<=1?'<b class="mid">no próximo mês</b>':`em ${c.prazo} meses`}${c.juri?' · <b>com júri</b>':''}</dd>
        <dt>Manutenção</dt><dd>${manut(c)} bloco${manut(c)>1?'s':''}/mês${c.atraso?` · <b class="lo">${c.atraso} atrasado${c.atraso>1?'s':''}</b>`:''}</dd>
-       ${PORTE[c.rar]?`<dt>Porte</dt><dd class="${faltaPorte(c)?'lo':'hi'}">exige ${PORTE[c.rar]} advogado${PORTE[c.rar]>1?'s':''} na equipe${faltaPorte(c)?` · você tem ${advsEquipe()}`:''}</dd>`:''}
+       ${PORTE[c.rar]?`<dt>Porte</dt><dd class="${faltaPorte(c)?'lo':'hi'}">exige ${PORTE[c.rar]} advogado${PORTE[c.rar]>1?'s':''} na equipe${faltaPorte(c)?` · você tem ${advsTotal()}`:''}</dd>`:''}
       <dt>Juiz</dt><dd title="${JUIZES[c.juiz].desc}">${c.juizNome} · ${JUIZES[c.juiz].nome}${c.npcJuiz?npcTag(c.npcJuiz):''}</dd>
       <dt>Recurso do adversário</dt><dd class="num">${c.inst<maxInst(c)?pct(apelo):'sem recurso'}</dd>
     </dl>

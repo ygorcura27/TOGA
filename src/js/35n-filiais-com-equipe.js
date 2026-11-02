@@ -6,6 +6,7 @@ const FUNC_FIL=['estagiario','junior','pleno','senior'];
 function filU(k){ const F=S.filU||(S.filU={}); if(!F[k]) F[k]={imovel:0,equipe:[],desde:S.semana}; return F[k]; }
 const unidades=()=>S.carreira==='adv'?S.filiais.map(k=>[k,filU(k)]):[];
 const blocosFil=U=>Math.floor(U.equipe.reduce((a,f)=>a+FUNCOES.adv[f.funcao].bl*(.6+f.moral/250),0));
+const advsFilAdv=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length,0);
 const advsFil=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length+Math.floor(U.equipe.filter(f=>f.funcao==='estagiario').length/2),0);
 const despFil=()=>unidades().reduce((a,[,U])=>a+IMOVEL_FIL[U.imovel].aluguel+U.equipe.reduce((x,f)=>x+f.sal,0),0);
 const estrangeiro=k=>LOC[k]&&LOC[k].nivel==='global'&&LOC[k].pais!=='Portugal';

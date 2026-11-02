@@ -10,15 +10,15 @@ function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>
 const TIERS=[
   {nome:'Escritório iniciante',rarMax:2,valor:.85,partido:1},
   {nome:'Escritório local',rarMax:3,valor:1.25,partido:1.2,req:{imovel:1,advs:2}},
-  {nome:'Escritório regional',rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:3}},
-  {nome:'Escritório nacional',rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:6}},
+  {nome:'Escritório regional',rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:2}},
+  {nome:'Escritório nacional',rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:5}},
   {nome:'Escritório High Tier',rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
 ];
 const anosEscritorio=()=>S.u?Math.floor((S.semana-(S.u.fundado||S.semanaFormatura||1))/ANO):0;
 function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].nivel==='nacional'||LOC[f].nivel==='global')).length;
   const it=[];
   if(r.imovel!=null) it.push({l:`Imóvel: ${IMOVEIS.adv[r.imovel].nome} ou maior`,ok:(U.imovel||0)>=r.imovel,v:IMOVEIS.adv[U.imovel||0].nome});
-  if(r.advs) it.push({l:`${r.advs} advogados na equipe`,ok:advsEquipe()>=r.advs,v:advsEquipe()});
+  if(r.advs){ const n=advsTotal(); it.push({l:`${r.advs} advogados na equipe (sede e filiais)`,ok:n>=r.advs,v:n}); }
   if(r.filiais) it.push({l:`${r.filiais} filial em bairro ou cidade`,ok:S.filiais.length>=r.filiais,v:S.filiais.length});
   if(r.estados) it.push({l:`Filiais em ${r.estados} estado${r.estados>1?'s':''} fora da sede`,ok:est>=r.estados,v:est});
   if(r.clientes) it.push({l:`${r.clientes} clientes fixos`,ok:(S.clientes||[]).length>=r.clientes,v:(S.clientes||[]).length});
