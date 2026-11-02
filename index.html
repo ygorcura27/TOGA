@@ -4300,13 +4300,20 @@ async function prepararAudiencia(c){
   if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ m=sub?'enviar':'rapida'; addLog(`Agenda cheia de audiências ao vivo: “${c.titulo}” foi ${sub?'com '+sub.f.nome:'pela audiência rápida'}.`); }
   if(m==='enviar'&&!sub) m='rapida';
   c._modo=m;
-  if(m==='enviar'){ c.mod=(c.mod||0)+(sub.sk-skillTitular(c)); addLog(`${sub.f.nome} (${nomeFuncao(sub.f).toLowerCase()}) representou você em “${c.titulo}”.`); return null; }
+  if(m==='enviar'){ c._sub=sub.f.id; c.mod=(c.mod||0)+(sub.sk-skillTitular(c)); addLog(`${sub.f.nome} (${nomeFuncao(sub.f).toLowerCase()}) representou você em “${c.titulo}”.`); return null; }
   if(m!=='vivo') return null;
   usarVivo(); c._vivoIni=chanceDe(c);
   const r=await audienciaAoVivo(c); if(!r) return null; c._vivoFim=r.acordo?r.acordo:r.p;
   if(r.acordo) return r;
   ajustarPara(c,r.p); return null; }
-const limparModo=c=>{ delete c._modo; };
+const limparModo=c=>{ delete c._modo; delete c._sub; };
+// quem vai à audiência é quem aprende: o advogado (ou assessor) enviado ganha a experiência do caso, não você
+const XP_SUB={comum:3,incomum:4,raro:5,epico:6.5,lendario:8}; // na mesma escala do que você ganharia indo
+function xpSubstituto(c,mult){ const f=S.u&&S.u.equipe.find(x=>x.id===c._sub); if(!f) return;
+  const g=XP_SUB[c.rar]*mult; if(f.ae!==undefined&&f.area===c.area) f.ae=clamp(f.ae+g*(1-f.ae/110),0,95); else f.q=clamp(f.q+g*.6*(1-f.q/110),0,95);
+  f.moral=clamp(f.moral+(mult<=1?3:-2),0,100); }
+{ const g0=ganharXp; ganharXp=function(c,mult){ if(c._modo==='enviar') return xpSubstituto(c,mult); return g0(c,mult); }; }
+{ const x0=xpMP; xpMP=function(c,mult){ if(c._modo==='enviar') return xpSubstituto(c,mult); return x0(c,mult); }; }
 { const m0=momentoDecisivo; momentoDecisivo=async function(c){ if(c._modo==='vivo'||c._modo==='enviar') return; return m0(c); }; }
 { const r0=reviravolta; reviravolta=async function(c){ if(c._modo==='vivo'||c._modo==='enviar') return; return r0(c); }; }
 { const a0=audiencia; audiencia=async function(c){ // recursos da advocacia também podem ter sustentação oral ao vivo
