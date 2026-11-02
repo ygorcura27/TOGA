@@ -293,7 +293,7 @@ function painelOrganizacao(){ const U=S.u, o=organizacao(), g=gestorAtual(), q=q
   </section>`; }
 function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gestorId, prox=!pub&&PROMO_ADV[f.funcao];
   return `<article class="panel" style="gap:8px">
-    <div class="panel-head"><h3 style="font-size:15px">${esc(f.nome)}</h3>${gest?'<span class="tag">Gestor</span>':''}</div>
+    <div class="panel-head"><h3 style="font-size:15px;display:flex;align-items:center;gap:8px">${retrato(f.nome,{size:36})}${esc(f.nome)}</h3>${gest?'<span class="tag">Gestor</span>':''}</div>
     <span class="label" style="text-transform:none;letter-spacing:0">${nomeFuncao(f)} · ${f.semanas} meses na equipe${f.area?` · ${AREAS[f.area].nome} <span style="color:var(--brass)">${'★'.repeat(estrelasF(f))}</span> (${Math.floor(f.ae)})`:''}</span>
     <div class="vs"><span>Qualidade</span><div class="bar"><i style="width:${f.q}%;background:var(--win)"></i></div><span class="num">${Math.round(f.q)}</span>
       <span>Gestão</span><div class="bar"><i style="width:${f.g}%;background:var(--b-estudo)"></i></div><span class="num">${f.g}</span>

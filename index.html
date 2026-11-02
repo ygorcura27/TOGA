@@ -368,6 +368,15 @@ select,.field input{border-radius:6px}
 @media (max-width:700px){.jn-manchete{grid-template-columns:minmax(0,1fr)}.jn-cab{grid-template-columns:minmax(0,1fr)}.jn-cab .jn-meta,.jn-cab .jn-meta:last-child{text-align:center}}
 .start-traits .chip.neg{border-style:dashed} .start-traits .chip.neg.on{background:color-mix(in srgb,var(--loss) 14%,var(--surface));border-color:var(--loss);color:var(--ink)}
 .vip{margin-top:20px}
+
+/* ===== Retratos e ícones ===== */
+.retrato{display:block;flex:none;border-radius:50%}
+.brand .eu{margin-left:4px;box-shadow:0 0 0 2px var(--gold);border-radius:50%}
+.ico-area{width:18px;height:18px;fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:6px}
+.fichas{display:flex;flex-wrap:wrap;gap:8px 14px}
+.ficha{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.2} .ficha b{display:block;font-weight:600} .ficha small{color:var(--muted);font-size:11px}
+.av-lado .retrato{margin-bottom:4px} .av-lado.dir .retrato{align-self:flex-end}
+.jn-retrato{width:62%;height:auto;filter:grayscale(1) contrast(1.15);opacity:.92}
 </style>
 
 <div id="app"></div>
@@ -2738,7 +2747,7 @@ function painelOrganizacao(){ const U=S.u, o=organizacao(), g=gestorAtual(), q=q
   </section>`; }
 function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gestorId, prox=!pub&&PROMO_ADV[f.funcao];
   return `<article class="panel" style="gap:8px">
-    <div class="panel-head"><h3 style="font-size:15px">${esc(f.nome)}</h3>${gest?'<span class="tag">Gestor</span>':''}</div>
+    <div class="panel-head"><h3 style="font-size:15px;display:flex;align-items:center;gap:8px">${retrato(f.nome,{size:36})}${esc(f.nome)}</h3>${gest?'<span class="tag">Gestor</span>':''}</div>
     <span class="label" style="text-transform:none;letter-spacing:0">${nomeFuncao(f)} · ${f.semanas} meses na equipe${f.area?` · ${AREAS[f.area].nome} <span style="color:var(--brass)">${'★'.repeat(estrelasF(f))}</span> (${Math.floor(f.ae)})`:''}</span>
     <div class="vs"><span>Qualidade</span><div class="bar"><i style="width:${f.q}%;background:var(--win)"></i></div><span class="num">${Math.round(f.q)}</span>
       <span>Gestão</span><div class="bar"><i style="width:${f.g}%;background:var(--b-estudo)"></i></div><span class="num">${f.g}</span>
@@ -4357,7 +4366,7 @@ function audienciaAoVivo(c){
   const skN=t=>NOS[t]+(t===s.foco?10:-4)+cans(), skA=t=>advSk(t)+(t===fortAdv?6:-2);
   const duelo=()=>s.postura===AV_VENCE[s.advPostura]?1:s.advPostura===AV_VENCE[s.postura]?-1:0;
   const lance=(t,l)=>{ s.feed.unshift({m:s.min,t,l}); s.feed=s.feed.slice(0,9); };
-  const mexer=(v,l)=>{ s.conv=lim(s.conv+v); if(l==='nos') s.combo=Math.max(1,s.combo+1); else if(l==='eles') s.combo=Math.min(-1,s.combo-1); };
+  const mexer=(v,l)=>{ if(Math.abs(v)>=6) tocar('murmurio'); s.conv=lim(s.conv+v); if(l==='nos') s.combo=Math.max(1,s.combo+1); else if(l==='eles') s.combo=Math.min(-1,s.combo-1); };
   const chOp=o=>!o[1]?1:Math.max(.1,Math.min(.9,sig((skN(o[1])+o[2]-d)/10)));
   const chAcordo=()=>Math.max(.05,Math.min(.9,sig((s.conv-58)/7)+(S.skills.negociacao-50)/200+(JZ.acordo||0)));
   const box=document.createElement('div'); box.className='av-ov'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','Audiência ao vivo');
@@ -4437,7 +4446,7 @@ function audienciaAoVivo(c){
     const barras=s.barras.map(b=>{ const h=Math.min(64,Math.abs(b.d)*6+(b.d?5:2)); return `<i style="left:${b.m/AV_FIM*98.5}%;height:${h}px;top:${b.d>=0?70-h:70}px;background:${b.d>0?'var(--win)':b.d<0?'var(--loss)':'var(--line)'}"></i>`; }).join('');
     box.innerHTML=`<div class="av">
       <header class="av-placar">
-        <div class="av-lado"><span class="label">${R[0]}</span><b>${esc(S.nome)}</b><small>Oratória ${NOS.testemunha} · Análise ${NOS.prova} · ${AREAS[c.area]?AREAS[c.area].nome:'Área'} ${NOS.tese}</small></div>
+        <div class="av-lado">${retrato(S.nome,{g:S.genero,size:52})}<span class="label">${R[0]}</span><b>${esc(S.nome)}</b><small>Oratória ${NOS.testemunha} · Análise ${NOS.prova} · ${AREAS[c.area]?AREAS[c.area].nome:'Área'} ${NOS.tese}</small></div>
         <div class="av-centro"><span class="label av-fase">${f} · ${esc(c.titulo)}</span><div class="av-relogio num">${String(s.min).padStart(2,'0')}' / ${AV_FIM}'</div>
           <div class="av-cabo" role="img" aria-label="Convicção: ${conv}% a seu favor"><i style="width:${conv}%"></i></div><small>Convicção: <b>${conv}%</b> a seu favor · começou em ${s.ini}%</small></div>
         <div class="av-lado dir"><span class="label">${R[1]||'Outra parte'}</span><b>Dificuldade ${d}</b><small>${quem}${c.juri?' · júri':''}</small></div>
@@ -4528,7 +4537,7 @@ function audienciaJuiz(p){ return new Promise(fim=>{
   function sentenciar(x){ const ac=x===p.partes.verdade, tec=s.fund==='tecnica', esc=(S.skills.escrita-50)/400;
     let ch=ac?(tec?.93:.82)+esc:(tec?.3:.15)+esc/2; ch*=1-s.nulidade/100;
     if(!tec) s.extra+=5;
-    s.res={ch:clamp(ch,.03,.97),recMais:ac?0:.25}; s.sent={x,ac};
+    s.res={ch:clamp(ch,.03,.97),recMais:ac?0:.25}; s.sent={x,ac}; tocar('carimbo');
     lance(`Sentença: ${x==='a'?sentA:sentB}. Fundamentação ${tec?'técnica':'curta'}.`,'');
     addLog(`Audiência presidida em “${p.titulo}”: ${x==='a'?sentA:sentB.toLowerCase()} · ${ac?'a prova confirmava a sua leitura':'a verdade estava do outro lado'}.`,ac?'g':'r'); }
   function acao(a,v){
@@ -4574,10 +4583,10 @@ function audienciaJuiz(p){ return new Promise(fim=>{
     else sent='<small>Ao fim da instrução você decide. Até lá, separe o que convence do que é verdade.</small>';
     box.innerHTML=`<div class="av">
       <header class="av-placar">
-        <div class="av-lado"><span class="label" style="color:var(--b-case)">${P.a.rot}</span><b>${esc(P.a.nome)}</b><small>skill ${P.a.sk}</small></div>
+        <div class="av-lado">${retrato(P.a.nome,{size:52})}<span class="label" style="color:var(--b-case)">${P.a.rot}</span><b>${esc(P.a.nome)}</b><small>skill ${P.a.sk}</small></div>
         <div class="av-centro"><span class="label av-fase">Você preside · ${esc(p.titulo)}</span><div class="av-relogio num">${String(s.min).padStart(2,'0')}' / 55'</div>
           <div class="av-cabo jz" role="img" aria-label="Os autos mostram ${autos}% a favor do ${lado('a')}"><i style="width:${autos}%"></i></div><small>Os autos mostram: <b>${autos>=50?`${autos}% ${lado('a')}`:`${100-autos}% ${lado('b')}`}</b></small></div>
-        <div class="av-lado dir"><span class="label" style="color:var(--b-familia)">${P.b.rot}</span><b>${esc(P.b.nome)}</b><small>skill ${P.b.sk}</small></div>
+        <div class="av-lado dir">${retrato(P.b.nome,{size:52})}<span class="label" style="color:var(--b-familia)">${P.b.rot}</span><b>${esc(P.b.nome)}</b><small>skill ${P.b.sk}</small></div>
       </header>
       <div class="av-faixa">
         <div class="av-mini"><span class="label">Sua convicção · pelas pistas</span><span>${s.pistas.length?(Math.abs(cert-50)<8?'Ainda em dúvida.':`Apontam para o ${cert>50?lado('a'):lado('b')} (${Math.max(cert,100-cert)}%).`):'Sem pistas: você só sabe o que as partes mostraram.'}</span></div>
@@ -4741,7 +4750,7 @@ function renderJornal(){ const J=JN(), ult=Math.max(1,S.semana-1); if(edJornal==
     <div class="jn-nav"><button class="btn ghost" data-act="jornalEd" data-v="-1" ${m<=1?'disabled':''}>◀ Edição anterior</button><span class="label">Edição nº ${m} · ${mesNome(m)}</span><button class="btn ghost" data-act="jornalEd" data-v="1" ${m>=ult?'disabled':''}>Próxima ▶</button></div>
     <article class="jn-papel">
       <header class="jn-cab"><span class="jn-meta">Ano ${Math.floor((m-1)/12)+1} · Edição ${m}</span><h1>Gazeta Forense</h1><span class="jn-meta">${mesNome(m)} · R$ 4,50</span></header>
-      ${man?`<section class="jn-manchete"><div class="jn-foto">${svgIco(man.ico,'jn-ico-g')}</div><div><span class="label">${({caso:'Tribunais',carreira:'Carreiras',perfil:'Perfil',brasil:'Brasil',escandalo:'Escândalo',opiniao:'Opinião',academia:'Academia',rival:'Duelo',meta:'Perfil'})[man.cat]||'Destaque'}</span><h2>${esc(man.titulo)}</h2>${man.txt?`<p>${esc(man.txt)}</p>`:''}</div></section>`
+      ${man?`<section class="jn-manchete"><div class="jn-foto">${['caso','carreira','perfil','meta','opiniao','escandalo'].includes(man.cat)?retrato(S.nome,{g:S.genero,size:170,cls:'jn-retrato',toga:S.carreira==='juiz'}):svgIco(man.ico,'jn-ico-g')}</div><div><span class="label">${({caso:'Tribunais',carreira:'Carreiras',perfil:'Perfil',brasil:'Brasil',escandalo:'Escândalo',opiniao:'Opinião',academia:'Academia',rival:'Duelo',meta:'Perfil'})[man.cat]||'Destaque'}</span><h2>${esc(man.titulo)}</h2>${man.txt?`<p>${esc(man.txt)}</p>`:''}</div></section>`
         :`<section class="jn-manchete"><div class="jn-foto">${svgIco('predio','jn-ico-g')}</div><div><span class="label">Movimento forense</span><h2>Mês tranquilo nos fóruns</h2><p>Nenhum caso seu chegou às páginas desta vez. Audiências ao vivo bem conduzidas, metas cumpridas e promoções viram notícia.</p></div></section>`}
       <div class="jn-cols">
         ${col('Tribunais e casos',['caso','rival'])}${col('Carreiras',['carreira','perfil','meta','escandalo'])}${col('Brasil',['brasil'])}${col('Academia e opinião',['academia','opiniao'])}
@@ -4826,6 +4835,64 @@ function mesVip(){
 { const c0=renderConquistas; renderConquistas=function(){ c0(); const V=vipLer();
     app.insertAdjacentHTML('beforeend',`<section class="panel vip"><div class="panel-head"><h2>Habilidades VIP</h2><span class="label">${Object.keys(V.ids).length} de ${VIP.length} · valem para todas as partidas</span></div>
       <div class="cqs">${VIP.map(h=>{ const ok=V.ids[h.id], c=Math.min(h.alvo,V.cont[h.cont]||0); return `<div class="cq ${ok?'on':''}" style="--tc:var(--gold)"><div class="cq-top"><b>${h.nome}</b><span class="num">${ok?'ativa':`${c}/${h.alvo}`}</span></div><small>${h.desc}</small><small>${ok?'Desbloqueada.':h.req}</small></div>`; }).join('')}</div></section>`); }; }
+// ===================== RETRATOS, ÍCONES POR ÁREA E SONS DA AUDIÊNCIA =====================
+// retratos gerados a partir do nome (sem arquivos): sempre o mesmo rosto para a mesma pessoa
+function hashNome(s){ let h=2166136261; for(const ch of String(s)){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+const FEM_NOMES=new Set([...PRIM_F,'Ana','Carla','Elisa','Gabriela','Isabela','Karen','Marina','Olívia','Rita','Tânia','Yara','Bianca','Luíza','Helena','Camila','Beatriz','Patrícia','Renata','Aline','Marta','Inês','Sônia','Lívia','Clara']);
+function generoDe(nome){ const n=String(nome).replace(/^(Dra?\.|Servidora?|Promotora?|Defensora?|Juíza|Juiz|Ministra?|Desembargadora?)\s+/,''), p=n.split(' ')[0];
+  if(/^Dra\.|^Juíza|^Ministra|^Desembargadora|^Promotora|^Defensora/.test(nome)) return 'f'; if(/^Dr\.|^Juiz |^Ministro|^Desembargador |^Promotor |^Defensor /.test(nome)) return 'm';
+  return FEM_NOMES.has(p)||/a$/.test(p)?'f':'m'; }
+const PELE=['#F3D4B6','#E2B48D','#C58C60','#9B6440','#6C4329'], CABELO=['#1D1A17','#3A281D','#6A482C','#A9773E','#CFC6BA'], FUNDO=['#3A6FB8','#7A55BF','#3F9466','#B9597A','#B08A2E','#2A9D8F'];
+function retrato(nome,o={}){ const h=hashNome(nome), g=o.g||generoDe(nome), sz=o.size||40, pele=PELE[h%5], cab=CABELO[(h>>3)%5], fundo=FUNDO[(h>>6)%6];
+  const estilo=(h>>9)%3, oculos=((h>>12)%4)===0, roupa=o.toga?'#111318':['#23262E','#2E3B55','#4A3A2E','#2F2F35'][(h>>14)%4];
+  let cabelo;
+  if(g==='f') cabelo=[`<path d="M18 30c0-11 6-17 14-17s14 6 14 17v16h-5V31c-3-4-6-6-9-6s-6 2-9 6v15h-5z" fill="${cab}"/>`,
+    `<path d="M18 31c0-11 6-18 14-18s14 7 14 18c0 5-1 9-3 11l-1-12c-3-3-6-5-10-5s-7 2-10 5l-1 12c-2-2-3-6-3-11z" fill="${cab}"/>`,
+    `<circle cx="32" cy="12" r="6" fill="${cab}"/><path d="M19 30c0-10 6-16 13-16s13 6 13 16c-3-5-8-8-13-8s-10 3-13 8z" fill="${cab}"/>`][estilo];
+  else cabelo=[`<path d="M19 28c0-9 6-14 13-14s13 5 13 14c-3-4-8-6-13-6s-10 2-13 6z" fill="${cab}"/>`,
+    `<path d="M19 29c0-10 6-15 13-15 8 0 13 5 13 13-5-1-11-4-14-8-2 5-7 8-12 10z" fill="${cab}"/>`,
+    `<path d="M21 36c1 7 5 11 11 11s10-4 11-11c-2 4-6 6-11 6s-9-2-11-6z" fill="${cab}" opacity=".9"/><path d="M21 25c2-6 6-9 11-9s9 3 11 9c-3-2-7-3-11-3s-8 1-11 3z" fill="${cab}" opacity=".85"/>`][estilo];
+  const gola=o.toga?'<path d="M28 50l4 6 4-6" fill="#F4F1EA"/>':'<path d="M27 49l5 7 5-7" fill="#F4F1EA"/><path d="M31 52h2l1 8h-4z" fill="'+fundo+'"/>';
+  return `<svg class="retrato ${o.cls||''}" width="${sz}" height="${sz}" viewBox="0 0 64 64" role="img" aria-label="${esc(nome)}"><circle cx="32" cy="32" r="32" fill="${fundo}" opacity=".28"/>
+    <clipPath id="rc${h}"><circle cx="32" cy="32" r="32"/></clipPath><g clip-path="url(#rc${h})">
+    <path d="M10 64c2-10 10-16 22-16s20 6 22 16z" fill="${roupa}"/>${gola}<rect x="28" y="40" width="8" height="9" rx="3" fill="${pele}"/>
+    <ellipse cx="32" cy="31" rx="12" ry="14" fill="${pele}"/>${cabelo}
+    <circle cx="27.5" cy="31" r="1.3" fill="#1D1A17"/><circle cx="36.5" cy="31" r="1.3" fill="#1D1A17"/><path d="M29 38c2 1.4 4 1.4 6 0" stroke="#6E3B2E" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    ${oculos?'<g fill="none" stroke="#1D1A17" stroke-width="1.2"><circle cx="27.5" cy="31" r="3.4"/><circle cx="36.5" cy="31" r="3.4"/><path d="M30.9 31h2.2"/></g>':''}</g></svg>`; }
+// ícone por área do Direito, no título de cada pasta
+const ICO_AREA={penal:'<circle cx="8" cy="14" r="4"/><circle cx="16" cy="14" r="4"/><path d="M10 10l1.5-4h1L14 10"/>',
+  civel:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 11h7M9 15h7M9 18h4"/>',
+  trabalho:'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V5h6v3M3 13h18"/>',
+  familia:'<path d="M4 11l8-7 8 7v9H4z"/><path d="M12 17s-3-2-3-4a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2-3 4-3 4z"/>',
+  empresarial:'<path d="M4 21V5l8-2v18M12 9l8 2v10M7 8h2M7 12h2M7 16h2M15 13h2M15 17h2M3 21h18"/>',
+  tributario:'<circle cx="12" cy="12" r="8"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6.5v1.5M12 16v1.5"/>'};
+const icoArea=a=>`<svg class="ico-area" viewBox="0 0 24 24" aria-hidden="true">${ICO_AREA[a]||ICO_AREA.civel}</svg>`;
+const fichaPessoa=(nome,papel,o)=>`<span class="ficha">${retrato(nome,{size:30,...o})}<span><b>${esc(nome)}</b><small>${papel}</small></span></span>`;
+{ const p0=pasta; pasta=function(c,ativo){ let h=p0(c,ativo).replace('<h3>',`<h3>${icoArea(c.area)}`); const r=typeof rivalDe==='function'?rivalDe(c):null;
+    return h.replace('</h3>',`</h3><div class="fichas">${fichaPessoa(c.cliente,'cliente')}${r?fichaPessoa(r.nome,'advogado rival'):''}${fichaPessoa(c.juizNome,'quem julga',{toga:true})}</div>`); }; }
+{ const m0=mpCard; mpCard=function(c){ return m0(c).replace('<h3>',`<h3>${icoArea(c.area)}`).replace('</h3>',`</h3><div class="fichas">${fichaPessoa(c.reu,'investigado')}</div>`); }; }
+{ const d0=dpCard; dpCard=function(c){ return d0(c).replace('<h3>',`<h3>${icoArea(c.area)}`).replace('</h3>',`</h3><div class="fichas">${fichaPessoa(c.assistido,c.preso?'assistido · preso':'assistido')}</div>`); }; }
+{ const c0=procCard; procCard=function(p){ return c0(p).replace('<h3>',`<h3>${icoArea(p.area)}`).replace('</h3>',`</h3><div class="fichas">${fichaPessoa(p.cliente,'autor')}</div>`); }; }
+// você no cabeçalho
+{ const h0=header; header=function(){ const h=h0(); return S?h.replace('<h1>Toga</h1><span>',`<h1>Toga</h1>${retrato(S.nome,{g:S.genero,size:34,cls:'eu',toga:['juiz'].includes(S.carreira)})}<span>`):h; }; }
+
+// ---------- sons: martelo no veredito, murmúrio nos lances fortes, carimbo na sentença ----------
+function ruido(dur,freq,vol,t0=0){ const ctx=audioCtx, n=Math.floor(ctx.sampleRate*dur), b=ctx.createBuffer(1,n,ctx.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const src=ctx.createBufferSource(), f=ctx.createBiquadFilter(), g=ctx.createGain(), t=ctx.currentTime+t0;
+  src.buffer=b; f.type='lowpass'; f.frequency.value=freq; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  src.connect(f).connect(g).connect(ctx.destination); src.start(t); }
+function batida(freq,t0,vol){ const ctx=audioCtx, o=ctx.createOscillator(), g=ctx.createGain(), t=ctx.currentTime+t0;
+  o.type='sine'; o.frequency.setValueAtTime(freq,t); o.frequency.exponentialRampToValueAtTime(freq*.5,t+.15);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+.22); o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+.25); }
+{ const t0=tocar; tocar=function(tipo){ if(!['martelo','murmurio','carimbo'].includes(tipo)) return t0(tipo); if(!somLigado()) return;
+    try{ audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+      if(tipo==='martelo'){ for(const t of [0,.32]){ batida(140,t,.35); ruido(.06,2500,.25,t); } }
+      if(tipo==='murmurio') ruido(.9,500,.05);
+      if(tipo==='carimbo'){ batida(90,0,.3); ruido(.08,1200,.2); } }catch(e){} }; }
+// o martelo bate antes do resultado aparecer em qualquer veredito
+new MutationObserver(ms=>{ for(const m of ms){ const el=m.target; if(el.classList&&el.classList.contains('verdict')&&!el.hidden) tocar('martelo'); } })
+  .observe(document.getElementById('modal-root'),{subtree:true,attributes:true,attributeFilter:['hidden']});
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;

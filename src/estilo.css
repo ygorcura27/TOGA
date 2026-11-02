@@ -362,3 +362,12 @@ select,.field input{border-radius:6px}
 @media (max-width:700px){.jn-manchete{grid-template-columns:minmax(0,1fr)}.jn-cab{grid-template-columns:minmax(0,1fr)}.jn-cab .jn-meta,.jn-cab .jn-meta:last-child{text-align:center}}
 .start-traits .chip.neg{border-style:dashed} .start-traits .chip.neg.on{background:color-mix(in srgb,var(--loss) 14%,var(--surface));border-color:var(--loss);color:var(--ink)}
 .vip{margin-top:20px}
+
+/* ===== Retratos e ícones ===== */
+.retrato{display:block;flex:none;border-radius:50%}
+.brand .eu{margin-left:4px;box-shadow:0 0 0 2px var(--gold);border-radius:50%}
+.ico-area{width:18px;height:18px;fill:none;stroke:var(--gold);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:6px}
+.fichas{display:flex;flex-wrap:wrap;gap:8px 14px}
+.ficha{display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;line-height:1.2} .ficha b{display:block;font-weight:600} .ficha small{color:var(--muted);font-size:11px}
+.av-lado .retrato{margin-bottom:4px} .av-lado.dir .retrato{align-self:flex-end}
+.jn-retrato{width:62%;height:auto;filter:grayscale(1) contrast(1.15);opacity:.92}

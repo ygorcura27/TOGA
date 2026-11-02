@@ -50,7 +50,7 @@ function audienciaJuiz(p){ return new Promise(fim=>{
   function sentenciar(x){ const ac=x===p.partes.verdade, tec=s.fund==='tecnica', esc=(S.skills.escrita-50)/400;
     let ch=ac?(tec?.93:.82)+esc:(tec?.3:.15)+esc/2; ch*=1-s.nulidade/100;
     if(!tec) s.extra+=5;
-    s.res={ch:clamp(ch,.03,.97),recMais:ac?0:.25}; s.sent={x,ac};
+    s.res={ch:clamp(ch,.03,.97),recMais:ac?0:.25}; s.sent={x,ac}; tocar('carimbo');
     lance(`Sentença: ${x==='a'?sentA:sentB}. Fundamentação ${tec?'técnica':'curta'}.`,'');
     addLog(`Audiência presidida em “${p.titulo}”: ${x==='a'?sentA:sentB.toLowerCase()} · ${ac?'a prova confirmava a sua leitura':'a verdade estava do outro lado'}.`,ac?'g':'r'); }
   function acao(a,v){
@@ -96,10 +96,10 @@ function audienciaJuiz(p){ return new Promise(fim=>{
     else sent='<small>Ao fim da instrução você decide. Até lá, separe o que convence do que é verdade.</small>';
     box.innerHTML=`<div class="av">
       <header class="av-placar">
-        <div class="av-lado"><span class="label" style="color:var(--b-case)">${P.a.rot}</span><b>${esc(P.a.nome)}</b><small>skill ${P.a.sk}</small></div>
+        <div class="av-lado">${retrato(P.a.nome,{size:52})}<span class="label" style="color:var(--b-case)">${P.a.rot}</span><b>${esc(P.a.nome)}</b><small>skill ${P.a.sk}</small></div>
         <div class="av-centro"><span class="label av-fase">Você preside · ${esc(p.titulo)}</span><div class="av-relogio num">${String(s.min).padStart(2,'0')}' / 55'</div>
           <div class="av-cabo jz" role="img" aria-label="Os autos mostram ${autos}% a favor do ${lado('a')}"><i style="width:${autos}%"></i></div><small>Os autos mostram: <b>${autos>=50?`${autos}% ${lado('a')}`:`${100-autos}% ${lado('b')}`}</b></small></div>
-        <div class="av-lado dir"><span class="label" style="color:var(--b-familia)">${P.b.rot}</span><b>${esc(P.b.nome)}</b><small>skill ${P.b.sk}</small></div>
+        <div class="av-lado dir">${retrato(P.b.nome,{size:52})}<span class="label" style="color:var(--b-familia)">${P.b.rot}</span><b>${esc(P.b.nome)}</b><small>skill ${P.b.sk}</small></div>
       </header>
       <div class="av-faixa">
         <div class="av-mini"><span class="label">Sua convicção · pelas pistas</span><span>${s.pistas.length?(Math.abs(cert-50)<8?'Ainda em dúvida.':`Apontam para o ${cert>50?lado('a'):lado('b')} (${Math.max(cert,100-cert)}%).`):'Sem pistas: você só sabe o que as partes mostraram.'}</span></div>

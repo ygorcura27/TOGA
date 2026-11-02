@@ -126,7 +126,7 @@ function audienciaAoVivo(c){
   const skN=t=>NOS[t]+(t===s.foco?10:-4)+cans(), skA=t=>advSk(t)+(t===fortAdv?6:-2);
   const duelo=()=>s.postura===AV_VENCE[s.advPostura]?1:s.advPostura===AV_VENCE[s.postura]?-1:0;
   const lance=(t,l)=>{ s.feed.unshift({m:s.min,t,l}); s.feed=s.feed.slice(0,9); };
-  const mexer=(v,l)=>{ s.conv=lim(s.conv+v); if(l==='nos') s.combo=Math.max(1,s.combo+1); else if(l==='eles') s.combo=Math.min(-1,s.combo-1); };
+  const mexer=(v,l)=>{ if(Math.abs(v)>=6) tocar('murmurio'); s.conv=lim(s.conv+v); if(l==='nos') s.combo=Math.max(1,s.combo+1); else if(l==='eles') s.combo=Math.min(-1,s.combo-1); };
   const chOp=o=>!o[1]?1:Math.max(.1,Math.min(.9,sig((skN(o[1])+o[2]-d)/10)));
   const chAcordo=()=>Math.max(.05,Math.min(.9,sig((s.conv-58)/7)+(S.skills.negociacao-50)/200+(JZ.acordo||0)));
   const box=document.createElement('div'); box.className='av-ov'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','Audiência ao vivo');
@@ -206,7 +206,7 @@ function audienciaAoVivo(c){
     const barras=s.barras.map(b=>{ const h=Math.min(64,Math.abs(b.d)*6+(b.d?5:2)); return `<i style="left:${b.m/AV_FIM*98.5}%;height:${h}px;top:${b.d>=0?70-h:70}px;background:${b.d>0?'var(--win)':b.d<0?'var(--loss)':'var(--line)'}"></i>`; }).join('');
     box.innerHTML=`<div class="av">
       <header class="av-placar">
-        <div class="av-lado"><span class="label">${R[0]}</span><b>${esc(S.nome)}</b><small>Oratória ${NOS.testemunha} · Análise ${NOS.prova} · ${AREAS[c.area]?AREAS[c.area].nome:'Área'} ${NOS.tese}</small></div>
+        <div class="av-lado">${retrato(S.nome,{g:S.genero,size:52})}<span class="label">${R[0]}</span><b>${esc(S.nome)}</b><small>Oratória ${NOS.testemunha} · Análise ${NOS.prova} · ${AREAS[c.area]?AREAS[c.area].nome:'Área'} ${NOS.tese}</small></div>
         <div class="av-centro"><span class="label av-fase">${f} · ${esc(c.titulo)}</span><div class="av-relogio num">${String(s.min).padStart(2,'0')}' / ${AV_FIM}'</div>
           <div class="av-cabo" role="img" aria-label="Convicção: ${conv}% a seu favor"><i style="width:${conv}%"></i></div><small>Convicção: <b>${conv}%</b> a seu favor · começou em ${s.ini}%</small></div>
         <div class="av-lado dir"><span class="label">${R[1]||'Outra parte'}</span><b>Dificuldade ${d}</b><small>${quem}${c.juri?' · júri':''}</small></div>
