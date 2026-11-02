@@ -246,6 +246,7 @@ async function fimSemanaJuiz(){
     J.acervo=J.acervo.filter(p=>!((p.semana||0)>0));
     for(const p of pauta){
       const vivo=await audienciaJuizSe(p); // audiência ao vivo: a chance de manter vem do que você decidiu nela
+      if(vivo&&vivo.vencido){ J.sentencas++; xpJuiz(p,1); sent.push([p,null,'Voto vencido no colegiado']); continue; } // a decisão é da maioria
       if(!vivo && RORD.indexOf(p.rar)>=2 && Math.random()<.35) await eventoJuiz(p);
       if(p.adiado){ p.adiado=false; p.semana=0; J.acervo.push(p); sent.push([p,null,'Nova perícia: volta ao acervo']); continue; }
       const ch=vivo?vivo.ch:calcAcerto(p).ch, ap=vivo&&chanceRecursoJ(p)?Math.min(.95,chanceRecursoJ(p)+vivo.recMais):chanceRecursoJ(p), rec=Math.random()<ap;

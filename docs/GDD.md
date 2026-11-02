@@ -706,3 +706,12 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 ## Equilíbrio atual (simulações rápidas)
 - **Escritório** (`npm run sim`, 12 partidas de 24 meses por nível, robô que aceita casos com 40%+ e manda os comuns com a equipe): iniciante R$ 4,7 mil, local R$ 10,1 mil, regional R$ 23,5 mil, regional com equipe de nacional R$ 39 mil, High Tier R$ 193 mil por mês. Juiz substituto: R$ 25 mil.
 - **Defensoria:** o expediente tem +2 blocos (triagem do balcão). Sem equipe, metade das carreiras termina em 24 meses (reputação média 5); com a equipe inicial, 58; com equipe grande, 80.
+
+## Sessão de julgamento (desembargador, STJ, STF)
+- Do cargo de desembargador em diante, os processos raros ou maiores podem ir a **sessão ao vivo** (no lugar da audiência presidida), dentro do limite de 3 por mês.
+- Mesa fixa por cargo: câmara de 3, turma de 5, plenário de 11. Cada colega tem uma linha (garantista, punitivista, legalista, pragmático, consequencialista) e uma afinidade com você que muda conforme vocês votam juntos.
+- Você é relator em 1 a cada 3 sessões (lê o voto, que puxa a mesa pela Escrita). Fases: sustentação oral, seu voto, 3 rodadas de debate com 2 ações (convencer, articular com −12 de capital político, suavizar a tese, pedir vista, reajustar o voto até 2 vezes) e votação um a um.
+- No STF, a opinião pública (TV Justiça) pesa nos colegas consequencialistas, votar contra ela custa 1 de reputação e o resultado vale em dobro.
+- Reputação: relator vencedor +4 (+2 com tese suavizada), vogal na maioria +1, vencido −1. Voto vencido não conta como sentença sua no tribunal.
+- Consequências futuras: maioria contra a prova pode cair em ação rescisória em 6 a 18 meses (−3); voto vencido de acordo com a prova pode virar maioria em 18 a 36 meses (+4). Relator vencedor soma ao índice de liderança e vira notícia.
+- **Promotor:** condenação rende 30% mais reputação; com a equipe inicial a reputação média em 24 meses passou de 36 para 56, no padrão do juiz e do defensor.

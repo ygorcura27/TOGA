@@ -213,7 +213,7 @@ async function julgamentoMP(c){
   await momentoDecisivo(c);
   const ch=calcCondenacao(c).ch, r=Math.random(), cond=r<=ch;
   let dP, linhas=[];
-  if(cond){ dP=R.ganho+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0); P.condenacoes++; xpMP(c,1); if(c.inocente) P.erros.push({titulo:c.titulo,rar:c.rar}); }
+  if(cond){ dP=R.ganho*1.3+(tem('oratoria',3)&&RORD.indexOf(c.rar)>=2?1:0); P.condenacoes++; xpMP(c,1); if(c.inocente) P.erros.push({titulo:c.titulo,rar:c.rar}); }
   else if(c.inocente){ dP=0; P.absolvicoes++; xpMP(c,1.5); linhas.push('O réu era inocente: a absolvição foi justa e não custa reputação.'); }
   else { dP=-R.perda; P.absolvicoes++; xpMP(c,1.5); S.estresse=clamp(S.estresse+6,0,100); }
   S.prest=clamp(S.prest+dP,0,100);
