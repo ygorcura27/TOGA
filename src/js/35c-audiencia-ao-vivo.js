@@ -46,8 +46,8 @@ async function prepararAudiencia(c){
   c._modo=m;
   if(m==='enviar'){ c.mod=(c.mod||0)+(sub.sk-skillTitular(c)); addLog(`${sub.f.nome} (${nomeFuncao(sub.f).toLowerCase()}) representou você em “${c.titulo}”.`); return null; }
   if(m!=='vivo') return null;
-  usarVivo();
-  const r=await audienciaAoVivo(c); if(!r) return null;
+  usarVivo(); c._vivoIni=chanceDe(c);
+  const r=await audienciaAoVivo(c); if(!r) return null; c._vivoFim=r.acordo?r.acordo:r.p;
   if(r.acordo) return r;
   ajustarPara(c,r.p); return null; }
 const limparModo=c=>{ delete c._modo; };
@@ -117,7 +117,7 @@ function audienciaAoVivo(c){
   const quem=c.juri?'Os jurados':papel==='adv'?c.juizNome:'O juiz';
   const R={adv:['Você',papel==='adv'?ADV[c.adv].nome:''],mp:['Acusação · você','Defesa'],dp:['Defesa · você',c.area==='penal'?'Ministério Público':'Parte contrária']}[papel];
   const cartas=avCartas(c);
-  const s={min:0,rodando:false,vel:1,conv:ch0*100,ini:Math.round(ch0*100),postura:'equilibrada',foco:Object.keys(NOS).sort((a,b)=>NOS[b]-NOS[a])[0],advPostura:'equilibrada',
+  const s={pre:true,escolha:[],min:0,rodando:false,vel:1,conv:ch0*100,ini:Math.round(ch0*100),postura:'equilibrada',foco:Object.keys(NOS).sort((a,b)=>NOS[b]-NOS[a])[0],advPostura:'equilibrada',
     objecoes:2,recessos:1,folego:S.energia,combo:0,juizVisto:false,sondou:false,acordoEm:0,usadas:{},
     advCartas:[{t:'Prova surpresa da outra parte',forca:6,quando:rint(30,44)},{t:'Testemunha de última hora',forca:5,quando:rint(12,28)}].slice(0,RORD.indexOf(c.rar)>=3?2:1),
     feed:[{m:0,t:`${quem} abre${c.juri?'m':''} a audiência.`,l:'neutro'}],barras:[],ultimo:null,momento:null,feitos:{},fim:false,res:null};
@@ -134,7 +134,16 @@ function audienciaAoVivo(c){
   let timer;
   function encerrar(){ clearTimeout(timer); S.energia=clamp(Math.round(s.folego),0,100); box.remove(); fim(s.res); }
   function terminar(texto){ s.fim=true; s.rodando=false; s.res={p:s.conv/100}; lance(texto,'neutro'); }
+  // pré-audiência: escolha até 2 testemunhas; cada uma muda a sua skill de um tipo de lance
+  const TESTEMUNHAS=[{id:'firme',t:'Testemunha firme',q:'Não se abala com pergunta difícil.',ef:'+6 em testemunhas',tipo:'testemunha',v:6},
+    {id:'tecnica',t:'Testemunha técnica',q:'Explica documentos e números.',ef:'+6 em provas',tipo:'prova',v:6},
+    {id:'emotiva',t:'Testemunha comovente',q:'Brilha com juízes garantistas e no júri.',ef:'+4 em testemunhas, +4 se quem julga valoriza depoimentos',tipo:'testemunha',v:4,pref:4},
+    {id:'arriscada',t:'Testemunha-bomba',q:'Sabe de tudo, mas pode desmoronar.',ef:'+10 em testemunhas · 30% de desmoronar (−8)',tipo:'testemunha',v:10,risco:.3}];
+  function comecar(){ for(const id of s.escolha){ const w=TESTEMUNHAS.find(x=>x.id===id); NOS[w.tipo]+=w.v+(w.pref&&JZ.pref==='testemunha'?w.pref:0);
+      if(w.risco&&Math.random()<w.risco) s.desmorona=rint(12,28); }
+    s.pre=false; lance(s.escolha.length?`Você leva ${s.escolha.length} testemunha${s.escolha.length>1?'s':''} para a audiência.`:'Você vai sem testemunhas próprias.','neutro'); }
   function passo(){
+    if(s.desmorona===s.min+1){ s.desmorona=0; mexer(-8,'eles'); lance('A testemunha-bomba desmorona no depoimento (−8).','eles'); }
     if(!s.rodando||s.momento||s.fim) return;
     s.min++; const f=fase(s.min); let dv=0;
     if(AV_MOMENTOS[s.min]&&!s.feitos[s.min]){ s.momento=s.min; s.feitos[s.min]=1; s.rodando=false; return desenhar(); }
@@ -157,7 +166,9 @@ function audienciaAoVivo(c){
     desenhar(); }
   function agendar(){ clearTimeout(timer); timer=setTimeout(()=>{ passo(); if(!s.fim) agendar(); },700/s.vel); }
   function acao(a,v){
-    if(a==='play'){ if(!s.fim&&!s.momento) s.rodando=!s.rodando; }
+    if(a==='testemunha'){ const i=s.escolha.indexOf(v); if(i>=0) s.escolha.splice(i,1); else if(s.escolha.length<2) s.escolha.push(v); }
+    else if(a==='comecar'){ comecar(); s.rodando=true; }
+    else if(a==='play'){ if(!s.fim&&!s.momento) s.rodando=!s.rodando; }
     else if(a==='vel'){ s.vel=+v; agendar(); }
     else if(a==='postura') s.postura=v;
     else if(a==='foco') s.foco=v;
@@ -182,6 +193,14 @@ function audienciaAoVivo(c){
     desenhar(); }
   box.addEventListener('click',e=>{ const b=e.target.closest('[data-av]'); if(!b||b.disabled) return; acao(b.dataset.av,b.dataset.v); });
   function desenhar(){
+    if(s.pre){ box.innerHTML=`<div class="av"><header class="av-placar"><div class="av-lado"><span class="label">${R[0]}</span><b>${esc(S.nome)}</b></div>
+      <div class="av-centro"><span class="label av-fase">Pré-audiência · ${esc(c.titulo)}</span><div class="av-relogio">Escalação</div><small>Chance de partida: <b>${s.ini}%</b> · ${quem}${c.juri?' · júri':''}</small></div>
+      <div class="av-lado dir"><span class="label">${R[1]||'Outra parte'}</span><b>Dificuldade ${d}</b></div></header>
+      <section class="panel"><div class="panel-head"><h2>Quem você leva para depor?</h2><span class="label">até 2 · ${s.escolha.length} escolhida${s.escolha.length===1?'':'s'}</span></div>
+        <div class="av-cartas">${TESTEMUNHAS.map(w=>`<button class="av-carta ${s.escolha.includes(w.id)?'agora':''}" data-av="testemunha" data-v="${w.id}" aria-pressed="${s.escolha.includes(w.id)}"><b>${w.t}</b><small>${w.q}</small><small class="hi">${w.ef}</small></button>`).join('')}</div></section>
+      <section class="panel"><div class="panel-head"><h2>Seus trunfos</h2><span class="label">vêm do preparo · use na fase certa</span></div>
+        <div class="av-cartas">${cartas.map(k=>`<div class="av-carta"><b>${k.t}</b><small>${k.q}</small><small>${AV_NOMES[k.tipo]} · +${k.forca} · melhor em ${k.fase.toLowerCase()}</small></div>`).join('')}</div></section>
+      <div class="av-ctl" style="max-width:420px"><button class="btn brass" data-av="comecar">Começar a audiência</button></div></div>`; return; }
     const f=fase(s.min), conv=Math.round(s.conv), du=duelo(), parado=s.fim||!!s.momento;
     const corConv=conv>=60?'var(--win)':conv>=40?'var(--warn)':'var(--loss)';
     const barras=s.barras.map(b=>{ const h=Math.min(64,Math.abs(b.d)*6+(b.d?5:2)); return `<i style="left:${b.m/AV_FIM*98.5}%;height:${h}px;top:${b.d>=0?70-h:70}px;background:${b.d>0?'var(--win)':b.d<0?'var(--loss)':'var(--line)'}"></i>`; }).join('');

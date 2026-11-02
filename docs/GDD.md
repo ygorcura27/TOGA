@@ -689,3 +689,12 @@ Ideias do design original que continuam valendo como direção, mas não estão 
   - Objeções mal decididas e falso testemunho apurado sem mentira aumentam o risco de nulidade.
   - Incidentes: testemunha que muda a versão, pedido urgente (±1 de reputação) e propina.
   - Sentença técnica ou curta (+5 de energia). Acertar a verdade: o tribunal mantém em 82–93%; errar: reforma em 70–85%; a nulidade reduz tudo.
+
+## Jornal, rivais, repercussão e metas
+- **Gazeta Forense:** aba Jornal com uma edição por mês (manchete com ilustração, colunas de tribunais, carreiras, Brasil, academia e rivais). Promoções, posses, conquistas épicas, viradas em audiências ao vivo, duelos com rivais, metas cumpridas, leis aprovadas, escândalos e artigos publicados viram notícia. Sair na manchete com notícia boa rende +1 de prestígio.
+- **Coluna de opinião:** uma por mês, custa 8 de energia e usa Escrita: bem recebida +2 de prestígio (e +2 de capital político nas carreiras públicas); polêmica −1.
+- **Rivais da advocacia:** três advogados fixos (o veterano, a estrela em ascensão, o tubarão, a criminalista) aparecem em 22% das ofertas incomuns ou maiores, somam a força deles à dificuldade e são fortes num tipo de lance. Ganham +1 de força quando vencem você e a cada ano.
+- **Rival de carreira (juiz, promotor, defensor):** um colega disputa as mesmas vagas; se ele tiver mais reputação na hora do pedido de promoção, há 40% de ele ficar com a vaga.
+- **Repercussão:** vencer ao vivo com virada de 15 pontos, partindo de menos de 40% ou num caso épico ou lendário vira manchete; na advocacia traz 1 a 2 ofertas extras de indicação no mês seguinte, nas carreiras públicas +3 de capital político.
+- **Pré-audiência:** antes da audiência ao vivo você escolhe até 2 testemunhas (firme, técnica, comovente, testemunha-bomba) e vê os trunfos.
+- **Metas de 24 meses:** três por vez, por carreira (vitórias, nível do escritório, clientes fixos, audiências ao vivo, sentenças mantidas, condenações, atendimentos, habeas corpus, patrimônio), com prestígio, dinheiro ou capital político de recompensa.
