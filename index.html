@@ -4283,7 +4283,9 @@ function seletorModo(c){ const m=modoDe(c), sub=melhorSub(c), cheio=vivoUsadas()
     ${b('rapida','Rápida',false,'A balança de sempre, com o momento decisivo.')}
     ${b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:'Contrate advogados para enviar à audiência.')}
   </div>${cheio?`<small class="lo">Você já tem ${VIVO_MES} audiências ao vivo neste mês: esta vai ${sub?'com '+esc(sub.f.nome.split(' ')[0]):'rápida'}.</small>`:''}</div>`; }
-{ const p0=pasta; pasta=function(c,ativo){ const h=p0(c,ativo); return ativo&&S.casos.includes(c)&&(c.inst||1)===1?h.replace('<div class="ctl">',seletorModo(c)+'<div class="ctl">'):h; }; }
+{ const p0=pasta; pasta=function(c,ativo){ const h=p0(c,ativo); if(!ativo||!S.casos.includes(c)) return h;
+    const sel=(c.inst||1)>1?seletorModo(c).replace('<span class="label">Audiência</span>','<span class="label">Sustentação oral no tribunal</span>'):seletorModo(c);
+    return h.replace('<div class="ctl">',sel+'<div class="ctl">'); }; }
 { const m0=mpCard; mpCard=function(c){ const h=m0(c); return c.fase==='juizo'?h.replace('<div class="ctl">',seletorModo(c)+'<div class="ctl">'):h; }; }
 { const d0=dpCard; dpCard=function(c){ const h=d0(c); return RORD.indexOf(c.rar)>=2?h.replace('<div class="ctl">',seletorModo(c)+'<div class="ctl">'):h; }; }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=modoAud]'); if(!b||b.disabled||!S) return;
@@ -4305,7 +4307,7 @@ async function prepararAudiencia(c){
 const limparModo=c=>{ delete c._modo; };
 { const m0=momentoDecisivo; momentoDecisivo=async function(c){ if(c._modo==='vivo'||c._modo==='enviar') return; return m0(c); }; }
 { const r0=reviravolta; reviravolta=async function(c){ if(c._modo==='vivo'||c._modo==='enviar') return; return r0(c); }; }
-{ const a0=audiencia; audiencia=async function(c){ if((c.inst||1)>1) return a0(c);
+{ const a0=audiencia; audiencia=async function(c){ // recursos da advocacia também podem ter sustentação oral ao vivo
     const r=await prepararAudiencia(c);
     if(r&&r.acordo){ const val=c.valor*r.acordo, hon=Math.round(val*.2); S.caixa+=hon; S.u.honSemana+=hon; pagarAssociados(hon); S.vitorias++; S.casos=S.casos.filter(x=>x.id!==c.id);
       addLog(`Acordo na audiência de “${c.titulo}”: ${pct(r.acordo)} do pedido, ${brl(hon)} de honorários.`,'g'); return; }
@@ -4369,11 +4371,13 @@ function audienciaAoVivo(c){
   const quem=c.juri?'Os jurados':papel==='adv'?c.juizNome:'O juiz';
   const R={adv:['Você',papel==='adv'?ADV[c.adv].nome:''],mp:['Acusação · você','Defesa'],dp:['Defesa · você',c.area==='penal'?'Ministério Público':'Parte contrária']}[papel];
   const cartas=avCartas(c);
-  const s={pre:true,escolha:[],min:0,rodando:false,vel:1,conv:ch0*100,ini:Math.round(ch0*100),postura:'equilibrada',foco:Object.keys(NOS).sort((a,b)=>NOS[b]-NOS[a])[0],advPostura:'equilibrada',
+  // no tribunal (recurso) é uma sustentação oral de 30 minutos: sem testemunhas, quase tudo é tese e debate
+  const rec=(c.inst||1)>1, FIM=rec?30:AV_FIM, FASES=rec?[[0,'Abertura'],[5,'Debates'],[26,'Sentença']]:AV_FASES, MOM=rec?{15:AV_MOMENTOS[50]}:AV_MOMENTOS;
+  const s={pre:!rec,escolha:[],min:0,rodando:false,vel:1,conv:ch0*100,ini:Math.round(ch0*100),postura:'equilibrada',foco:Object.keys(NOS).sort((a,b)=>NOS[b]-NOS[a])[0],advPostura:'equilibrada',
     objecoes:2,recessos:1,folego:vip('nervos')?100:S.energia,combo:0,juizVisto:false,sondou:false,acordoEm:0,usadas:{},
-    advCartas:[{t:'Prova surpresa da outra parte',forca:6,quando:rint(30,44)},{t:'Testemunha de última hora',forca:5,quando:rint(12,28)}].slice(0,RORD.indexOf(c.rar)>=3?2:1),
-    feed:[{m:0,t:`${quem} abre${c.juri?'m':''} a audiência.`,l:'neutro'}],barras:[],ultimo:null,momento:null,feitos:{},fim:false,res:null};
-  const lim=v=>Math.max(5,Math.min(95,v)), fase=m=>{ let f='Abertura'; for(const [a,n] of AV_FASES) if(m>=a) f=n; return f; };
+    advCartas:(rec?[{t:'Precedente novo da outra parte',forca:6,quando:rint(8,22)}]:[{t:'Prova surpresa da outra parte',forca:6,quando:rint(30,44)},{t:'Testemunha de última hora',forca:5,quando:rint(12,28)}]).slice(0,RORD.indexOf(c.rar)>=3?2:1),
+    feed:[{m:0,t:rec?`O ${INST[c.inst]} abre a sessão: sustentação oral em “${c.titulo}”.`:`${quem} abre${c.juri?'m':''} a audiência.`,l:'neutro'}],barras:[],ultimo:null,momento:null,feitos:{},fim:false,res:null};
+  const lim=v=>Math.max(5,Math.min(95,v)), fase=m=>{ let f='Abertura'; for(const [a,n] of FASES) if(m>=a) f=n; return f; };
   const cans=()=>s.folego<35?-6:s.folego<60?-2:0;
   const skN=t=>NOS[t]+(t===s.foco?10:-4)+cans(), skA=t=>advSk(t)+(t===fortAdv?6:-2);
   const duelo=()=>s.postura===AV_VENCE[s.advPostura]?1:s.advPostura===AV_VENCE[s.postura]?-1:0;
@@ -4398,7 +4402,7 @@ function audienciaAoVivo(c){
     if(s.desmorona===s.min+1){ s.desmorona=0; mexer(-8,'eles'); lance('A testemunha-bomba desmorona no depoimento (−8).','eles'); }
     if(!s.rodando||s.momento||s.fim) return;
     s.min++; const f=fase(s.min); let dv=0;
-    if(AV_MOMENTOS[s.min]&&!s.feitos[s.min]){ s.momento=s.min; s.feitos[s.min]=1; s.rodando=false; return desenhar(); }
+    if(MOM[s.min]&&!s.feitos[s.min]){ s.momento=s.min; s.feitos[s.min]=1; s.rodando=false; return desenhar(); }
     if(s.min%6===0){ let p=s.conv>62?'agressiva':s.conv<38?'cautelosa':'equilibrada'; if(Math.random()<.3) p=pick(Object.keys(AV_POST));
       if(p!==s.advPostura){ s.advPostura=p; lance(`A outra parte muda para postura ${AV_POST[p].t.toLowerCase()}.`,'neutro'); } }
     const PN=AV_POST[s.postura], PA=AV_POST[s.advPostura]; s.folego=Math.max(0,s.folego-PN.gasto*1.4);
@@ -4412,9 +4416,9 @@ function audienciaAoVivo(c){
       let v=W.mag*(PN.mag+PA.mag)/2*(.7+Math.random()*.6); if(tipo===JZ.pref) v*=nos&&s.foco===tipo?1.5:1.1; v=Math.round(v*10)/10;
       dv=nos?v:-v; mexer(dv,l); s.ultimo=nos?null:{v,min:s.min};
       lance(pick(AV_TXT[tipo][l])+(nos&&tipo===JZ.pref&&s.juizVisto?' Isso pesa para quem julga.':''),l); }
-    if(s.min===55) lance(`${quem} encerra${c.juri?'m':''} a instrução.`,'neutro');
+    if(s.min===FIM-5) lance(rec?'Encerradas as sustentações. O tribunal vai votar.':`${quem} encerra${c.juri?'m':''} a instrução.`,'neutro');
     s.barras.push({m:s.min,d:dv});
-    if(s.min>=AV_FIM) terminar(`Fim da audiência. ${quem} vai decidir com ${Math.round(s.conv)}% a seu favor.`);
+    if(s.min>=FIM) terminar(`Fim da audiência. ${quem} vai decidir com ${Math.round(s.conv)}% a seu favor.`);
     desenhar(); }
   function agendar(){ clearTimeout(timer); timer=setTimeout(()=>{ passo(); if(!s.fim) agendar(); },700/s.vel); }
   function acao(a,v){
@@ -4424,7 +4428,7 @@ function audienciaAoVivo(c){
     else if(a==='vel'){ s.vel=+v; agendar(); }
     else if(a==='postura') s.postura=v;
     else if(a==='foco') s.foco=v;
-    else if(a==='op'){ const o=AV_MOMENTOS[s.momento].ops[+v], ch=chOp(o), deu=Math.random()<ch, dv=deu?o[3]:o[4];
+    else if(a==='op'){ const o=MOM[s.momento].ops[+v], ch=chOp(o), deu=Math.random()<ch, dv=deu?o[3]:o[4];
       lance(!o[1]?(o[3]?'Você reforça o que já está provado.':'Você não arrisca.'):deu?`${o[0]}: deu certo.`:`${o[0]}: saiu pela culatra.`,dv>0?'nos':dv<0?'eles':'neutro');
       mexer(dv,dv>0?'nos':dv<0?'eles':null); s.barras.push({m:s.min,d:dv}); s.momento=null; s.rodando=true; }
     else if(a==='carta'){ const k=cartas.find(x=>x.id===v); if(!k||s.usadas[v]||!s.min) return; s.usadas[v]=1;
@@ -4455,11 +4459,11 @@ function audienciaAoVivo(c){
       <div class="av-ctl" style="max-width:420px"><button class="btn brass" data-av="comecar">Começar a audiência</button></div></div>`; return; }
     const f=fase(s.min), conv=Math.round(s.conv), du=duelo(), parado=s.fim||!!s.momento;
     const corConv=conv>=60?'var(--win)':conv>=40?'var(--warn)':'var(--loss)';
-    const barras=s.barras.map(b=>{ const h=Math.min(64,Math.abs(b.d)*6+(b.d?5:2)); return `<i style="left:${b.m/AV_FIM*98.5}%;height:${h}px;top:${b.d>=0?70-h:70}px;background:${b.d>0?'var(--win)':b.d<0?'var(--loss)':'var(--line)'}"></i>`; }).join('');
+    const barras=s.barras.map(b=>{ const h=Math.min(64,Math.abs(b.d)*6+(b.d?5:2)); return `<i style="left:${b.m/FIM*98.5}%;height:${h}px;top:${b.d>=0?70-h:70}px;background:${b.d>0?'var(--win)':b.d<0?'var(--loss)':'var(--line)'}"></i>`; }).join('');
     box.innerHTML=`<div class="av">
       <header class="av-placar">
         <div class="av-lado">${retrato(S.nome,{g:S.genero,size:52})}<span class="label">${R[0]}</span><b>${esc(S.nome)}</b><small>Oratória ${NOS.testemunha} · Análise ${NOS.prova} · ${AREAS[c.area]?AREAS[c.area].nome:'Área'} ${NOS.tese}</small></div>
-        <div class="av-centro"><span class="label av-fase">${f} · ${esc(c.titulo)}</span><div class="av-relogio num">${String(s.min).padStart(2,'0')}' / ${AV_FIM}'</div>
+        <div class="av-centro"><span class="label av-fase">${f} · ${esc(c.titulo)}</span><div class="av-relogio num">${String(s.min).padStart(2,'0')}' / ${FIM}'</div>
           <div class="av-cabo" role="img" aria-label="Convicção: ${conv}% a seu favor"><i style="width:${conv}%"></i></div><small>Convicção: <b>${conv}%</b> a seu favor · começou em ${s.ini}%</small></div>
         <div class="av-lado dir"><span class="label">${R[1]||'Outra parte'}</span><b>Dificuldade ${d}</b><small>${quem}${c.juri?' · júri':''}</small></div>
       </header>
@@ -4470,8 +4474,8 @@ function audienciaAoVivo(c){
       </div>
       <div class="av-corpo">
         <section class="panel av-feed"><div class="panel-head"><h2>Lance a lance</h2></div>
-          ${s.momento?`<div class="av-momento"><span class="label">Momento decisivo · pausado</span><span>${AV_MOMENTOS[s.momento].t}</span>
-            ${AV_MOMENTOS[s.momento].ops.map((o,i)=>`<button class="opt" data-av="op" data-v="${i}"><span>${o[0]}</span><b class="num">${o[1]?`${pct(chOp(o))} · +${o[3]}/${o[4]}`:o[3]?'+'+o[3]:'±0'}</b></button>`).join('')}</div>`:''}
+          ${s.momento?`<div class="av-momento"><span class="label">Momento decisivo · pausado</span><span>${MOM[s.momento].t}</span>
+            ${MOM[s.momento].ops.map((o,i)=>`<button class="opt" data-av="op" data-v="${i}"><span>${o[0]}</span><b class="num">${o[1]?`${pct(chOp(o))} · +${o[3]}/${o[4]}`:o[3]?'+'+o[3]:'±0'}</b></button>`).join('')}</div>`:''}
           ${s.feed.map(x=>`<div class="av-ev ${x.l}"><span class="num">${x.m}'</span><span>${x.t}</span></div>`).join('')}</section>
         <section class="av-meio">
           <div class="panel"><div class="panel-head"><h2>Trunfos</h2><span class="label">uma vez cada · melhor na fase certa</span></div>
@@ -4929,6 +4933,11 @@ function sessaoJulgamento(p){ return new Promise(fim=>{
   const chanceConv=m=>{ const P=SJ_PERFIS[m.perfil], contra=(rumo()>0&&P.lado<0)||(rumo()<0&&P.lado>0);
     return lim(sig((S.skills.oratoria-60+(m.afin-50)*.6-(contra?P.res*2:0)-m.irrit)/12),.1,.9); };
   ev(`Aberta a sessão da ${O.nome}. ${relator?'Você é o relator.':`Você é vogal; o relator é ${nomeRel}.`}`,'g');
+  // relações: quem articulou com você cobra o favor; aliados acompanham; desafetos trabalham contra
+  const base=id=>colegas().find(x=>x.id===id);
+  const cob=mesa.find(m=>m.favor&&!m.divergente);
+  if(cob){ s.cobra={id:cob.id,lado:cob.conv>=50?'s':'n'}; ev(`${cob.nome} cobra o favor da última sessão: espera que você vote por ${lado(s.cobra.lado)}.`,'g'); }
+  function aliancas(){ for(const m of s.mesa) if(m.afin>=75&&!m.divergente){ empurra(m,rumo()*6); ev(`${m.nome} (aliança de mesa) sinaliza que acompanha o seu voto.`,s.seu); } }
   const box=document.createElement('div'); box.className='av-ov'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','Sessão de julgamento');
   document.body.appendChild(box);
   function passo(){
@@ -4936,9 +4945,11 @@ function sessaoJulgamento(p){ return new Promise(fim=>{
         for(const m of s.mesa) empurra(m,(l==='s'?1:-1)*d*(.6+Math.random()*.8)); ev(`Sustentação oral do advogado que pede para ${lado(l)}: ${forte?'convincente':'protocolar'}.`,l); }
       s.fase='escolha'; ev(relator?'Como relator, defina a direção do voto que vai ler.':`${nomeRel} lê o voto de relator: ${lado(s.mesa[0].conv>=50?'s':'n')}. Qual é o seu voto?`,'g'); return; }
     if(s.fase==='relatorio'){ const f=(S.skills.escrita-50)/3+6; for(const m of s.mesa) empurra(m,rumo()*f*(SJ_PERFIS[m.perfil].tese?1.3:1)*(.6+Math.random()*.6));
-      ev(`Você lê o voto de relator por ${lado(s.seu)} (Escrita ${Math.round(S.skills.escrita)}). A mesa se move.`,s.seu); s.fase='debate'; s.rodada=1; s.acoes=2; return; }
+      ev(`Você lê o voto de relator por ${lado(s.seu)} (Escrita ${Math.round(S.skills.escrita)}). A mesa se move.`,s.seu); s.fase='debate'; s.rodada=1; s.acoes=2; aliancas(); return; }
     if(s.fase==='debate'){ const d0=s.mesa.find(m=>m.divergente), alvos=s.mesa.filter(m=>!m.divergente&&Math.abs(m.conv-50)<25), alvo=alvos.length?pick(alvos):null;
       if(alvo){ const d=-rumo()*rint(5,11); empurra(alvo,d); ev(`${d0.nome} (divergente) conversa com ${alvo.nome} e puxa para ${lado(d>0?'s':'n')}.`,d>0?'s':'n'); }
+      for(const inim of s.mesa.filter(m=>m.afin<=20&&!m.divergente)){ const al=alvos.filter(m=>m!==inim); if(!al.length) continue; const x=pick(al), d=-rumo()*rint(3,7); empurra(x,d); empurra(inim,-rumo()*4);
+        ev(`${inim.nome}, que não esquece as divergências com você, trabalha ${x.nome} contra o seu voto.`,d>0?'s':'n'); }
       if(O.stf){ const pub=s.publico>=50?'s':'n'; for(const m of s.mesa) if(SJ_PERFIS[m.perfil].publico) empurra(m,(pub==='s'?1:-1)*3); ev(`A TV Justiça mostra a opinião pública inclinada a ${lado(pub)}.`,'g'); }
       if(s.rodada>=3){ s.fase='votacao'; ev('Encerrado o debate. Os votos saem um a um.','g'); return votar(); }
       s.rodada++; s.acoes=2; } }
@@ -4948,7 +4959,10 @@ function sessaoJulgamento(p){ return new Promise(fim=>{
     let rep=comigo?(relator?(s.suavizou?2:4):1):-1;
     if(O.stf){ const pub=s.publico>=50?'s':'n'; if(s.seu!==pub) rep-=1; if(comigo) rep*=2; }
     S.prest=clamp(S.prest+rep,0,100);
-    for(const c of colegas()){ const m=s.mesa.find(x=>x.id===c.id); c.afin=clamp(m.afin+(m.voto===s.seu?2:-1),0,100); }
+    for(const c of colegas()){ const m=s.mesa.find(x=>x.id===c.id); c.afin=clamp(m.afin+(m.voto===s.seu?2:-1),0,100); if(m.favor) c.favor=true; }
+    if(s.cobra){ const b=base(s.cobra.id), m=s.mesa.find(x=>x.id===s.cobra.id); b.favor=false;
+      if(s.seu===s.cobra.lado){ b.afin=clamp(b.afin+6,0,100); ev(`Favor pago: a relação com ${m.nome} melhora.`,'g'); }
+      else { b.afin=clamp(b.afin-20,0,100); ev(`Você não pagou o favor: ${m.nome} vira desafeto na mesa.`,'n'); } }
     if(comigo&&relator){ J.lideranca=(J.lideranca||0)+1; noticia('caso',`Voto de ${S.nome} vira tese no ${O.stf?'Supremo':'tribunal'}`,`Por ${Math.max(nS,nN)} a ${Math.min(nS,nN)}, a ${O.nome.toLowerCase()} acompanhou o relator em “${p.titulo}”.`,3); }
     // o mérito volta depois: maioria errada pode cair em rescisória; voto vencido certo pode virar maioria anos depois
     const F=J.futuros||(J.futuros=[]);
@@ -4960,11 +4974,11 @@ function sessaoJulgamento(p){ return new Promise(fim=>{
     if(s.acao==='conv'){ const ch=chanceConv(m);
       if(Math.random()<ch){ empurra(m,rumo()*rint(9,16)); m.afin=clamp(m.afin+3,0,100); ev(`Você convence ${m.nome} (${pct(ch)}): o voto se aproxima do seu.`,s.seu); }
       else { m.irrit+=4; empurra(m,-rumo()*3); ev(`${m.nome} não se convence (${pct(ch)}) e endurece a posição.`,s.seu==='s'?'n':'s'); } }
-    if(s.acao==='art'){ if((S.pol??10)<12) return; S.pol=(S.pol??10)-12; empurra(m,rumo()*15); m.afin=clamp(m.afin-3,0,100); ev(`Nos bastidores, você articula com ${m.nome}. Funciona, mas custa capital político.`,'g'); }
+    if(s.acao==='art'){ if((S.pol??10)<12) return; S.pol=(S.pol??10)-12; empurra(m,rumo()*15); m.favor=true; ev(`Nos bastidores, você articula com ${m.nome}. Funciona, mas o favor vai ser cobrado numa próxima sessão.`,'g'); }
     s.acoes--; s.acao=null; }
   function acao(a,v){
     if(a==='avancar'&&!s.fim&&s.fase!=='escolha'&&s.fase!=='votacao'){ passo(); s.acao=null; }
-    else if(a==='voto'){ s.seu=v; ev(`Você vota por ${lado(v)}.`,v); if(relator) s.fase='relatorio'; else { s.fase='debate'; s.rodada=1; s.acoes=2; } }
+    else if(a==='voto'){ s.seu=v; ev(`Você vota por ${lado(v)}.`,v); if(relator) s.fase='relatorio'; else { s.fase='debate'; s.rodada=1; s.acoes=2; aliancas(); } }
     else if(a==='acao') s.acao=s.acao===v?null:v;
     else if(a==='alvo') agir(v);
     else if(a==='suavizar'&&relator&&!s.suavizou&&s.acoes>0&&s.fase==='debate'){ s.suavizou=true; s.acoes--; for(const m of s.mesa) empurra(m,rumo()*6); ev('Você suaviza a tese. Mais colegas conseguem acompanhar.','g'); }
@@ -4991,7 +5005,7 @@ function sessaoJulgamento(p){ return new Promise(fim=>{
         <div class="av-lado dir"><span class="label">Seu voto</span><b>${s.seu?lado(s.seu):'a definir'}</b><small>${O.stf?`TV Justiça: ${s.publico>=50?`${s.publico}% quer prover`:`${100-s.publico}% quer negar`}`:'colegiado'}</small></div></header>
       <section class="panel"><div class="panel-head"><h2>A mesa</h2><span class="label">${s.acao?'escolha o colega':'convicção de cada um · afinidade com você'}</span></div>
         <div class="sj-mesa">${s.mesa.map(m=>{ const c=Math.round(m.conv); return `<div class="sj-cad">${m.voto?`<span class="sj-voto ${m.voto}">${lado(m.voto)}</span>`:''}${retrato(m.nome,{size:40,toga:true})}
-          <b>${esc(m.nome)}</b><small>${SJ_PERFIS[m.perfil].t}${m.divergente?' · divergente':''}</small><div class="sj-conv" role="img" aria-label="${c}% para prover"><i style="width:${c}%"></i></div><small>${c>=50?`${c}% prover`:`${100-c}% negar`} · afinidade ${m.afin}</small>
+          <b>${esc(m.nome)}</b><small>${SJ_PERFIS[m.perfil].t}${m.divergente?' · divergente':''}${m.afin>=75?' · <span class="hi">aliança</span>':m.afin<=20?' · <span class="lo">desafeto</span>':''}${m.favor?' · você deve um favor':''}</small><div class="sj-conv" role="img" aria-label="${c}% para prover"><i style="width:${c}%"></i></div><small>${c>=50?`${c}% prover`:`${100-c}% negar`} · afinidade ${m.afin}</small>
           ${s.fase==='debate'&&!m.divergente?`<button class="tab" data-sj="alvo" data-v="${m.id}" ${pode?'':'disabled'}>${s.acao==='conv'?`Convencer · ${pct(chanceConv(m))}`:s.acao==='art'?'Articular':'—'}</button>`:''}</div>`; }).join('')}</div></section>
       <div class="av-corpo sj-corpo"><section class="panel av-feed"><div class="panel-head"><h2>Sessão</h2></div>${res}${s.feed.map(x=>`<div class="av-ev ${x.c==='s'?'pa':x.c==='n'?'pb':''}"><span></span><span>${x.t}</span></div>`).join('')}</section>
         <section class="panel av-instr"><h2>Suas ações · ${s.fase==='debate'?s.acoes:'–'}</h2>

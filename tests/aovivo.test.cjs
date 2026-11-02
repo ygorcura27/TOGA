@@ -7,12 +7,13 @@ const POLITICA = `(h,b)=>{ const op=[...h.matchAll(/<button class="opt"[^>]*data
 // prepara um caso que vai a audiência ao vivo neste mês
 const PREPARO = {
   adv: S => { const c = S.ofertas[0]; S.casos.push(c); S.ofertas = S.ofertas.filter(x => x !== c); c.rar = 'raro'; c.prazo = 1; c.modoAud = 'vivo'; c.apoios = { perito: 2 }; c.prep = 6; },
+  recurso: S => { const c = S.ofertas[0]; S.casos.push(c); S.ofertas = S.ofertas.filter(x => x !== c); c.rar = 'raro'; c.inst = 2; c.lado = 'recorrente'; c.perdaOrig = 3; c.prazo = 1; c.modoAud = 'vivo'; },
   promotor: S => { const c = S.p.casos[0]; c.fase = 'juizo'; c.prazo = 1; c.rar = 'raro'; c.prep = 6; c.modoAud = 'vivo'; },
   defensor: S => { for (const c of S.d.casos) c.prazo = Math.max(2, c.prazo); const c = S.d.casos[0]; c.rar = 'raro'; c.prazo = 1; c.prep = 4; c.modoAud = 'vivo'; },
   juiz: S => { for (const x of S.j.acervo) x.semana = 0; const p = S.j.acervo[0]; p.rar = 'raro'; p.estudo = 6; p.semana = 1; p.modoAud = 'vivo'; },
-  colegiado: S => { S.j.cargo = 3; S.pol = 40; for (const x of S.j.acervo) x.semana = 0; const p = S.j.acervo[0]; p.rar = 'epico'; p.estudo = 9; p.semana = 1; p.modoAud = 'vivo'; },
+  colegiado: S => { S.j.cargo = 3; S.pol = 40; S.j.colegas = { cargo: 3, L: [0, 1, 2, 3].map(i => ({ id: i, nome: ['Ricardo Leme', 'Sônia Prates', 'Gustavo Amaral', 'Helena Rocha'][i], perfil: 'legalista', afin: [80, 15, 50, 50][i], favor: i === 2 })) }; for (const x of S.j.acervo) x.semana = 0; const p = S.j.acervo[0]; p.rar = 'epico'; p.estudo = 9; p.semana = 1; p.modoAud = 'vivo'; },
 };
-const CARREIRA = { adv: 'adv', promotor: 'promotor', defensor: 'defensor', juiz: 'juiz', colegiado: 'juiz' };
+const CARREIRA = { adv: 'adv', recurso: 'adv', promotor: 'promotor', defensor: 'defensor', juiz: 'juiz', colegiado: 'juiz' };
 // robô: começa, acelera, decide o que aparecer e sai quando houver resultado
 async function jogar(p) {
   for (let k = 0; k < 400; k++) {
