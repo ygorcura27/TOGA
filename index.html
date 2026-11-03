@@ -5364,6 +5364,8 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
   ['Escritório de advocacia','Como promovo alguém da equipe?',`<p>No painel <b>Plano de carreira</b> (aba Estrutura e equipe). Cada promoção pede tempo no cargo e skill: ${Object.entries(REQ_PLANO).map(([k,r])=>`${FUNCOES.adv[k].nome.toLowerCase()}: ${r.meses} meses e skill ${r.sk}`).join('; ')}. Cada audiência que a pessoa vence no seu lugar adianta 1 mês, até a metade do prazo.</p>
     <p>Quem fica pronto e não é promovido perde moral depois de 3 meses. Depois de 6, um escritório rival pode oferecer a vaga: você promove, dá um aumento de 20% para ganhar tempo ou deixa ir (o rival fica mais forte e às vezes leva um cliente). Sênior com 1 ano de casa e moral alta pede sociedade, se houver vaga: cada nível do escritório tem um limite de sócios (veja a tabela de níveis).</p>`],
   ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a <b>postura nas audiências</b> por raridade (você é sempre o titular: no juiz, audiência completa, julgamento rápido ou sentença direta; no promotor e no defensor, ao vivo ou rápida) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
+  ['Escritório de advocacia','Como o gestor melhora?',`<p>O gestor (nas carreiras públicas, o chefe de gabinete, de secretaria ou coordenador) tem a skill de <b>gestão</b>. Ela soma na organização do escritório, que mexe na chance de todos os casos, e decide se ele acerta a prioridade ao distribuir os blocos da equipe.</p>
+    <p>A gestão cresce sozinha com o tempo no cargo, cerca de 3 pontos no primeiro ano e mais devagar quanto mais alta. No cartão dele há um <b>curso de gestão</b> (${brl(CURSO_GESTAO.custo)}, +${CURSO_GESTAO.ganho} na hora, um a cada ${CURSO_GESTAO.intervalo} meses). O máximo é ${CURSO_GESTAO.teto}.</p>`],
   ['Casos','Como funcionam os recursos?',`<p>Recurso não ocupa vaga de caso. Cada instância acima da primeira tira <b>13 pontos</b> da chance (tribunal −13, STJ −26, STF −39). Se a decisão anterior foi a seu favor, você ganha +10; se foi contra, perde 10. Escrita ${NIV[2]} dá +8 em recursos.</p>`],
   ['Casos','Como sobe a chance de um caso?',`<p>Blocos de trabalho no caso (com retorno decrescente), skills da área, estrelas, teses e apoios na pasta do caso, estrutura do escritório e o seu estado (energia e estresse). Abaixo de 30 de energia você perde 10 de chance.</p>`],
   ['Rotina','O que são os desafios?',`<p>Na aba Conquistas. São objetivos grandes que <b>você escolhe</b> (no máximo ${DSF_MAX} ao mesmo tempo), com prazo, como chegar a Regional em 4 anos, vencer 3 épicos seguidos ou passar um ano invicto. Cumpridos, dão prestígio, dinheiro ou capital político e uma insígnia. Desistir não custa nada; deixar o prazo vencer conta como falha. As <b>metas</b> são diferentes: o jogo sorteia três objetivos curtos por vez.</p>`],
@@ -5696,6 +5698,32 @@ function painelDesafios(completo){ if(!S||!dsfNoJogo()) return ''; const D=DSF()
 { const d0=painelDiario; painelDiario=function(){ return painelDesafios(false)+d0(); }; }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=dsfAceitar],[data-act=dsfDesistir]'); if(!b||b.disabled||!S) return;
   if(b.dataset.act==='dsfAceitar') aceitarDesafio(b.dataset.v); else desistirDesafio(b.dataset.v); });
+// ===================== O GESTOR APRENDE =====================
+// A gestão do gestor (ou chefe de gabinete, de secretaria, coordenador) cresce com o tempo no cargo e com cursos.
+// Tempo de casa: um pouco por mês, mais devagar quanto mais alto. Curso: +6 na hora, pago pelo caixa (ou orçamento da unidade), com intervalo de 12 meses.
+const CURSO_GESTAO={custo:6000,ganho:6,intervalo:12,teto:95};
+const pagaEstrutura=()=>pubCar()?S.u.orc:S.caixa;
+function semanaGestor(){ const g=S.u&&gestorAtual(); if(!g) return;
+  const antes=Math.floor(g.g); g.g=Math.min(CURSO_GESTAO.teto,g.g+.5*(1-g.g/110));
+  if(Math.floor(g.g)>antes&&Math.floor(g.g)%5===0) addLog(`${g.nome} ganhou experiência na gestão: agora ${Math.floor(g.g)}.`,'g'); }
+{ const s0=semanaEquipe; semanaEquipe=function(){ const r=s0(); semanaGestor(); return r; }; }
+const cursoDisponivel=f=>!f.cursoGEm||S.semana-f.cursoGEm>=CURSO_GESTAO.intervalo;
+function cursoGestao(id){ const f=S.u.equipe.find(x=>x.id===id); if(!f||f.id!==S.u.gestorId||!cursoDisponivel(f)||f.g>=CURSO_GESTAO.teto) return;
+  if(pagaEstrutura()<CURSO_GESTAO.custo) return;
+  if(pubCar()) S.u.orc-=CURSO_GESTAO.custo; else S.caixa-=CURSO_GESTAO.custo;
+  const a=f.g; f.g=Math.min(CURSO_GESTAO.teto,f.g+CURSO_GESTAO.ganho); f.cursoGEm=S.semana; f.moral=clamp(f.moral+5,0,100);
+  addLog(`${f.nome} fez um curso de gestão: ${Math.floor(a)} → ${Math.floor(f.g)}.`,'g'); salvar(); render(); }
+// botão no cartão do gestor; a gestão aparece arredondada
+{ const c0=cardFunc; cardFunc=function(f){ let h=c0(f); h=h.replace(`<span class="num">${f.g}</span>`,`<span class="num">${Math.floor(f.g)}</span>`);
+    if(f.id!==S.u.gestorId) return h;
+    const falta=f.cursoGEm?CURSO_GESTAO.intervalo-(S.semana-f.cursoGEm):0, sem=pagaEstrutura()<CURSO_GESTAO.custo, max=f.g>=CURSO_GESTAO.teto;
+    const tt=max?'Gestão no máximo.':falta>0?`Próximo curso em ${falta} ${falta===1?'mês':'meses'}.`:sem?`Falta ${pubCar()?'orçamento':'caixa'}.`:`+${CURSO_GESTAO.ganho} de gestão na hora. Um curso a cada ${CURSO_GESTAO.intervalo} meses.`;
+    const bt=`<button class="chip" data-act="cursoGestao" data-id="${f.id}" ${max||falta>0||sem?'disabled':''} title="${tt}">Curso de gestão · ${brl(CURSO_GESTAO.custo)}</button>`;
+    return h.replace('<div class="chips">',`<p style="margin:0;font-size:12px;color:var(--muted)">Gestão cresce com o tempo no cargo (mais devagar quanto mais alta) e com cursos. ${tt}</p><div class="chips">${bt}`); }; }
+// arredonda também no resumo de organização
+{ const r0=renderEstrutura; renderEstrutura=function(){ r0(); const g=S.u&&gestorAtual(); if(!g) return;
+    app.querySelectorAll('dd').forEach(dd=>{ if(dd.textContent.includes(' · gestão ')) dd.textContent=dd.textContent.replace(/ · gestão [\d.]+/,` · gestão ${Math.floor(g.g)}`); }); }; }
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=cursoGestao]'); if(!b||b.disabled||!S) return; cursoGestao(+b.dataset.id); });
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
