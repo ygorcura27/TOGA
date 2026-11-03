@@ -72,7 +72,7 @@ function calcAcerto(p){
   let ch=sig((skill+bonus-p.d)/12); if(p.juri) ch=.5+(ch-.5)*.8;
   return {skill,items,ch:clamp(ch,.05,.95)};
 }
-function chanceRecursoJ(p){ const c=S.j.cargo; if(c===4) return 0; if(c===3) return RORD.indexOf(p.rar)>=3?chanceApeloAdv(p,false)*.6:0; if(c===2 && RORD.indexOf(p.rar)<2) return 0; return chanceApeloAdv(p,false); }
+function chanceRecursoJ(p){ const c=S.j.cargo; if(c===4) return 0; if(c===3) return RORD.indexOf(p.rar)>=3?chanceApeloAdv(p,false,true)*.6:0; if(c===2 && RORD.indexOf(p.rar)<2) return 0; return chanceApeloAdv(p,false,true); }
 // tempo mínimo no cargo atual antes da promoção, em meses (índice = cargo de destino)
 const TEMPO_CARGO={juiz:[0,24,96,180,240],promotor:[0,24,96,144],defensor:[0,24,96,144]};
 const tempoTxt=m=>m>=12?`${Math.floor(m/12)} ano${m>=24?'s':''}${m%12?` e ${m%12} ${m%12>1?'meses':'mês'}`:''}`:`${m} ${m===1?'mês':'meses'}`;

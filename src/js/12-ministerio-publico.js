@@ -228,7 +228,7 @@ async function julgamentoMP(c){
   addLog(`${cond?'Condenação':'Absolvição'} em “${c.titulo}” · chance ${pct(ch)} · ${sgn(dP)} reputação.`,cond?'g':'r');
   if(c.inst>=3) return;
   if(cond){
-    const ca=clamp(.35+R.apelo,.05,.95);
+    const ca=clamp(.35+APELO_J[c.rar],.05,.95); // a defesa usa a tabela antiga: recursos mantidos são parte da reputação do promotor
     const ap=await rolar('A defesa vai recorrer?',`Defesas recorrem da maioria das condenações. Base ${pct(ca)}.`,ca,'Recorreu','Não recorreu');
     if(ap){ const prox={...c,inst:c.inst+1,lado:'recorrido',prep:0,semana:0,mod:0};
       P.recursos.push({titulo:c.titulo,rar:c.rar,tipo:'defesa',ch:calcCondenacao(prox).ch,semanas:rint(3,6)}); }

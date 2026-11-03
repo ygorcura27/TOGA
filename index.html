@@ -431,11 +431,11 @@ const AREAS = {
   tributario:{nome:'Tributário',skills:{tributario:.5,pesquisa:.3,escrita:.2}},
 };
 const RAR = {
-  comum:   {nome:'Comum',   d:[10,30], ganho:1, perda:2,  apelo:.15, prazo:[2,3],  xp:1},
-  incomum: {nome:'Incomum', d:[25,45], ganho:2, perda:3,  apelo:.30, prazo:[3,4],  xp:1.3},
-  raro:    {nome:'Raro',    d:[40,65], ganho:3, perda:5,  apelo:.45, prazo:[4,6],  xp:1.6},
-  epico:   {nome:'Épico',   d:[60,85], ganho:4, perda:7,  apelo:.60, prazo:[6,8],  xp:2},
-  lendario:{nome:'Lendário',d:[80,100],ganho:6, perda:10, apelo:.80, prazo:[8,10], xp:2.5},
+  comum:   {nome:'Comum',   d:[10,30], ganho:1, perda:2,  apelo:.10, prazo:[2,3],  xp:1},
+  incomum: {nome:'Incomum', d:[25,45], ganho:2, perda:3,  apelo:.20, prazo:[3,4],  xp:1.3},
+  raro:    {nome:'Raro',    d:[40,65], ganho:3, perda:5,  apelo:.30, prazo:[4,6],  xp:1.6},
+  epico:   {nome:'Épico',   d:[60,85], ganho:4, perda:7,  apelo:.40, prazo:[6,8],  xp:2},
+  lendario:{nome:'Lendário',d:[80,100],ganho:6, perda:10, apelo:.55, prazo:[8,10], xp:2.5},
 };
 const RORD = ['comum','incomum','raro','epico','lendario'];
 const ADV = {pf:{nome:'Pessoa física',apelo:-.10}, empresa:{nome:'Empresa grande',apelo:.15}, estado:{nome:'Estado / Ministério Público',apelo:.20}};
@@ -765,7 +765,9 @@ function calcChance(c,extra=0){
 }
 function chanceAcordo(c){let v=.55+S.skills.negociacao/200+(tem('negociacao',1)?.1:0)+(temSala('reuniao')?.1:0)+(c.npcAdv&&npcTipo(npcPor(c.npcAdv))==='amigo'?.1:0);
   if(c.juiz==='pragmatico') v+=.10; if(S.traits.includes('carismatico')) v+=.10; return clamp(v,.05,.95);}
-function chanceApeloAdv(c,hist){return clamp(RAR[c.rar].apelo+ADV[c.adv].apelo-(hist?.25:0),.05,.95);}
+// chance de a parte contrária recorrer da sua vitória (o juiz usa a tabela própria, APELO_J, para recursos das sentenças dele)
+const APELO_J={comum:.15,incomum:.30,raro:.45,epico:.60,lendario:.80};
+function chanceApeloAdv(c,hist,juiz){return clamp((juiz?APELO_J[c.rar]:RAR[c.rar].apelo)+ADV[c.adv].apelo-(hist?.25:0),.05,.95);}
 
 // ===================== AGENDA =====================
 function blocosUsados(){let n=S.agenda.estudo+S.agenda.lazer+vidaBlocos()+acadBlocos()+estudBlocos();
@@ -1509,7 +1511,7 @@ function calcAcerto(p){
   let ch=sig((skill+bonus-p.d)/12); if(p.juri) ch=.5+(ch-.5)*.8;
   return {skill,items,ch:clamp(ch,.05,.95)};
 }
-function chanceRecursoJ(p){ const c=S.j.cargo; if(c===4) return 0; if(c===3) return RORD.indexOf(p.rar)>=3?chanceApeloAdv(p,false)*.6:0; if(c===2 && RORD.indexOf(p.rar)<2) return 0; return chanceApeloAdv(p,false); }
+function chanceRecursoJ(p){ const c=S.j.cargo; if(c===4) return 0; if(c===3) return RORD.indexOf(p.rar)>=3?chanceApeloAdv(p,false,true)*.6:0; if(c===2 && RORD.indexOf(p.rar)<2) return 0; return chanceApeloAdv(p,false,true); }
 // tempo mínimo no cargo atual antes da promoção, em meses (índice = cargo de destino)
 const TEMPO_CARGO={juiz:[0,24,96,180,240],promotor:[0,24,96,144],defensor:[0,24,96,144]};
 const tempoTxt=m=>m>=12?`${Math.floor(m/12)} ano${m>=24?'s':''}${m%12?` e ${m%12} ${m%12>1?'meses':'mês'}`:''}`:`${m} ${m===1?'mês':'meses'}`;
@@ -2017,7 +2019,7 @@ async function julgamentoMP(c){
   addLog(`${cond?'Condenação':'Absolvição'} em “${c.titulo}” · chance ${pct(ch)} · ${sgn(dP)} reputação.`,cond?'g':'r');
   if(c.inst>=3) return;
   if(cond){
-    const ca=clamp(.35+R.apelo,.05,.95);
+    const ca=clamp(.35+APELO_J[c.rar],.05,.95); // a defesa usa a tabela antiga: recursos mantidos são parte da reputação do promotor
     const ap=await rolar('A defesa vai recorrer?',`Defesas recorrem da maioria das condenações. Base ${pct(ca)}.`,ca,'Recorreu','Não recorreu');
     if(ap){ const prox={...c,inst:c.inst+1,lado:'recorrido',prep:0,semana:0,mod:0};
       P.recursos.push({titulo:c.titulo,rar:c.rar,tipo:'defesa',ch:calcCondenacao(prox).ch,semanas:rint(3,6)}); }

@@ -101,5 +101,7 @@ function calcChance(c,extra=0){
 }
 function chanceAcordo(c){let v=.55+S.skills.negociacao/200+(tem('negociacao',1)?.1:0)+(temSala('reuniao')?.1:0)+(c.npcAdv&&npcTipo(npcPor(c.npcAdv))==='amigo'?.1:0);
   if(c.juiz==='pragmatico') v+=.10; if(S.traits.includes('carismatico')) v+=.10; return clamp(v,.05,.95);}
-function chanceApeloAdv(c,hist){return clamp(RAR[c.rar].apelo+ADV[c.adv].apelo-(hist?.25:0),.05,.95);}
+// chance de a parte contrária recorrer da sua vitória (o juiz usa a tabela própria, APELO_J, para recursos das sentenças dele)
+const APELO_J={comum:.15,incomum:.30,raro:.45,epico:.60,lendario:.80};
+function chanceApeloAdv(c,hist,juiz){return clamp((juiz?APELO_J[c.rar]:RAR[c.rar].apelo)+ADV[c.adv].apelo-(hist?.25:0),.05,.95);}
 

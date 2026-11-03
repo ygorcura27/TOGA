@@ -10,11 +10,11 @@ const AREAS = {
   tributario:{nome:'Tributário',skills:{tributario:.5,pesquisa:.3,escrita:.2}},
 };
 const RAR = {
-  comum:   {nome:'Comum',   d:[10,30], ganho:1, perda:2,  apelo:.15, prazo:[2,3],  xp:1},
-  incomum: {nome:'Incomum', d:[25,45], ganho:2, perda:3,  apelo:.30, prazo:[3,4],  xp:1.3},
-  raro:    {nome:'Raro',    d:[40,65], ganho:3, perda:5,  apelo:.45, prazo:[4,6],  xp:1.6},
-  epico:   {nome:'Épico',   d:[60,85], ganho:4, perda:7,  apelo:.60, prazo:[6,8],  xp:2},
-  lendario:{nome:'Lendário',d:[80,100],ganho:6, perda:10, apelo:.80, prazo:[8,10], xp:2.5},
+  comum:   {nome:'Comum',   d:[10,30], ganho:1, perda:2,  apelo:.10, prazo:[2,3],  xp:1},
+  incomum: {nome:'Incomum', d:[25,45], ganho:2, perda:3,  apelo:.20, prazo:[3,4],  xp:1.3},
+  raro:    {nome:'Raro',    d:[40,65], ganho:3, perda:5,  apelo:.30, prazo:[4,6],  xp:1.6},
+  epico:   {nome:'Épico',   d:[60,85], ganho:4, perda:7,  apelo:.40, prazo:[6,8],  xp:2},
+  lendario:{nome:'Lendário',d:[80,100],ganho:6, perda:10, apelo:.55, prazo:[8,10], xp:2.5},
 };
 const RORD = ['comum','incomum','raro','epico','lendario'];
 const ADV = {pf:{nome:'Pessoa física',apelo:-.10}, empresa:{nome:'Empresa grande',apelo:.15}, estado:{nome:'Estado / Ministério Público',apelo:.20}};
