@@ -410,6 +410,7 @@ select,.field input{border-radius:6px}
 .plano-l{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .plano-m{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:2px}
 .plano-m b{color:var(--ink)}
+.perfil-cl{font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;vertical-align:1px;cursor:help}
 </style>
 
 <div id="app"></div>
@@ -3985,8 +3986,9 @@ function semanaPolitica(){ if(['juiz','promotor','defensor'].includes(S.carreira
 
 // ===================== CLIENTES DA CASA E CONCORRÊNCIA (advocacia) =====================
 // clientes satisfeitos viram fixos: pagam partido mensal e mandam casos; escritórios rivais disputam clientes e advogados
-const RIVAIS_NOMES=['Mattos & Leme Advogados','Rocha Carvalho Sociedade de Advogados','Prates, Amaral & Associados','Nogueira Freitas Advocacia','Campos Vieira Advogados'];
-function rivais(){ if(!S.rivais){ const L=[...RIVAIS_NOMES].sort(()=>Math.random()-.5).slice(0,3); S.rivais=L.map(n=>({nome:n,prest:rint(30,65)})); } return S.rivais; }
+// os rivais são os mesmos do Jornal (35e); aqui eles ganham o prestígio na praça
+function rivaisPraca(){ const R=rivais(); for(const r of R) if(typeof r.prest!=='number'||isNaN(r.prest)) r.prest=rint(30,65); return R; }
+const nomeRival=r=>r.escr||r.nome;
 const partidoDe=c=>clamp(Math.round(c.valor*.0015/100)*100,800,8000);
 function clienteVitoria(c){ if(S.carreira!=='adv') return; S.clientes=S.clientes||[];
   const f=c.clienteFixo&&S.clientes.find(x=>x.id===c.clienteFixo);
@@ -3997,23 +3999,23 @@ function clienteVitoria(c){ if(S.carreira!=='adv') return; S.clientes=S.clientes
 function clienteDerrota(c){ if(S.carreira!=='adv'||!c.clienteFixo) return; const f=(S.clientes||[]).find(x=>x.id===c.clienteFixo); if(f) f.satisf=clamp(f.satisf-20,0,100); }
 function ofertasClientes(){ if(S.carreira!=='adv') return; for(const f of S.clientes||[]) if(Math.random()<.3){
   const a=areasAtivas().includes(f.area)?f.area:areaOferta(S.sede), c=novoCaso(S.sede,{},a); c.cliente=f.nome; c.clienteFixo=f.id; S.ofertas.push(c); } }
-async function semanaClientes(){ if(S.carreira!=='adv') return; const U=S.u, L=S.clientes||[], R=rivais();
+async function semanaClientes(){ if(S.carreira!=='adv') return; const U=S.u, L=S.clientes||[], R=rivaisPraca();
   let tot=0; const mt=TIERS[tierEscritorio()].partido; for(const f of L){ const v=Math.round(f.partido*mt/100)*100; S.caixa+=v; U.honSemana+=v; tot+=v; }
   if(tot) addLog(`Partido mensal de ${L.length} cliente${L.length>1?'s':''} fixo${L.length>1?'s':''}: ${brl(tot)}.`);
   for(const f of [...L]){ const rv=pick(R);
     if(f.satisf<=20){ S.clientes=S.clientes.filter(x=>x!==f); addLog(`${f.nome} se cansou dos resultados e deixou o escritório.`,'r'); }
-    else if(f.satisf<50&&Math.random()<.05){ S.clientes=S.clientes.filter(x=>x!==f); rv.prest=clamp(rv.prest+2,0,100); addLog(`${f.nome} trocou o seu escritório pelo ${rv.nome}.`,'r'); } }
+    else if(f.satisf<50&&Math.random()<.05){ S.clientes=S.clientes.filter(x=>x!==f); rv.prest=clamp(rv.prest+2,0,100); addLog(`${f.nome} trocou o seu escritório pelo ${nomeRival(rv)}.`,'r'); } }
   for(const r of R) r.prest=clamp(r.prest+rnd(-1.5,1.5)+(55-r.prest)*.02,5,100);
   // rival tenta levar um advogado bom e insatisfeito
   const alvo=U.equipe.filter(f=>['pleno','senior'].includes(f.funcao)&&f.moral<75).sort((a,b)=>b.q-a.q)[0];
   if(alvo&&Math.random()<.04){ const rv=pick(R), novo=Math.round(alvo.sal*1.25/50)*50;
-    const v=await modal(`<h2>Proposta da concorrência</h2><p>O ${esc(rv.nome)} ofereceu a ${esc(alvo.nome)} (${nomeFuncao(alvo).toLowerCase()}, qualidade ${Math.round(alvo.q)}) um salário maior para mudar de escritório.</p>
+    const v=await modal(`<h2>Proposta da concorrência</h2><p>O ${esc(nomeRival(rv))} ofereceu a ${esc(alvo.nome)} (${nomeFuncao(alvo).toLowerCase()}, qualidade ${Math.round(alvo.q)}) um salário maior para mudar de escritório.</p>
       <div class="opts"><button class="opt" data-mv="cobrir"><span>Cobrir a proposta</span><b class="num">${brl(novo)}/mês</b><small>Salário +25% e moral +15. ${esc(alvo.nome.split(' ')[0])} fica.</small></button>
       <button class="opt" data-mv="deixar"><span>Deixar ir</span><b class="num">−1 advogado</b><small>Você economiza o salário, mas perde os blocos e pode perder um cliente junto.</small></button></div>`,[]);
-    if(v==='cobrir'){ alvo.sal=novo; alvo.salBase=novo; alvo.moral=clamp(alvo.moral+15,0,100); addLog(`Você cobriu a proposta do ${rv.nome}: ${alvo.nome} fica por ${brl(novo)}/mês.`,'g'); }
-    else { removeFunc(alvo.id); rv.prest=clamp(rv.prest+3,0,100); addLog(`${alvo.nome} foi para o ${rv.nome}.`,'r');
+    if(v==='cobrir'){ alvo.sal=novo; alvo.salBase=novo; alvo.moral=clamp(alvo.moral+15,0,100); addLog(`Você cobriu a proposta do ${nomeRival(rv)}: ${alvo.nome} fica por ${brl(novo)}/mês.`,'g'); }
+    else { removeFunc(alvo.id); rv.prest=clamp(rv.prest+3,0,100); addLog(`${alvo.nome} foi para o ${nomeRival(rv)}.`,'r');
       const cl=(S.clientes||[]).find(x=>x.area===alvo.area); if(cl&&Math.random()<.5){ S.clientes=S.clientes.filter(x=>x!==cl); addLog(`E levou o cliente ${cl.nome}.`,'r'); } } } }
-function painelClientes(){ const L=S.clientes||[], R=rivais(), ranking=[{nome:'Seu escritório',prest:S.prest,eu:true},...R].sort((a,b)=>b.prest-a.prest);
+function painelClientes(){ const L=S.clientes||[], R=rivaisPraca(), ranking=[{nome:'Seu escritório',prest:S.prest,eu:true},...R.map(r=>({nome:nomeRival(r),prest:r.prest}))].sort((a,b)=>b.prest-a.prest);
   return `<section class="panel"><div class="panel-head"><h2>Clientes e concorrência</h2><span class="label">${L.length} cliente${L.length===1?'':'s'} fixo${L.length===1?'':'s'}</span></div>
     ${L.length?`<ul class="break">${L.map(f=>`<li><span><b>${esc(f.nome)}</b> · ${AREAS[f.area].nome} · ${f.casos} caso${f.casos>1?'s':''}</span><span class="num ${f.satisf>=60?'hi':f.satisf<40?'lo':''}">${brl(f.partido)}/mês · satisfação ${Math.round(f.satisf)}</span></li>`).join('')}</ul>`
       :'<p style="margin:0;font-size:12.5px;color:var(--muted)">Ganhe casos raros ou maiores para conquistar clientes fixos: eles pagam partido mensal e mandam casos novos. Derrotas derrubam a satisfação; abaixo de 50, a concorrência pode levá-los.</p>'}
@@ -5427,6 +5429,68 @@ function painelPlano(){ if(S.carreira!=='adv'||!S.u) return ''; const L=todosDaE
     <div class="plano">${L.sort((a,b)=>podePromover(b[0])-podePromover(a[0])).map(linha).join('')}</div></section>`; }
 { const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelPlano(); if(!h) return;
     const fil=app.querySelector('.panel.filiais-eq'); if(fil) fil.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
+// ===================== CLIENTES COM PERSONALIDADE =====================
+// cada cliente fixo tem um jeito: muda o partido, a paciência, quem ele aceita na audiência e o que ele traz.
+const PERFIS={
+  pagador:{nome:'Bom pagador',ico:'💼',desc:'Partido 15% maior e sempre em dia.'},
+  atrasa:{nome:'Paga atrasado',ico:'⏳',desc:'Em alguns meses atrasa o partido; paga depois, acumulado. Três atrasos seguidos e você pode cobrar ou perdoar.'},
+  exigente:{nome:'Exigente',ico:'🎩',desc:'Quer você na audiência: se mandar outra pessoa, a satisfação cai. Se você for e ganhar, sobe mais.'},
+  indicador:{nome:'Bem relacionado',ico:'🤝',desc:'Satisfeito (70 ou mais), indica casos de amigos, muitas vezes raros ou maiores.'},
+  fiel:{nome:'Fiel',ico:'🛡️',desc:'Derrota pesa metade e a concorrência não consegue levá-lo.'},
+  impaciente:{nome:'Impaciente',ico:'⚡',desc:'Manda mais casos, mas fica insatisfeito nos meses sem nenhum caso dele em andamento.'},
+  pechincha:{nome:'Pechincheiro',ico:'🧾',desc:'Partido 20% menor, mas manda casos com mais frequência.'},
+  midiatico:{nome:'Midiático',ico:'📣',desc:'Casos dele saem no jornal: vitória rende prestígio extra, derrota custa prestígio.'},
+};
+const perfilDe=f=>f&&PERFIS[f.perfil];
+const clienteDoCaso=c=>c&&c.clienteFixo&&(S.clientes||[]).find(x=>x.id===c.clienteFixo);
+function darPerfil(f){ if(f.perfil) return; f.perfil=pick(Object.keys(PERFIS));
+  if(f.perfil==='pagador') f.partido=Math.round(f.partido*1.15/100)*100;
+  if(f.perfil==='pechincha') f.partido=Math.round(f.partido*.8/100)*100; }
+const tagPerfil=f=>{ const P=perfilDe(f); return P?`<span class="tag perfil-cl" title="${esc(P.desc)}">${P.ico} ${P.nome}</span>`:''; };
+// saves antigos: clientes sem perfil ganham um
+{ const r0=render; render=function(){ if(S&&S.clientes) for(const f of S.clientes) darPerfil(f); r0(); }; }
+// vitória e derrota
+const foiVoce=c=>c._modo!=='enviar';
+{ const v0=clienteVitoria; clienteVitoria=function(c){ const antes=(S.clientes||[]).length, f=clienteDoCaso(c); v0(c);
+    if((S.clientes||[]).length>antes){ const n=S.clientes[S.clientes.length-1]; darPerfil(n); addLog(`Perfil de ${n.nome}: ${PERFIS[n.perfil].nome.toLowerCase()}. ${PERFIS[n.perfil].desc}`); }
+    if(!f) return; const P=f.perfil;
+    if(P==='exigente'){ if(foiVoce(c)) f.satisf=clamp(f.satisf+5,0,100); else { f.satisf=clamp(f.satisf-12,0,100); addLog(`${f.nome} ganhou, mas reclamou: queria você na audiência, não ${c._subNome||'outra pessoa'}.`,'r'); } }
+    if(P==='midiatico'){ const g=Math.round(RAR[c.rar].ganho*.5*10)/10; S.prest=clamp(S.prest+g,0,100); addLog(`A vitória de ${f.nome} saiu na imprensa. ${sgn(g)} prestígio.`,'g'); } }; }
+{ const d0=clienteDerrota; clienteDerrota=function(c){ const f=clienteDoCaso(c); d0(c); if(!f) return; const P=f.perfil;
+    if(P==='fiel') f.satisf=clamp(f.satisf+10,0,100); // a derrota pesa metade
+    if(P==='exigente'&&!foiVoce(c)){ f.satisf=clamp(f.satisf-10,0,100); addLog(`${f.nome} ficou furioso: perdeu sem você na audiência.`,'r'); }
+    if(P==='midiatico'){ const g=Math.round(RAR[c.rar].ganho*.4*10)/10; S.prest=clamp(S.prest-g,0,100); addLog(`A derrota de ${f.nome} virou notícia. −${g} prestígio.`,'r'); } }; }
+// casos novos: impacientes e pechincheiros mandam mais; bem relacionados indicam
+{ const o0=ofertasClientes; ofertasClientes=function(){ o0(); if(S.carreira!=='adv') return;
+    for(const f of S.clientes||[]){
+      if((f.perfil==='impaciente'||f.perfil==='pechincha')&&Math.random()<.18){ const a=areasAtivas().includes(f.area)?f.area:areaOferta(S.sede), c=novoCaso(S.sede,{},a); c.cliente=f.nome; c.clienteFixo=f.id; S.ofertas.push(c); }
+      if(f.perfil==='indicador'&&f.satisf>=70&&Math.random()<.12){ const c=novoCaso(S.sede,{raro:20,epico:6},areaOferta(S.sede)); c.indicadoPor=f.nome; S.ofertas.push(c);
+        addLog(`${f.nome} indicou um caso: “${c.titulo}”.`,'g'); } } }; }
+// mês: atrasos, impaciência e fidelidade
+{ const s0=semanaClientes; semanaClientes=async function(){ if(S.carreira!=='adv') return s0(); const L=S.clientes||[];
+    const atrasou=[];
+    for(const f of L) if(f.perfil==='atrasa'&&Math.random()<.3){ atrasou.push([f,f.partido]); f.partido=0; }
+    const fieis=L.filter(f=>f.perfil==='fiel'&&f.satisf>20);
+    await s0();
+    const mt=TIERS[tierEscritorio()].partido;
+    for(const [f,v] of atrasou){ f.partido=v; f.devendo=(f.devendo||0)+Math.round(v*mt/100)*100; f.atrasos=(f.atrasos||0)+1; addLog(`${f.nome} atrasou o partido deste mês (devendo ${brl(f.devendo)}).`,'r'); }
+    for(const f of L) if(f.perfil==='atrasa'&&f.devendo&&!atrasou.some(([x])=>x===f)){ S.caixa+=f.devendo; S.u.honSemana+=f.devendo; addLog(`${f.nome} quitou o partido atrasado: ${brl(f.devendo)}.`,'g'); f.devendo=0; f.atrasos=0; }
+    // fiéis não trocam de escritório (só saem se a satisfação desabar)
+    for(const f of fieis) if(!S.clientes.includes(f)&&f.satisf>20){ S.clientes.push(f); }
+    for(const f of S.clientes) if(f.perfil==='impaciente'&&!S.casos.some(c=>c.clienteFixo===f.id)){ f.satisf=clamp(f.satisf-3,0,100); }
+    const cobrar=S.clientes.find(f=>f.perfil==='atrasa'&&(f.atrasos||0)>=3);
+    if(cobrar){ const v=await modal(`<h2>${esc(cobrar.nome)} está devendo</h2><p>Três meses seguidos de partido atrasado: ${brl(cobrar.devendo)} em aberto.</p>
+      <div class="opts"><button class="opt" data-mv="cobrar"><span>Cobrar na justiça</span><b class="num">recebe ~70%</b><small>Você recupera parte do valor, mas o cliente vai embora.</small></button>
+      <button class="opt" data-mv="perdoar"><span>Perdoar a dívida</span><b class="num">+15 satisfação</b><small>Você perde o valor, mas o cliente fica grato e para de atrasar por um tempo.</small></button>
+      <button class="opt" data-mv="esperar"><span>Esperar mais</span><b class="num">—</b><small>Talvez pague no mês que vem.</small></button></div>`,[]);
+      if(v==='cobrar'){ const r=Math.round(cobrar.devendo*.7/100)*100; S.caixa+=r; S.clientes=S.clientes.filter(x=>x!==cobrar); addLog(`Você cobrou ${cobrar.nome} na justiça e recebeu ${brl(r)}. O cliente foi embora.`); }
+      else if(v==='perdoar'){ cobrar.devendo=0; cobrar.atrasos=0; cobrar.satisf=clamp(cobrar.satisf+15,0,100); cobrar.perfil='pagador'; addLog(`Você perdoou a dívida de ${cobrar.nome}. Grato, passou a pagar em dia.`,'g'); }
+      else cobrar.atrasos=2; } }; }
+// mostrar o perfil no painel de clientes e no cartão do caso
+{ const p0=painelClientes; painelClientes=function(){ let h=p0(); for(const f of S.clientes||[]) h=h.replace(`<b>${esc(f.nome)}</b> · `,`<b>${esc(f.nome)}</b> ${tagPerfil(f)} · `); return h; }; }
+{ const p0=pasta; pasta=function(c,ativo){ let h=p0(c,ativo); const f=clienteDoCaso(c);
+    const extra=f?`<p style="margin:0;font-size:12.5px"><b>Cliente fixo</b> ${tagPerfil(f)} · satisfação ${Math.round(f.satisf)}<br><span style="color:var(--muted)">${esc(PERFIS[f.perfil].desc)}</span></p>`:c.indicadoPor?`<p style="margin:0;font-size:12.5px">🤝 Indicação de <b>${esc(c.indicadoPor)}</b>.</p>`:'';
+    return extra?h.replace('</h2>','</h2>'+extra):h; }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
