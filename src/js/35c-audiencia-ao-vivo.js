@@ -5,6 +5,11 @@
 //  · enviar: um advogado (ou assessor, nas carreiras públicas) vai no seu lugar e a chance usa a skill dele.
 // Ao vivo cabem só VIVO_MES audiências por mês: o resto vai rápida ou com a equipe, para o mês não ficar cansativo.
 const VIVO_MES=3;
+// energia na audiência ao vivo: o fôlego começa na sua energia (mínimo AV_FOLEGO_MIN) e a audiência desconta
+// metade do fôlego gasto, no máximo AV_CUSTO_MAX. Exausto (abaixo de AV_EXAUSTO), a audiência não vai ao vivo.
+const AV_FOLEGO_MIN=30, AV_CUSTO_MAX=25, AV_EXAUSTO=15;
+const folegoInicial=()=>vip('nervos')?100:Math.max(AV_FOLEGO_MIN,S.energia);
+const custoAoVivo=(ini,fim,extra=0)=>Math.max(0,Math.min(AV_CUSTO_MAX,Math.round(Math.max(0,ini-fim)*.5))-extra);
 const vivoUsadas=()=>S.vivo&&S.vivo.mes===S.semana?S.vivo.n:0;
 const usarVivo=()=>{ if(!S.vivo||S.vivo.mes!==S.semana) S.vivo={mes:S.semana,n:0}; S.vivo.n++; };
 const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'adv';
@@ -47,6 +52,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=modoA
 async function prepararAudiencia(c){
   let m=modoDe(c); const sub=melhorSub(c);
   if(m==='vivo'&&!vivoPermitido(c)) m='rapida';
+  if(m==='vivo'&&S.energia<AV_EXAUSTO&&!vip('nervos')){ m=sub?'enviar':'rapida'; addLog(`Você está exausto (energia ${Math.round(S.energia)}): “${c.titulo}” foi ${sub?'com '+sub.f.nome:'pela audiência rápida'} em vez de ao vivo.`,'r'); }
   if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ m=sub?'enviar':'rapida'; addLog(`Agenda cheia de audiências ao vivo: “${c.titulo}” foi ${sub?'com '+sub.f.nome:'pela audiência rápida'}.`); }
   if(m==='enviar'&&!sub) m='rapida';
   c._modo=m;
@@ -133,9 +139,9 @@ function audienciaAoVivo(c){
   // no tribunal (recurso) é uma sustentação oral de 30 minutos: sem testemunhas, quase tudo é tese e debate
   const rec=(c.inst||1)>1, FIM=rec?30:AV_FIM, FASES=rec?[[0,'Abertura'],[5,'Debates'],[26,'Sentença']]:AV_FASES, MOM=rec?{15:AV_MOMENTOS[50]}:AV_MOMENTOS;
   const s={pre:!rec,escolha:[],min:0,rodando:false,vel:1,conv:ch0*100,ini:Math.round(ch0*100),postura:'equilibrada',foco:Object.keys(NOS).sort((a,b)=>NOS[b]-NOS[a])[0],advPostura:'equilibrada',
-    objecoes:2,recessos:1,folego:vip('nervos')?100:S.energia,combo:0,juizVisto:false,sondou:false,acordoEm:0,usadas:{},
+    objecoes:2,recessos:1,folego:folegoInicial(),combo:0,juizVisto:false,sondou:false,acordoEm:0,usadas:{},
     advCartas:(rec?[{t:'Precedente novo da outra parte',forca:6,quando:rint(8,22)}]:[{t:'Prova surpresa da outra parte',forca:6,quando:rint(30,44)},{t:'Testemunha de última hora',forca:5,quando:rint(12,28)}]).slice(0,RORD.indexOf(c.rar)>=3?2:1),
-    feed:[{m:0,t:rec?`O ${INST[c.inst]} abre a sessão: sustentação oral em “${c.titulo}”.`:`${quem} abre${c.juri?'m':''} a audiência.`,l:'neutro'}],barras:[],ultimo:null,momento:null,feitos:{},fim:false,res:null};
+    feed:[{m:0,t:rec?`O ${INST[c.inst]} abre a sessão: sustentação oral em “${c.titulo}”.`:`${quem} abre${c.juri?'m':''} a audiência.`,l:'neutro'}],barras:[],ultimo:null,momento:null,feitos:{},fim:false,res:null}; s.f0=s.folego;
   const lim=v=>Math.max(5,Math.min(95,v)), fase=m=>{ let f='Abertura'; for(const [a,n] of FASES) if(m>=a) f=n; return f; };
   const cans=()=>s.folego<35?-6:s.folego<60?-2:0;
   const skN=t=>NOS[t]+(t===s.foco?10:-4)+cans(), skA=t=>advSk(t)+(t===fortAdv?6:-2);
@@ -147,7 +153,7 @@ function audienciaAoVivo(c){
   const box=document.createElement('div'); box.className='av-ov'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','Audiência ao vivo');
   document.body.appendChild(box);
   let timer;
-  function encerrar(){ clearTimeout(timer); S.energia=clamp(Math.round(s.folego),0,100); box.remove(); fim(s.res); }
+  function encerrar(){ clearTimeout(timer); const g=custoAoVivo(s.f0,s.folego); S.energia=clamp(S.energia-g,0,100); if(g) addLog(`A audiência ao vivo custou ${g} de energia.`); box.remove(); fim(s.res); }
   function terminar(texto){ s.fim=true; s.rodando=false; s.res={p:s.conv/100}; lance(texto,'neutro'); }
   // pré-audiência: escolha até 2 testemunhas; cada uma muda a sua skill de um tipo de lance
   const TESTEMUNHAS=[{id:'firme',t:'Testemunha firme',q:'Não se abala com pergunta difícil.',ef:'+6 em testemunhas',tipo:'testemunha',v:6},
@@ -260,3 +266,9 @@ function audienciaAoVivo(c){
       </div></div>`; }
   desenhar(); agendar();
   }); }
+// a previsão de energia da agenda avisa quanto as audiências ao vivo deste mês podem custar
+{ const p0=previsaoEnergia; previsaoEnergia=function(){ const h=p0(); if(S.carreira!=='adv') return h;
+    const n=Math.min(VIVO_MES-vivoUsadas(),S.casos.filter(c=>c.prazo<=1&&modoDe(c)==='vivo'&&vivoPermitido(c)).length);
+    if(n<=0) return h; const fim=+((h.match(/→ <b>(\d+)<\/b>/)||[])[1]||S.energia);
+    const aviso=` <span class="lo">· ${n} audiência${n>1?'s':''} ao vivo neste mês: até −${n*AV_CUSTO_MAX} de energia${fim<AV_EXAUSTO?' (você chega exausto, abaixo de '+AV_EXAUSTO+': elas vão rápidas ou com a equipe)':''}</span>`;
+    return h.replace(/<\/p>\s*$/,aviso+'</p>'); }; }

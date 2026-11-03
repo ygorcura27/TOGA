@@ -14,6 +14,7 @@ const modoJuiz=p=>{ if(p.modoAud) return p.modoAud==='vivo'&&!vivoJuizOk(p)?'rap
     return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${RAPIDO_MES} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${RAPIDO_MES} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
 async function audienciaJuizSe(p){
   let m=modoJuiz(p);
+  if(m==='vivo'&&S.energia<AV_EXAUSTO&&!vip('nervos')){ addLog(`Você está exausto (energia ${Math.round(S.energia)}): “${p.titulo}” foi para julgamento rápido.`,'r'); m='rapido'; }
   if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências completas: “${p.titulo}” foi para julgamento rápido.`); m='rapido'; }
   if(m==='rapido'&&rapidosUsados()>=RAPIDO_MES){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
   if(m==='gabinete') return null;
@@ -50,7 +51,7 @@ function audienciaJuiz(p){ return new Promise(fim=>{
   const sentA=penal?'Condenação':'Procedente', sentB=penal?'Absolvição':'Improcedente';
   const estudo=(p.estudo||0)+(p.semana||0);
   const acc=clamp(sig((S.skills.analise+prepCaso(p,estudo)*1.5-p.d+20)/12)+(vip('faro')?.1:0),.55,.96), sabeArea=clamp(sig((S.skills[p.area]-50)/10),.4,.9);
-  const s={min:0,rodando:false,vel:1,autos:50,logOdds:0,folego:vip('nervos')?100:S.energia,nulidade:0,diligencia:1,folego0:0,feed:[{m:0,t:'Você abre a audiência. As partes não fazem acordo.',l:''}],lances:[],pistas:[],barras:[],decisao:null,feitos:{},fim:false,fund:'tecnica',extra:0,res:null};
+  const s={min:0,rodando:false,vel:1,autos:50,logOdds:0,folego:folegoInicial(),nulidade:0,diligencia:1,folego0:0,feed:[{m:0,t:'Você abre a audiência. As partes não fazem acordo.',l:''}],lances:[],pistas:[],barras:[],decisao:null,feitos:{},fim:false,fund:'tecnica',extra:0,res:null}; s.f0=s.folego;
   const lado=x=>P[x].rot.toLowerCase(), lim=(v,a,b)=>Math.max(a,Math.min(b,v));
   const TX={a:['A testemunha do {a} descreve os fatos com detalhes.','O {a} junta um documento que confirma a sua versão.','O {a} expõe uma contradição da outra parte.','A testemunha do {a} confirma datas e horários.'],
             b:['A testemunha do {b} contradiz a versão do {a}.','O {b} apresenta um documento que complica a versão do {a}.','O {b} levanta dúvida sobre os fatos.','A testemunha do {b} diz que tudo foi diferente.']};
@@ -63,7 +64,7 @@ function audienciaJuiz(p){ return new Promise(fim=>{
   const pista=(t,l)=>s.pistas.unshift({t,l});
   const box=document.createElement('div'); box.className='av-ov'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','Audiência do juiz');
   document.body.appendChild(box); let timer;
-  function encerrar(){ clearTimeout(timer); S.energia=clamp(Math.round(s.folego)+s.extra,0,100); box.remove(); fim(s.res); }
+  function encerrar(){ clearTimeout(timer); const g=custoAoVivo(s.f0,s.folego,s.extra); S.energia=clamp(S.energia-g,0,100); if(g) addLog(`A audiência completa custou ${g} de energia.`); box.remove(); fim(s.res); }
   function concluir(){ s.fim=true; s.rodando=false; lance('Instrução encerrada. Os autos vêm conclusos para sentença.',''); }
   function passo(){ if(!s.rodando||s.decisao||s.fim) return; s.min++; s.folego=Math.min(100,s.folego+.3);
     if([20,36,46].includes(s.min)&&!s.feitos[s.min]){ s.feitos[s.min]=1; s.rodando=false;
