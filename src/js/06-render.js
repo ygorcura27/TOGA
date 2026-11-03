@@ -314,7 +314,7 @@ function renderMapa(level){
   </div>`;
 }
 function stepper(kind,id,val,free){
-  return `<div class="step"><button data-act="dec" data-k="${kind}" data-id="${id}" ${val<=0?'disabled':''} aria-label="Menos">−</button><span>${val}</span><button data-act="inc" data-k="${kind}" data-id="${id}" ${free<=0?'disabled':''} aria-label="Mais">+</button></div>`;
+  return `<div class="step"><button data-act="dec" data-k="${kind}" data-id="${id}" ${val<=0?'disabled':''} aria-label="Menos">−</button><input class="step-n num" type="number" inputmode="numeric" min="0" max="${val+Math.max(0,free)}" value="${val}" data-k="${kind}" data-id="${id}" data-v="${val}" aria-label="Blocos"><button data-act="inc" data-k="${kind}" data-id="${id}" ${free<=0?'disabled':''} aria-label="Mais">+</button></div>`;
 }
 function pasta(c,ativo){
   const R=RAR[c.rar], A=AREAS[c.area], cc=calcChance(c);

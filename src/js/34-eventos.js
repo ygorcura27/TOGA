@@ -1,4 +1,13 @@
 // ===================== EVENTOS =====================
+// um bloco a mais (d=1) ou a menos (d=-1) numa linha da agenda; devolve false se não deu
+function passoAgenda(k,id,d){ if(d>0&&livres()<=0) return false;
+    if(k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
+    else if(k==='trabalho'){ const c=d>0?casoQuePrecisa():casoQueSobra(); if(!c) return false; c.semana=Math.max(0,(c.semana||0)+d); }
+    else if(k==='dp'){ const c=S.d.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
+    else if(k==='inq'){ const c=S.p.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
+    else if(k==='proc'){ const p=S.j.acervo.find(x=>x.id===id); p.semana=Math.max(0,(p.semana||0)+d); }
+    else S.agenda[k]=Math.max(0,S.agenda[k]+d);  return true; }
+
 app.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b||b.disabled) return;
   if(['SELECT','INPUT','OPTION','TEXTAREA'].includes(b.tagName)) return; // campos usam 'change'; redesenhar aqui fechava o seletor aberto
@@ -30,13 +39,7 @@ app.addEventListener('click',e=>{
     return; }
   if(a==='aceitar'){ const c0=S.ofertas.find(x=>x.id===id); if(c0&&c0.npcJuiz&&!c0.etica&&npcTipo(npcPor(c0.npcJuiz))==='amigo'&&casos1()<maxCasos()){ eticaAmigoJuiz(c0); return; } const c=S.ofertas.find(x=>x.id===id); if(c&&casos1()<maxCasos()){ S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x.id!==id); addLog(`Aceitou “${c.titulo}” (${RAR[c.rar].nome}, ${brl(c.valor)}).`);} }
   if(a==='recusar'){ S.ofertas=S.ofertas.filter(x=>x.id!==id); }
-  if(a==='inc'||a==='dec'){ const d=a==='inc'?1:-1; if(d>0&&livres()<=0) return;
-    if(b.dataset.k==='case'){ const c=S.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
-    else if(b.dataset.k==='trabalho'){ const c=d>0?casoQuePrecisa():casoQueSobra(); if(!c) return; c.semana=Math.max(0,(c.semana||0)+d); }
-    else if(b.dataset.k==='dp'){ const c=S.d.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
-    else if(b.dataset.k==='inq'){ const c=S.p.casos.find(x=>x.id===id); c.semana=Math.max(0,(c.semana||0)+d); }
-    else if(b.dataset.k==='proc'){ const p=S.j.acervo.find(x=>x.id===id); p.semana=Math.max(0,(p.semana||0)+d); }
-    else S.agenda[b.dataset.k]=Math.max(0,S.agenda[b.dataset.k]+d); }
+  if(a==='inc'||a==='dec'){ if(!passoAgenda(b.dataset.k,id,a==='inc'?1:-1)) return; }
   if(a==='estr'){ const c=S.casos.find(x=>x.id===id); c.estrategia=v; }
   if(a==='apoio'){ const c=S.casos.find(x=>x.id===id), ap=APOIOS[v], st=c.apoios[v]||0, custo=custoApoio(ap,c);
     if(st===0){ if(ap.blocos>livres()||S.caixa<custo) return; c.apoios[v]=1; S.caixa-=custo; if(ap.bad){ S.integ=clamp(S.integ-15,0,100); addLog(`Você usou um atalho antiético em “${c.titulo}”. −15 integridade.`,'r'); } }
@@ -105,3 +108,9 @@ app.addEventListener('change',e=>{
   if(e.target.dataset.act==='autoDist'&&S){ S.u.auto=e.target.checked; salvar(); return; }
   if(e.target.dataset.act==='estudoSkill'&&S){ S.agenda.estudoSkill=e.target.value; salvar(); } });
 
+// número digitado direto no campo da agenda: aplica bloco a bloco, com as mesmas regras dos botões
+document.addEventListener('change',e=>{ const el=e.target; if(!el.classList||!el.classList.contains('step-n')||!S) return;
+  const k=el.dataset.k, id=+el.dataset.id, atual=+el.dataset.v, alvo=Math.max(0,Math.floor(+el.value||0)); let n=atual;
+  while(n<alvo&&passoAgenda(k,id,1)) n++;
+  while(n>alvo&&passoAgenda(k,id,-1)) n--;
+  salvar(); render(); });
