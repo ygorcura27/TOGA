@@ -36,7 +36,7 @@ const foiVoce=c=>c._modo!=='enviar';
       if(f.perfil==='indicador'&&f.satisf>=70&&Math.random()<.12){ const c=novoCaso(S.sede,{raro:20,epico:6},areaOferta(S.sede)); c.indicadoPor=f.nome; S.ofertas.push(c);
         addLog(`${f.nome} indicou um caso: “${c.titulo}”.`,'g'); } } }; }
 // mês: atrasos, impaciência e fidelidade
-{ const s0=semanaClientes; semanaClientes=async function(){ if(S.carreira!=='adv') return s0(); const L=S.clientes||[];
+{ const s0=semanaClientes; semanaClientes=async function(){ if(S.carreira!=='adv') return s0(); if(!S.clientes) S.clientes=[]; const L=S.clientes;
     const atrasou=[];
     for(const f of L) if(f.perfil==='atrasa'&&Math.random()<.3){ atrasou.push([f,f.partido]); f.partido=0; }
     const fieis=L.filter(f=>f.perfil==='fiel'&&f.satisf>20);
