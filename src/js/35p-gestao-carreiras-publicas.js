@@ -44,15 +44,15 @@ function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, 
   const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
   const nt=t=>`<p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">${t}</p>`;
   const cand=candidatosAcordo().length;
-  return `<section class="panel gestao" style="margin-bottom:16px"><div class="panel-head"><h2>Gestão ${J?'do gabinete':S.carreira==='promotor'?'da promotoria':'da defensoria'}</h2><span class="label">${G.acordo||(U.auto&&g)||G.aud!=='raras'?'automática':'manual'}</span></div>
+  return `<section class="panel gestao" style="margin-bottom:16px"><div class="panel-head"><h2>Gestão ${J?'do gabinete':S.carreira==='promotor'?'da promotoria':'da defensoria'}</h2><span class="label">${G.acordo||(U.auto&&g)?'automática':'manual'}</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 24px;align-items:start">
     <div style="display:grid;gap:8px"><span class="label">Acordos</span>
       <label class="row"><input type="checkbox" data-gestao="acordo" ${G.acordo?'checked':''}> <span>${NOME_ACORDO[S.carreira]}</span></label>
       <div class="row"><span class="name">Chance mínima</span><select data-gestao="minAc" ${G.acordo?'':'disabled'}>${opt({'0.4':'40%','0.5':'50%','0.6':'60%','0.7':'70%'},G.minAc)}</select></div>
       ${nt(`Tenta no fechamento do mês, sem abrir janela. Hoje ${cand} ${cand===1?'caso passa':'casos passam'} na regra. Se não der acordo, o caso segue normal.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Audiências</span>
-      <select data-gestao="aud">${opt(GESTAO_AUD_PUB(),G.aud)}</select>
-      ${nt(J?`Ao vivo você preside e investiga quem tem razão (até ${VIVO_MES} por mês). Pelo gabinete, a sentença sai pela chance de acerto.`:`Quem vai no seu lugar é o assessor com a skill dele; sem assessor, a audiência é rápida. Ao vivo cabem ${VIVO_MES} por mês.`)}</div>
+      ${tabelaModos()}
+      ${nt(J?`Ao vivo você preside e investiga quem tem razão (até ${VIVO_MES} por mês). Pelo gabinete, a sentença sai pela chance de acerto.`:`Quem vai no seu lugar é o assessor, com a skill dele; sem assessor, a audiência é rápida. Ao vivo cabem ${VIVO_MES} por mês${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Equipe</span>
       <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:`Distribuir os blocos da equipe: nomeie um ${nomeGestor().toLowerCase()}`}</span></label></div>
     </div></section>`; }

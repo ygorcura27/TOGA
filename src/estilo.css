@@ -406,3 +406,10 @@ select,.field input{border-radius:6px}
 .plano-m b{color:var(--ink)}
 .perfil-cl{font-size:10.5px;font-weight:600;letter-spacing:0;text-transform:none;vertical-align:1px;cursor:help}
 .epoca-tag{background:color-mix(in srgb,var(--brass) 22%,transparent);color:var(--ink);font-size:10.5px;text-transform:none;letter-spacing:0;font-weight:600;align-self:flex-start}
+/* postura padrão das audiências */
+.modos-aud{overflow-x:auto}
+.modos-aud table{width:100%;border-collapse:collapse;font-size:13px}
+.modos-aud th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:4px 8px 4px 0;white-space:nowrap}
+.modos-aud tbody th{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.modos-aud td{padding:4px 8px 4px 0}
+.modos-aud select{width:100%;min-width:130px}
