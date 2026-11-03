@@ -402,12 +402,12 @@ As três funcionam do mesmo jeito; mudam a gameplay dos casos e os nomes.
 - **Atributos de cada pessoa:** qualidade, moral e, para o gestor, habilidade de gestão. O salário pedido acompanha a qualidade.
 - **Ações:** contratar (3 candidatos sorteados), demitir, **remover** um servidor efetivo e promover. Na advocacia, a carreira sobe de estagiário para júnior, de júnior para pleno e de pleno para sênior.
 - **Organização** vem da secretária, da recepção, do arquivo e do gestor. A **qualidade da equipe** entra como bônus na chance dos casos em que a equipe trabalhou.
-- **Lotação pública:** o tribunal cede 1 + nível do cargo servidores efetivos.
+- **Lotação pública:** o tribunal cede 2 + nível do cargo servidores efetivos.
 
 ### 6.4 Dinheiro
 - **Advocacia:** o caixa recebe os honorários e paga salários, aluguel, manutenção e filiais. Há também a retirada do titular e a distribuição de lucro aos sócios.
 - **Carreira pública:**
-  - o orçamento do gabinete (R$ 4 mil a R$ 15 mil por semana, conforme o cargo) vem do **índice de efetividade**, que mede processos concluídos contra processos novos;
+  - o orçamento do gabinete (R$ 5 mil a R$ 18 mil por mês, conforme o cargo) vem do **índice de efetividade**, que mede processos concluídos contra processos novos;
   - com orçamento negativo, há cortes, a moral da equipe cai e a efetividade cai junto;
   - o salário do cargo vai para o dinheiro pessoal.
 

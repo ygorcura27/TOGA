@@ -8,7 +8,7 @@ const EXPEDIENTE={
 };
 const pubAtual=()=>!S?null:S.carreira==='juiz'?S.j:S.carreira==='promotor'?S.p:S.carreira==='defensor'?S.d:null;
 // 1 + metade do porte da comarca + o cargo (cresce com as promoções)
-const expediente=()=>{ const X=EXPEDIENTE[S&&S.carreira]&&pubAtual(); return X?1+Math.floor(CIDADES[X.comarca].pop/2)+X.cargo+(S.carreira==='defensor'?2:0):0; }; // a Defensoria tem a triagem do balcão: +2
+const expediente=()=>{ const X=EXPEDIENTE[S&&S.carreira]&&pubAtual(); return X?1+Math.floor(CIDADES[X.comarca].pop/2)+X.cargo+(S.carreira==='defensor'?1:0):0; }; // a Defensoria tem a triagem do balcão: +1
 const expEquipe=()=>Math.min(gabinete(),expediente()), expPessoal=()=>Math.max(0,expediente()-gabinete());
 const gabCasos=()=>Math.max(0,gabinete()-expediente());
 const assessores=()=>S.u?S.u.equipe.filter(f=>f.funcao==='assessor'):[];

@@ -30,7 +30,8 @@ const FEM={Juiz:'Juíza',Promotor:'Promotora',Procurador:'Procuradora',Defensor:
 const fem=t=>S&&S.genero==='f'?String(t).replace(/(Juiz|Promotor|Procurador|Defensor|Desembargador|Ministro|Substituto|Público|Professor|Adjunto|Associado|Pesquisador|Mestrando|Doutorando)(?![a-zçãáéíóú])/g,w=>FEM[w]):t;
 const gen=(m,f)=>S&&S.genero==='f'?f:m;
 const PROMO_ADV={estagiario:'junior',junior:'pleno',pleno:'senior'};
-const ORC_BASE=[4000,6000,9000,12000,15000];
+const ORC_BASE=[5000,7500,11000,14500,18000]; // orçamento mensal da unidade por cargo
+const limServidores=()=>2+cargoAtual(); // servidores efetivos que a unidade pode requisitar (eram 1 + cargo)
 const CUSTO_VIDA=900;
 const pubCar=()=>S.carreira!=='adv';
 const FX=()=>FUNCOES[pubCar()?'pub':'adv'];
@@ -144,8 +145,8 @@ async function pedidoSociedade(){ const U=S.u, f=U.equipe.find(x=>x.id===U.pedid
 async function contratar(funcao){
   if(ocupado) return; const F=FX()[funcao], U=S.u;
   if(U.equipe.length>=mesas()) return modal('<h2>Sem mesa livre</h2><p>Construa uma sala de trabalho ou uma recepção na planta antes de contratar.</p>',[{t:'Ok',v:1}]);
-  if(funcao==='servidor'&&U.equipe.filter(f=>f.funcao==='servidor').length>=1+cargoAtual())
-    return modal(`<h2>Lotação completa</h2><p>O tribunal só cede ${1+cargoAtual()} servidor(es) efetivo(s) para este cargo. Promoções aumentam a lotação.</p>`,[{t:'Ok',v:1}]);
+  if(funcao==='servidor'&&U.equipe.filter(f=>f.funcao==='servidor').length>=limServidores())
+    return modal(`<h2>Lotação completa</h2><p>O tribunal só cede ${limServidores()} servidor(es) efetivo(s) para este cargo. Promoções aumentam a lotação.</p>`,[{t:'Ok',v:1}]);
   let cands;
   if(!pubCar()&&AE_FAIXA[funcao]){ // advogados: candidatos gerados por área, e a escolha mostra a skill deles (não a sua)
     const porArea={}; for(const k in AREAS) porArea[k]=[gerarCandidato(funcao,k),gerarCandidato(funcao,k),gerarCandidato(funcao,k)];

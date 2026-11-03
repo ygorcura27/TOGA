@@ -1,7 +1,7 @@
 // Simulação rápida das carreiras públicas (juiz, promotor e defensor): um robô joga N meses chamando as funções
 // do jogo direto (sem cliques nem animações) e repete várias partidas por cenário de equipe, para ver médias.
 // Rodar: node tests/sim-publicas.cjs [meses] [partidas]     ex.: node tests/sim-publicas.cjs 24 20
-// Variáveis: CARREIRAS=juiz,promotor,defensor   CENARIOS=nada,inicial,equipe   PESSOAL=9 (blocos próprios por mês)   COMARCA=sp
+// Variáveis: CARREIRAS=juiz,promotor,defensor   CENARIOS=nada,inicial,mais1,equipe   PESSOAL=9 (blocos próprios por mês)   COMARCA=sp
 const { chromium } = require('playwright');
 const path = require('path');
 const URL = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?teste';
@@ -25,6 +25,7 @@ async function jogar({ carreira, cenario, MESES, PESSOAL, COMARCA, NOCONC }) {
   for (const k of AR) S.skills[k] = 50; S.skills.analise = S.skills.oratoria = S.skills.escrita = 45;
   if (COMARCA) X().comarca = COMARCA;
   if (cenario === 'nada') S.u.equipe = [];
+  if (cenario === 'mais1') { const c = T.gerarCandidato('servidor'); c.q = 50; c.moral = 65; S.u.equipe.push(c); } // equipe inicial + 1 servidor
   if (cenario === 'equipe') { S.u.equipe = []; for (const f of ['assessor', 'assessor', 'servidor', 'estagiario']) { const c = T.gerarCandidato(f); c.q = 60; c.moral = 70; S.u.equipe.push(c); } }
   const vivo = () => T.S && !T.S.fim;
   for (let m = 0; m < MESES && vivo(); m++) {
@@ -57,7 +58,7 @@ async function jogar({ carreira, cenario, MESES, PESSOAL, COMARCA, NOCONC }) {
       const ord = [...X().casos].sort((a, b) => (a.prazo - b.prazo) || (b.preso - a.preso));
       for (const c of ord) dar(c, Math.max(T.MIN_ATD[c.rar] - (c.prep || 0), c.prazo <= 1 ? 1 : 0));
       for (const c of ord.filter(c => c.prazo <= 2)) dar(c, T.prepIdeal(c) - (c.prep || 0) - c.semana);
-      for (const c of X().casos.filter(c => c.preso && !c.hcFalhou && T.chanceHC(c) >= .5)) if (T.livres() >= 1) await T.dpHC(c.id);
+      for (const c of X().casos.filter(c => c.preso && !c.hcFalhou && T.chanceHC(c) >= .5).slice(0, 2)) if (T.livres() >= 1) await T.dpHC(c.id); // como um jogador: até 2 HC por mês
     }
     const promo = carreira === 'juiz' ? T.promoOk() : carreira === 'promotor' ? T.promoOkMP() : T.promoOkDP();
     if (promo) await T.promocao();
@@ -68,7 +69,7 @@ async function jogar({ carreira, cenario, MESES, PESSOAL, COMARCA, NOCONC }) {
   const prod = carreira === 'juiz' ? Q.sentencas : carreira === 'promotor' ? Q.condenacoes : Q.atendimentos;
   const pend = carreira === 'juiz' ? Q.acervo.length : Q.casos.length;
   const atr = carreira === 'juiz' ? Q.acervo.filter(p => p.idade > p.meta).length : carreira === 'promotor' ? Q.casos.filter(c => c.fase === 'inq' && c.idade > c.meta).length : Q.casos.filter(c => c.preso && !c.prep).length;
-  return { fim: !!T.S.fim, prest: T.S.prest, cargo: Q.cargo, prod, pend, atr, equipe: U.equipe.length, orc: U.orc, estresse: T.S.estresse };
+  return { fim: !!T.S.fim, prest: T.S.prest, cargo: Q.cargo, prod, pend, atr, equipe: U.equipe.length, orc: U.orc, estresse: T.S.estresse, energia: T.S.energia, exaust: T.S.__exaust||0 };
 }
 
 async function partida(p, carreira, cenario) {
@@ -85,12 +86,12 @@ async function partida(p, carreira, cenario) {
   const PROD = { juiz: 'sentenças', promotor: 'condenações', defensor: 'atendimentos' };
   console.log(`Carreiras públicas · ${MESES} meses · ${PARTIDAS} partidas por cenário · robô com ${PESSOAL} blocos próprios por mês`);
   for (const car of CARREIRAS) {
-    console.log(`\n${car.toUpperCase()}\ncenário  encerradas  reputação  cargo  ${PROD[car].padStart(12)}  atrasados  pendentes  equipe no fim   orçamento  estresse`);
+    console.log(`\n${car.toUpperCase()}\ncenário  encerradas  reputação  cargo  ${PROD[car].padStart(12)}  atrasados  pendentes  equipe no fim   orçamento  estresse  energia`);
     for (const cen of CENARIOS) {
       const R = []; const t0 = Date.now();
       for (let i = 0; i < PARTIDAS; i++) { try { R.push(await partida(p, car, cen)); } catch (e) { erros.push(e.message.split('\n')[0]); } }
       const V = R.filter(r => !r.fim);
-      console.log(`${cen.padEnd(8)} ${String(R.length - V.length).padStart(5)}/${R.length}  ${media(V, 'prest').toFixed(1).padStart(9)}  ${media(V, 'cargo').toFixed(1).padStart(5)}  ${media(V, 'prod').toFixed(0).padStart(12)}  ${media(V, 'atr').toFixed(1).padStart(9)}  ${media(V, 'pend').toFixed(0).padStart(9)}  ${media(V, 'equipe').toFixed(1).padStart(13)}  ${('R$ ' + Math.round(media(V, 'orc'))).padStart(10)}  ${media(V, 'estresse').toFixed(0).padStart(8)}   (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+      console.log(`${cen.padEnd(8)} ${String(R.length - V.length).padStart(5)}/${R.length}  ${media(V, 'prest').toFixed(1).padStart(9)}  ${media(V, 'cargo').toFixed(1).padStart(5)}  ${media(V, 'prod').toFixed(0).padStart(12)}  ${media(V, 'atr').toFixed(1).padStart(9)}  ${media(V, 'pend').toFixed(0).padStart(9)}  ${media(V, 'equipe').toFixed(1).padStart(13)}  ${('R$ ' + Math.round(media(V, 'orc'))).padStart(10)}  ${media(V, 'estresse').toFixed(0).padStart(8)}  ${media(V, 'energia').toFixed(0).padStart(7)}   (${((Date.now() - t0) / 1000).toFixed(0)}s)`);
     }
   }
   if (erros.length) console.log('\nErros:', [...new Set(erros)].slice(0, 5).join(' | '));
