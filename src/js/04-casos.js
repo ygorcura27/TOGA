@@ -8,12 +8,15 @@ function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>
 // porte do escritório: imóvel e filiais definem até que raridade de caso chega e quanto valem as causas
 // nível do escritório: uma escada de anos. Só o High Tier, com carteira grande, filiais em vários estados e full service, rende mais que um juiz.
 const TIERS=[
-  {nome:'Escritório iniciante',rarMax:2,valor:.85,partido:1},
-  {nome:'Escritório local',rarMax:3,valor:1.25,partido:1.2,req:{imovel:1,advs:2}},
-  {nome:'Escritório regional',rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:2}},
-  {nome:'Escritório nacional',rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:5}},
-  {nome:'Escritório High Tier',rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
+  {nome:'Escritório iniciante',socios:1,rarMax:2,valor:.85,partido:1},
+  {nome:'Escritório local',socios:2,rarMax:3,valor:1.25,partido:1.2,req:{imovel:1,advs:2}},
+  {nome:'Escritório regional',socios:3,rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:2}},
+  {nome:'Escritório nacional',socios:5,rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:5}},
+  {nome:'Escritório High Tier',socios:8,rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
 ];
+// sócios da sede (os sócios locais das filiais no exterior não contam)
+const sociosSede=()=>S.u?S.u.equipe.filter(f=>f.funcao==='socio').length:0;
+const limiteSocios=()=>TIERS[tierEscritorio()].socios;
 const anosEscritorio=()=>S.u?Math.floor((S.semana-(S.u.fundado||S.semanaFormatura||1))/ANO):0;
 function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].nivel==='nacional'||LOC[f].nivel==='global')).length;
   const it=[];

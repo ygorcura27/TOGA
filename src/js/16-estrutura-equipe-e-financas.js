@@ -105,7 +105,8 @@ function semanaEquipe(){ const U=S.u, linhas=[], carga=pendentes()/(trabalhadore
     if(!pubCar()&&(f.funcao==='senior'||f.funcao==='pleno')&&S.casos.length&&Math.random()<.5){
       const c=pick(S.casos); S.casos=S.casos.filter(x=>x!==c); linhas.push(`E levou o cliente de “${esc(c.titulo)}”.`); addLog(`${f.nome} levou o cliente de “${c.titulo}”.`,'r'); } }
   if(!pubCar()){ const cand=U.equipe.find(f=>f.funcao==='senior'&&f.semanas>=12&&f.moral>=65&&!f.pediuSoc);
-    if(cand&&Math.random()<.35){ cand.pediuSoc=true; U.pedidoSoc=cand.id; } }
+    if(cand&&sociosSede()>=limiteSocios()){ if(!cand.avisoSoc){ cand.avisoSoc=true; addLog(`${cand.nome} quer ser sócio, mas o ${TIERS[tierEscritorio()].nome.toLowerCase()} já tem o máximo de ${limiteSocios()} sócio${limiteSocios()>1?'s':''}. Suba o nível do escritório para abrir vaga.`); } }
+    else if(cand&&Math.random()<.35){ cand.pediuSoc=true; U.pedidoSoc=cand.id; } }
   return linhas; }
 function semanaEstruturaAdv(){ const U=S.u, d=despesasEscritorio();
   S.caixa-=d.total;
@@ -307,7 +308,7 @@ function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gest
     </div></article>`; }
 function painelTier(){ const t=tierEscritorio(), T=TIERS[t], prox=TIERS[t+1];
   return `<section class="panel"><div class="panel-head"><h2>Nível do escritório</h2><span class="label">${t+1} de ${TIERS.length}</span></div>
-    <dl class="meta"><dt>Nível atual</dt><dd><b>${T.nome}</b></dd><dt>Casos até</dt><dd>${RAR[RORD[T.rarMax]].nome}</dd><dt>Valor das causas</dt><dd class="num">×${T.valor.toLocaleString('pt-BR')}</dd><dt>Partido dos clientes</dt><dd class="num">×${T.partido.toLocaleString('pt-BR')}</dd><dt>Tempo de escritório</dt><dd class="num">${anosEscritorio()} ano${anosEscritorio()===1?'':'s'}</dd></dl>
+    <dl class="meta"><dt>Nível atual</dt><dd><b>${T.nome}</b></dd><dt>Casos até</dt><dd>${RAR[RORD[T.rarMax]].nome}</dd><dt>Valor das causas</dt><dd class="num">×${T.valor.toLocaleString('pt-BR')}</dd><dt>Partido dos clientes</dt><dd class="num">×${T.partido.toLocaleString('pt-BR')}</dd><dt>Sócios</dt><dd class="num">${sociosSede()} de ${T.socios}</dd><dt>Tempo de escritório</dt><dd class="num">${anosEscritorio()} ano${anosEscritorio()===1?'':'s'}</dd></dl>
     ${prox?`<span class="label">Para virar ${prox.nome}</span><ul class="break">${checarTier(prox.req).map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>`:'<p class="hi" style="margin:0">Topo do mercado: o escritório disputa os maiores casos do país.</p>'}
     <p style="margin:0;font-size:12px;color:var(--muted)">Só o High Tier rende mais que a magistratura, e chegar lá leva anos: carteira de clientes fixos, filiais pelos bairros e estados, equipe grande e todas as áreas.</p></section>`; }
 function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX()).filter(([k])=>k!=='socio');
