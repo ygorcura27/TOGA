@@ -421,3 +421,8 @@ select,.field input{border-radius:6px}
 .dsf .opts .opt:disabled{opacity:.5}
 .dsf-it{padding:8px 0;border-top:1px solid var(--line)}
 .dsf-ins{background:color-mix(in srgb,var(--gold, var(--brass)) 22%,transparent);color:var(--ink);text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:600}
+/* vocação das filiais */
+.voc{display:grid;gap:2px;padding:8px 10px;border:1px dashed var(--line);border-radius:6px}
+.voc.on{border-style:solid;border-color:var(--brass);background:color-mix(in srgb,var(--brass) 10%,transparent)}
+.voc b{font-size:13.5px}
+.voc small{font-size:12px;color:var(--muted)}

@@ -427,6 +427,11 @@ select,.field input{border-radius:6px}
 .dsf .opts .opt:disabled{opacity:.5}
 .dsf-it{padding:8px 0;border-top:1px solid var(--line)}
 .dsf-ins{background:color-mix(in srgb,var(--gold, var(--brass)) 22%,transparent);color:var(--ink);text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:600}
+/* vocação das filiais */
+.voc{display:grid;gap:2px;padding:8px 10px;border:1px dashed var(--line);border-radius:6px}
+.voc.on{border-style:solid;border-color:var(--brass);background:color-mix(in srgb,var(--brass) 10%,transparent)}
+.voc b{font-size:13.5px}
+.voc small{font-size:12px;color:var(--muted)}
 </style>
 
 <div id="app"></div>
@@ -5393,7 +5398,8 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
     <li><b>Porte:</b> para atender, um épico exige ${PORTE.epico} advogado na equipe e um lendário ${PORTE.lendario}. Sem isso, a chance cai.</li>
     <li>Na advocacia, só você ou um sócio podem ir à audiência de um épico ou lendário.</li></ul>`],
   ['Escritório de advocacia','Como funcionam as filiais?',`<p>Abra pela aba Região ou Brasil. Exige <b>2★ em Gestão</b> para outro bairro, <b>3★</b> para outra cidade ou estado e <b>4★ em Gestão + 3★ em Idiomas</b> para outro país (Portugal dispensa o idioma).</p>
-    <p>Cada filial tem imóvel e equipe próprios, no painel <b>Filiais</b> da aba Estrutura e equipe. A equipe de lá trabalha nos casos daquela cidade sem gastar a sua energia, pode ir às audiências de lá e cada advogado dela soma uma vaga de caso.</p>`],
+    <p>Cada filial tem imóvel e equipe próprios, no painel <b>Filiais</b> da aba Estrutura e equipe. A equipe de lá trabalha nos casos daquela cidade sem gastar a sua energia, pode ir às audiências de lá e cada advogado dela soma uma vaga de caso.</p>
+    <p>Cada lugar tem uma <b>vocação</b>, mostrada no painel do mapa: Faria Lima valoriza causas empresariais, Barra Funda fica ao lado do Fórum Criminal e do TRT, Brasília dá bônus nos tribunais superiores, Nova York traz causas internacionais e prestígio. Os bônus de área valem para a rede inteira e somam até +${VOC_TETO_AREA} por área; o valor das causas soma até ×${String(VOC_TETO_VALOR).replace('.',',')}. Filial de bairro ainda dá +${VOC_BAIRRO} nos casos daquele bairro.</p>`],
   ['Escritório de advocacia','Como funciona a gestão automática?',`<p>No topo da aba Estrutura e equipe. Você pode deixar o escritório aceitar casos sozinho acima de uma chance mínima, escolher a sua postura padrão nas audiências, por raridade e por instância (sempre ao vivo, rápida ou enviar advogado). Casos que você delega correm sem abrir a balança na sua tela: o resultado aparece no resumo do mês. Se o advogado perder, ele recorre sozinho quando a chance de reverter for de ${pct(REC_AUTO)} ou mais e, com um gestor administrativo, deixar a distribuição dos blocos da equipe automática.</p>`],
   ['Escritório de advocacia','Como promovo alguém da equipe?',`<p>No painel <b>Plano de carreira</b> (aba Estrutura e equipe). Cada promoção pede tempo no cargo e skill: ${Object.entries(REQ_PLANO).map(([k,r])=>`${FUNCOES.adv[k].nome.toLowerCase()}: ${r.meses} meses e skill ${r.sk}`).join('; ')}. Cada audiência que a pessoa vence no seu lugar adianta 1 mês, até a metade do prazo.</p>
     <p>Quem fica pronto e não é promovido perde moral depois de 3 meses. Depois de 6, um escritório rival pode oferecer a vaga: você promove, dá um aumento de 20% para ganhar tempo ou deixa ir (o rival fica mais forte e às vezes leva um cliente). Sênior com 1 ano de casa e moral alta pede sociedade, se houver vaga: cada nível do escritório tem um limite de sócios (veja a tabela de níveis).</p>`],
@@ -5776,6 +5782,102 @@ function previsaoEnergiaPub(){ const L=listaPub(), tot=L.reduce((a,c)=>a+(c.sema
   return `<p class="num" style="margin:0;font-size:12.5px">Energia: ${Math.round(S.energia)} hoje → <b class="${fim<30?'lo':''}">${fim}</b> no fim do mês (${pessoal} blocos seus de trabalho, ${desc} de descanso, ${lazer} de lazer${d?`, ${d>0?'+':''}${d}`:''})${partes.length?` <span class="${pior<30?'lo':''}">· ${partes.join(' e ')}: no pior caso ${pior}</span>`:''}${fim<30||pior<30?' · abaixo de 30 você perde 10 de chance':''}</p>`; }
 { const r0=render; render=function(){ r0(); if(!S||!['juiz','promotor','defensor'].includes(S.carreira)||view!=='escritorio') return;
     const b=app.querySelector('[data-act=fimSemana]'); if(b&&!app.querySelector('.prev-pub')) b.insertAdjacentHTML('beforebegin',`<div class="prev-pub">${previsaoEnergiaPub()}</div>`); }; }
+// ===================== VOCAÇÕES DAS FILIAIS =====================
+// Cada lugar tem uma razão de existir na rede. Com escritório aberto ali (sede ou filial), a vocação vale para o escritório inteiro:
+//  area: +N de chance nos casos dessa área em qualquer lugar (somando a rede, até VOC_TETO_AREA por área)
+//  valor: causas dessas áreas valem mais nos casos novos (somando a rede, até ×VOC_TETO_VALOR)
+//  ofertas: casos extras por mês vindos desse lugar, na área indicada
+//  recSup: +N de chance em recursos no STJ/TST (3ª instância) e no STF
+//  exterior: +N de chance nos casos fora do país
+//  prest: prestígio por mês
+// Filial de bairro também ganha +VOC_BAIRRO nos casos daquele bairro (presença no fórum regional e na clientela local).
+const VOC_TETO_AREA=8, VOC_TETO_VALOR=1.5, VOC_BAIRRO=4;
+const VOCACOES={
+  // São Paulo
+  'sp:paulista':{t:'Polo de contratos',area:{civel:3,empresarial:2},ofertas:[['empresarial',1]]},
+  'sp:farialima':{t:'Centro financeiro',valor:{areas:['empresarial','tributario'],x:1.25},ofertas:[['empresarial',1]]},
+  'sp:barrafunda':{t:'Ao lado do Fórum Criminal e do TRT',area:{penal:4,trabalho:3}},
+  'sp:tatuape':{t:'Clientela de bairro',ofertas:[['familia',1],['trabalho',1]]},
+  'sp:santoamaro':{t:'Volume trabalhista',area:{trabalho:2},ofertas:[['trabalho',1]]},
+  'sp:abc':{t:'Polo industrial e sindical',area:{trabalho:4},valor:{areas:['trabalho'],x:1.15}},
+  'sp:guarulhos':{t:'Aeroporto: consumo e logística',area:{civel:2},ofertas:[['civel',1]],exterior:2},
+  'sp:campinas':{t:'Tecnologia e inovação',area:{empresarial:3,tributario:2}},
+  // Rio de Janeiro
+  'rj:zonasul':{t:'Famílias de alta renda',valor:{areas:['familia'],x:1.3},area:{familia:2}},
+  'rj:barra':{t:'Condomínios e novos negócios',area:{familia:2,empresarial:2},ofertas:[['familia',1]]},
+  'rj:tijuca':{t:'Classe média tradicional',area:{civel:3},ofertas:[['civel',1]]},
+  'rj:madureira':{t:'Volume popular',ofertas:[['trabalho',1],['familia',1]]},
+  'rj:niteroi':{t:'Porta do Leste Fluminense',area:{civel:2,familia:2}},
+  'rj:caxias':{t:'Refinaria e polo petroquímico',valor:{areas:['empresarial','trabalho'],x:1.2}},
+  'rj:novaiguacu':{t:'Baixada: demanda reprimida',ofertas:[['familia',1]],area:{penal:2}},
+  // Brasil
+  sp:{t:'Maior mercado do país',ofertas:[['empresarial',1]],valor:{areas:['empresarial'],x:1.1}},
+  rj:{t:'Petróleo, energia e mídia',area:{empresarial:2},ofertas:[['civel',1]]},
+  bh:{t:'Mineração e indústria',area:{trabalho:2,empresarial:2}},
+  df:{t:'Tribunais superiores',recSup:6,area:{tributario:2}},
+  gyn:{t:'Agronegócio',valor:{areas:['civel','empresarial'],x:1.2}},
+  ssa:{t:'Direito de família e sucessões',area:{familia:3},ofertas:[['familia',1]]},
+  rec:{t:'Justiça do Trabalho forte',area:{trabalho:3},ofertas:[['trabalho',1]]},
+  for:{t:'Crescimento do Nordeste',area:{familia:2},ofertas:[['familia',1]]},
+  bel:{t:'Amazônia: terra e meio ambiente',area:{civel:3,penal:2}},
+  mao:{t:'Zona Franca',valor:{areas:['tributario','trabalho'],x:1.25},ofertas:[['tributario',1]]},
+  cwb:{t:'Tradição em grandes operações penais',area:{penal:3,empresarial:2}},
+  fln:{t:'Polo de tecnologia',area:{empresarial:2},ofertas:[['civel',1]]},
+  poa:{t:'Escola trabalhista gaúcha',area:{trabalho:3,familia:2}},
+  // mundo
+  nyc:{t:'Wall Street',valor:{areas:['empresarial'],x:1.3},prest:.2},
+  lon:{t:'Arbitragem internacional',area:{empresarial:5},prest:.1},
+  par:{t:'Direito europeu',area:{civel:3,empresarial:2},prest:.1},
+  mil:{t:'Moda, design e indústria',valor:{areas:['empresarial','trabalho'],x:1.15},area:{trabalho:2}},
+  lis:{t:'Porta de entrada na Europa',exterior:4,area:{civel:2,familia:2}},
+};
+const escritoriosAbertos=()=>S.carreira==='adv'?[S.sede,...S.filiais]:[];
+const vocacoesAtivas=()=>escritoriosAbertos().map(k=>[k,VOCACOES[k]]).filter(([,v])=>v);
+function descVocacao(v){ if(!v) return ''; const L=[];
+  if(v.area) L.push(Object.entries(v.area).map(([a,n])=>`+${n} em ${AREAS[a].nome}`).join(', ')+' (toda a rede)');
+  if(v.valor) L.push(`causas de ${v.valor.areas.map(a=>AREAS[a].nome).join(' e ')} valem ${Math.round((v.valor.x-1)*100)}% mais`);
+  if(v.ofertas) L.push(v.ofertas.map(([a,n])=>`+${n} caso${n>1?'s':''} de ${AREAS[a].nome} por mês`).join(', '));
+  if(v.recSup) L.push(`+${v.recSup} em recursos no STJ/TST e no STF`);
+  if(v.exterior) L.push(`+${v.exterior} nos casos no exterior`);
+  if(v.prest) L.push(`+${String(v.prest).replace('.',',')} de prestígio por mês`);
+  return L.join(' · '); }
+// totais da rede, com teto
+function vocArea(area){ return Math.min(VOC_TETO_AREA,vocacoesAtivas().reduce((s,[,v])=>s+((v.area&&v.area[area])||0),0)); }
+function vocValor(area){ return Math.min(VOC_TETO_VALOR,vocacoesAtivas().reduce((m,[,v])=>m*(v.valor&&v.valor.areas.includes(area)?v.valor.x:1),1)); }
+const vocSoma=campo=>vocacoesAtivas().reduce((s,[,v])=>s+(v[campo]||0),0);
+// chance: área da rede, recursos superiores, exterior e presença no bairro
+{ const b0=bonusPerks; bonusPerks=function(c,add){ b0(c,add); if(S.carreira!=='adv') return;
+    const a=vocArea(c.area); if(a) add(`Rede em ${AREAS[c.area].nome}`,a);
+    if((c.inst||1)>=3){ const r=vocSoma('recSup'); if(r) add('Escritório em Brasília',r); }
+    const L=LOC[c.cidade];
+    if(L&&L.nivel==='global'){ const x=vocSoma('exterior'); if(x) add('Rede no exterior',x); }
+    if(L&&L.nivel==='regional'&&!L.centro&&S.filiais.includes(c.cidade)) add('Escritório no bairro',VOC_BAIRRO); }; }
+// valor das causas novas
+{ const n0=novoCaso; novoCaso=function(...a){ const c=n0(...a); if(S.carreira==='adv'&&c.valor){ const m=vocValor(c.area); if(m>1){ c.valor=Math.round(c.valor*m/100)*100; c.hon=Math.round(c.valor*.2); c.vocValor=m; } } return c; }; }
+// casos extras por mês
+{ const g0=gerarOfertas; gerarOfertas=function(){ g0(); if(S.carreira!=='adv') return; let n=0;
+    for(const [k,v] of vocacoesAtivas()) for(const [area,q] of v.ofertas||[]) for(let i=0;i<q;i++){ const c=novoCaso(LOC[k].centro?LOC[k].parent:k,{},area); c.vocDe=k; S.ofertas.push(c); n++; }
+    if(n&&typeof aceitarAutomatico==='function') aceitarAutomatico(); }; }
+// prestígio mensal das filiais no exterior
+{ const s0=semanaEstruturaAdv; semanaEstruturaAdv=function(){ s0(); const p=vocSoma('prest'); if(p) S.prest=clamp(S.prest+p,0,100); }; }
+// ---------- telas ----------
+const vocHtml=(k,ativa)=>{ const v=VOCACOES[k]; if(!v) return '';
+  return `<div class="voc ${ativa?'on':''}"><span class="label">Vocação${ativa?' · ativa':''}</span><b>${esc(v.t)}</b><small>${descVocacao(v)}${LOC[k].nivel==='regional'&&!LOC[k].centro?` · +${VOC_BAIRRO} nos casos deste bairro`:''}</small></div>`; };
+// no painel do lugar (mapas Região, Brasil e Mundo)
+{ const p0=painel; painel=function(k){ const h=p0(k); if(S.carreira!=='adv'||!VOCACOES[k]) return h; return h.replace('<span class="label">Demanda por área</span>',vocHtml(k,temEscritorio(k))+'<span class="label">Demanda por área</span>'); }; }
+// no painel "Sua rede": o que a rede está dando
+{ const r0=painelRede; painelRede=function(){ const h=r0(); if(S.carreira!=='adv') return h; const A=vocacoesAtivas(); if(!A.length) return h;
+    const areas=Object.keys(AREAS).map(a=>[a,vocArea(a),vocValor(a)]).filter(([,n,m])=>n||m>1);
+    const lin=`<dt>Vocações ativas</dt><dd>${A.map(([k,v])=>`${esc(v.t)} <small style="color:var(--muted)">(${esc(nomeLocal(k))})</small>`).join('<br>')}</dd>
+      ${areas.length?`<dt>Efeito na rede</dt><dd>${areas.map(([a,n,m])=>`${AREAS[a].nome}: ${n?'+'+n:''}${n&&m>1?' · ':''}${m>1?'causas ×'+m.toLocaleString('pt-BR',{maximumFractionDigits:2}):''}`).join('<br>')}</dd>`:''}
+      ${vocSoma('recSup')?`<dt>Tribunais superiores</dt><dd>+${vocSoma('recSup')} em recursos no STJ/STF</dd>`:''}
+      ${vocSoma('prest')?`<dt>Prestígio internacional</dt><dd>+${vocSoma('prest').toLocaleString('pt-BR',{maximumFractionDigits:1})} por mês</dd>`:''}`;
+    return h.replace('</dl><button class="btn brass wide" data-act="fimSemana">',lin+'</dl><button class="btn brass wide" data-act="fimSemana">'); }; }
+// no cartão de cada filial (aba Estrutura e equipe)
+{ const p0=painelFiliais; painelFiliais=function(){ let h=p0(); if(!h) return h;
+    for(const k of S.filiais){ const v=VOCACOES[k]; if(!v) continue; const nome=esc(nomeLocal(k));
+      h=h.replace(`<h3>${nome}</h3>`,`<h3>${nome}</h3>`).replace(new RegExp(`(<h3>${nome.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}</h3><span class="label">[^<]*</span></div>)`),`$1<p style="margin:0;font-size:12px"><b>${esc(v.t)}</b> · <span style="color:var(--muted)">${descVocacao(v)}</span></p>`); }
+    return h; }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
