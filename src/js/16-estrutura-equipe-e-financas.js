@@ -301,7 +301,7 @@ function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gest
     <dl class="meta"><dt>${f.funcao==='socio'?'Participação':'Salário'}</dt><dd class="num">${f.funcao==='socio'?pct(f.part)+' do lucro':F.sal?brl(f.sal)+'/mês':'pago pelo tribunal'}</dd><dt>Blocos por mês</dt><dd class="num">${F.bl}</dd></dl>
     <div class="chips">
       ${gest?'':`<button class="chip" data-act="gestorF" data-id="${f.id}">Tornar gestor</button>`}
-      ${prox?`<button class="chip" data-act="promoverF" data-id="${f.id}" ${f.semanas<f.promoEm?'disabled':''}>Promover a ${FUNCOES.adv[prox].nome.toLowerCase()}</button>`:''}
+      ${prox?`<button class="chip" data-act="promoverF" data-id="${f.id}" ${podePromover(f)?'':`disabled title="Falta ${faltaPromo(f)}"`}>Promover a ${FUNCOES.adv[prox].nome.toLowerCase()}</button>`:''}
       ${f.sal?`<button class="chip" data-act="aumento" data-id="${f.id}">Aumento de 15%</button>`:''}
       ${f.funcao==='socio'?'':`<button class="chip bad" data-act="demitir" data-id="${f.id}">${pub?(f.funcao==='servidor'?'Devolver':'Exonerar'):'Demitir'}</button>`}
     </div></article>`; }

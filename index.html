@@ -405,6 +405,11 @@ select,.field input{border-radius:6px}
 .aj-tab th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:4px 8px 4px 0}
 .aj-tab td{border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);padding:5px 8px 5px 0;vertical-align:top}
 @media (max-width:600px){.aj-tab{font-size:12px}}
+/* plano de carreira */
+.plano{display:grid;gap:2px}
+.plano-l{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.plano-m{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:2px}
+.plano-m b{color:var(--ink)}
 </style>
 
 <div id="app"></div>
@@ -2793,7 +2798,7 @@ function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gest
     <dl class="meta"><dt>${f.funcao==='socio'?'Participação':'Salário'}</dt><dd class="num">${f.funcao==='socio'?pct(f.part)+' do lucro':F.sal?brl(f.sal)+'/mês':'pago pelo tribunal'}</dd><dt>Blocos por mês</dt><dd class="num">${F.bl}</dd></dl>
     <div class="chips">
       ${gest?'':`<button class="chip" data-act="gestorF" data-id="${f.id}">Tornar gestor</button>`}
-      ${prox?`<button class="chip" data-act="promoverF" data-id="${f.id}" ${f.semanas<f.promoEm?'disabled':''}>Promover a ${FUNCOES.adv[prox].nome.toLowerCase()}</button>`:''}
+      ${prox?`<button class="chip" data-act="promoverF" data-id="${f.id}" ${podePromover(f)?'':`disabled title="Falta ${faltaPromo(f)}"`}>Promover a ${FUNCOES.adv[prox].nome.toLowerCase()}</button>`:''}
       ${f.sal?`<button class="chip" data-act="aumento" data-id="${f.id}">Aumento de 15%</button>`:''}
       ${f.funcao==='socio'?'':`<button class="chip bad" data-act="demitir" data-id="${f.id}">${pub?(f.funcao==='servidor'?'Devolver':'Exonerar'):'Demitir'}</button>`}
     </div></article>`; }
@@ -5267,6 +5272,9 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
   ['Escritório de advocacia','Como funcionam as filiais?',`<p>Abra pela aba Região ou Brasil. Exige <b>2★ em Gestão</b> para outro bairro, <b>3★</b> para outra cidade ou estado e <b>4★ em Gestão + 3★ em Idiomas</b> para outro país (Portugal dispensa o idioma).</p>
     <p>Cada filial tem imóvel e equipe próprios, no painel <b>Filiais</b> da aba Estrutura e equipe. A equipe de lá trabalha nos casos daquela cidade sem gastar a sua energia, pode ir às audiências de lá e cada advogado dela soma uma vaga de caso.</p>`],
   ['Escritório de advocacia','Como funciona a gestão automática?',`<p>No topo da aba Estrutura e equipe. Você pode deixar o escritório aceitar casos sozinho acima de uma chance mínima, escolher a partir de que raridade você mesmo vai às audiências (o resto vai com o advogado adequado) e, com um gestor administrativo, deixar a distribuição dos blocos da equipe automática.</p>`],
+  ['Escritório de advocacia','Como promovo alguém da equipe?',`<p>No painel <b>Plano de carreira</b> (aba Estrutura e equipe). Cada promoção pede tempo no cargo e skill: ${Object.entries(REQ_PLANO).map(([k,r])=>`${FUNCOES.adv[k].nome.toLowerCase()}: ${r.meses} meses e skill ${r.sk}`).join('; ')}. Cada audiência que a pessoa vence no seu lugar adianta 1 mês, até a metade do prazo.</p>
+    <p>Quem fica pronto e não é promovido perde moral depois de 3 meses. Depois de 6, um escritório rival pode oferecer a vaga: você promove, dá um aumento de 20% para ganhar tempo ou deixa ir (o rival fica mais forte e às vezes leva um cliente). Sênior com 1 ano de casa e moral alta pede sociedade.</p>`],
+  ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a regra de <b>audiências</b> (quais você faz ao vivo; nas outras vai o assessor, ou sai pelo gabinete) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
   ['Casos','Como funcionam os recursos?',`<p>Recurso não ocupa vaga de caso. Cada instância acima da primeira tira <b>13 pontos</b> da chance (tribunal −13, STJ −26, STF −39). Se a decisão anterior foi a seu favor, você ganha +10; se foi contra, perde 10. Escrita ${NIV[2]} dá +8 em recursos.</p>`],
   ['Casos','Como sobe a chance de um caso?',`<p>Blocos de trabalho no caso (com retorno decrescente), skills da área, estrelas, teses e apoios na pasta do caso, estrutura do escritório e o seu estado (energia e estresse). Abaixo de 30 de energia você perde 10 de chance.</p>`],
   ['Rotina','Como a energia recarrega?',`<ul class="aj-lista">
@@ -5354,6 +5362,71 @@ function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, 
 document.addEventListener('change',e=>{ const k=e.target.dataset&&e.target.dataset.gestao; if(!S||!pubAtual()) return;
   if(k==='acordo'){ gestao().acordo=e.target.checked; salvar(); render(); }
   if(k==='minAc'){ gestao().minAc=+e.target.value; salvar(); render(); } });
+// ===================== PLANO DE CARREIRA DA EQUIPE =====================
+// Promoção agora pede tempo no cargo e skill. Cada audiência vencida por quem você enviou adianta 1 mês (até metade do prazo).
+// Quem está pronto e não é promovido perde moral; depois de alguns meses, um escritório rival pode tentar levar a pessoa.
+const REQ_PLANO={junior:{meses:12,sk:30},pleno:{meses:12,sk:55},senior:{meses:18,sk:68}};
+const skF=f=>f.ae!==undefined?f.ae:f.q;
+const mesesCargo=f=>(f.semanas||0)-(f.cargoDesde||0);
+const proxCargo=f=>S.carreira==='adv'?PROMO_ADV[f.funcao]:null;
+const mesesExig=f=>{ const r=REQ_PLANO[proxCargo(f)]; return r?Math.max(Math.ceil(r.meses/2),r.meses-((f.aud&&f.aud.v)||0)):0; };
+const podePromover=f=>{ const p=proxCargo(f), r=REQ_PLANO[p]; return !!r&&mesesCargo(f)>=mesesExig(f)&&skF(f)>=r.sk; };
+function faltaPromo(f){ const r=REQ_PLANO[proxCargo(f)]; if(!r) return ''; const L=[];
+  if(mesesCargo(f)<mesesExig(f)) L.push(`${mesesExig(f)-mesesCargo(f)} ${mesesExig(f)-mesesCargo(f)===1?'mês':'meses'} no cargo`);
+  if(skF(f)<r.sk) L.push(`skill ${r.sk} (tem ${Math.floor(skF(f))})`);
+  return L.join(' e '); }
+// todos os advogados e estagiários: sede e filiais
+const todosDaEquipe=()=>S.u?[...S.u.equipe.map(f=>[f,null]),...unidades().flatMap(([k,U])=>U.equipe.map(f=>[f,k]))]:[];
+const acharMembro=id=>todosDaEquipe().find(([f])=>f.id===id);
+// promoção: substitui a regra antiga (só tempo) e funciona também para quem está numa filial
+promoverF=function(id){ const a=acharMembro(id); if(!a) return; const [f]=a, prox=proxCargo(f); if(!prox||!podePromover(f)) return;
+  const F=FUNCOES.adv[prox]; f.funcao=prox; if(f.ae!==undefined) f.ae=clamp(f.ae+5,0,95); else if(AE_FAIXA[prox]){ f.area=f.area||S.espec; f.ae=clamp(Math.round(f.q),AE_FAIXA[prox][0],95); }
+  f.sal=Math.max(f.sal,F.sal); f.salBase=f.sal; f.q=clamp(Math.max(f.q+5,F.q[0]),0,95); f.moral=clamp(f.moral+15,0,100);
+  f.cargoDesde=f.semanas||0; f.prontoDesde=null; f.avisado=false;
+  addLog(`${f.nome} foi promovido a ${F.nome.toLowerCase()}.`,'g'); salvar(); render(); };
+// desempenho: vitórias e derrotas de quem foi enviado à audiência
+{ const d0=depoisDoVeredito; depoisDoVeredito=function(c,ganhou){ d0(c,ganhou);
+    if(c._modo==='enviar'&&c._sub){ const a=acharMembro(c._sub); if(a){ const f=a[0]; f.aud=f.aud||{v:0,d:0}; f.aud[ganhou?'v':'d']++; } } }; }
+// a experiência da audiência também vale para quem é da filial
+xpSubstituto=function(c,mult){ const a=acharMembro(c._sub); if(!a) return; const f=a[0];
+  const g=XP_SUB[c.rar]*mult; if(f.ae!==undefined&&f.area===c.area) f.ae=clamp(f.ae+g*(1-f.ae/110),0,95); else f.q=clamp(f.q+g*.6*(1-f.q/110),0,95);
+  f.moral=clamp(f.moral+(mult<=1?3:-2),0,100); };
+// a cada mês: quem está pronto espera; esperar demais custa moral e abre espaço para o rival
+{ const s0=semanaEstruturaAdv; semanaEstruturaAdv=function(){ s0(); const U=S.u; if(!U) return;
+    for(const [f,k] of todosDaEquipe()){ if(f.funcao==='estagiario') f.q=clamp(f.q+.25,0,95); // estagiário aprende com a rotina do escritório
+      if(!proxCargo(f)) continue;
+      if(!podePromover(f)){ f.prontoDesde=null; continue; }
+      if(!f.prontoDesde){ f.prontoDesde=S.semana; if(!f.avisado){ f.avisado=true; addLog(`${f.nome}${k?` (filial ${LOC[k].nome})`:''} está pronto para ser promovido a ${FUNCOES.adv[proxCargo(f)].nome.toLowerCase()}.`,'g'); } }
+      const w=S.semana-f.prontoDesde;
+      if(w>=3) f.moral=clamp(f.moral-3,0,100);
+      if(w>=6&&!U.propostaRival&&Math.random()<.25) U.propostaRival=f.id; } }; }
+async function propostaRival(){ const U=S.u, a=acharMembro(U.propostaRival); U.propostaRival=null; if(!a) return; const [f,k]=a, prox=proxCargo(f); if(!prox) return;
+  const R=rivais().slice().sort((x,y)=>y.forca-x.forca)[0], F=FUNCOES.adv[prox], novoSal=Math.round(Math.max(f.sal*1.3,F.sal)/50)*50, aum=Math.round(f.sal*1.2/50)*50;
+  const v=await modal(`<h2>${esc(R.escr)} quer levar ${esc(f.nome)}</h2>
+    <p>${esc(R.nome)} ofereceu a ${esc(f.nome)}${k?` (filial ${esc(LOC[k].nome)})`:''} uma vaga de <b>${F.nome.toLowerCase()}</b> por ${brl(novoSal)} por mês. Faz ${S.semana-f.prontoDesde} meses que ${esc(f.nome)} está pronto para a promoção e espera uma resposta sua.</p>
+    <dl class="meta"><dt>Cargo hoje</dt><dd>${nomeFuncao(f)} · ${brl(f.sal)}/mês</dd><dt>Skill</dt><dd class="num">${Math.floor(skF(f))}</dd><dt>Audiências</dt><dd class="num">${f.aud?`${f.aud.v} vitórias · ${f.aud.d} derrotas`:'nenhuma'}</dd><dt>Moral</dt><dd class="num">${Math.round(f.moral)}</dd></dl>`,
+    [{t:'Deixar ir',v:'ir',cls:'ghost'},{t:`Aumento de 20% (${brl(aum)})`,v:'aum'},{t:`Promover a ${F.nome.toLowerCase()}`,v:'prom',cls:'brass'}]);
+  if(v==='prom'){ promoverF(f.id); return; }
+  if(v==='aum'){ f.sal=aum; f.moral=clamp(f.moral+10,0,100); f.prontoDesde=S.semana; addLog(`${f.nome} aceitou ficar com aumento para ${brl(aum)}, mas ainda espera a promoção.`); salvar(); return; }
+  const lista=k?filU(k).equipe:U.equipe, i=lista.indexOf(f); if(i>=0) lista.splice(i,1); if(!k&&U.gestorId===f.id) U.gestorId=null;
+  R.forca=Math.min(14,R.forca+1);
+  addLog(`${f.nome} saiu para ${R.escr}. O rival ficou mais forte.`,'r');
+  if(S.casos.length&&Math.random()<.3){ const c=pick(S.casos.filter(x=>(x.inst||1)===1&&RORD.indexOf(x.rar)<3))||null; if(c){ S.casos=S.casos.filter(x=>x!==c); addLog(`${f.nome} levou o cliente de “${c.titulo}”.`,'r'); } }
+  salvar(); }
+{ const f0=fimSemana; fimSemana=async function(){ const r=await f0(); if(S&&S.carreira==='adv'&&S.u&&S.u.propostaRival&&!ocupado){ ocupado=true; try{ await propostaRival(); } finally{ ocupado=false; } render(); } return r; }; }
+// painel na aba Estrutura e equipe
+function painelPlano(){ if(S.carreira!=='adv'||!S.u) return ''; const L=todosDaEquipe().filter(([f])=>proxCargo(f));
+  if(!L.length) return '';
+  const linha=([f,k])=>{ const p=proxCargo(f), r=REQ_PLANO[p], ok=podePromover(f), w=f.prontoDesde?S.semana-f.prontoDesde:0;
+    const st=ok?(w>=3?`<b class="lo">esperando há ${w} meses</b>`:'<b class="hi">pronto</b>'):`falta ${faltaPromo(f)}`;
+    return `<div class="plano-l">${retrato(f.nome,{size:30})}<div><b>${esc(f.nome)}</b> <small style="color:var(--muted)">${nomeFuncao(f)}${k?` · filial ${esc(LOC[k].nome)}`:''} → ${FUNCOES.adv[p].nome.toLowerCase()}</small>
+      <div class="plano-m"><span>Tempo no cargo <b class="num">${mesesCargo(f)}/${mesesExig(f)}</b></span><span>Skill <b class="num">${Math.floor(skF(f))}/${r.sk}</b></span><span>Audiências <b class="num">${f.aud?`${f.aud.v}V ${f.aud.d}D`:'—'}</b></span><span>Moral <b class="num">${Math.round(f.moral)}</b></span><span>${st}</span></div></div>
+      <button class="chip ${ok?'on':''}" data-act="promoverF" data-id="${f.id}" ${ok?'':'disabled'}>Promover</button></div>`; };
+  return `<section class="panel"><div class="panel-head"><h2>Plano de carreira</h2><span class="label">${L.filter(([f])=>podePromover(f)).length} pronto(s)</span></div>
+    <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Júnior pede ${REQ_PLANO.junior.meses} meses e skill ${REQ_PLANO.junior.sk}; pleno, ${REQ_PLANO.pleno.meses} meses e ${REQ_PLANO.pleno.sk}; sênior, ${REQ_PLANO.senior.meses} meses e ${REQ_PLANO.senior.sk}. Cada audiência vencida adianta 1 mês. Quem fica pronto e espera mais de 3 meses perde moral, e depois de 6 pode receber proposta de um rival. Sênior com 1 ano de casa e moral alta pede sociedade.</p>
+    <div class="plano">${L.sort((a,b)=>podePromover(b[0])-podePromover(a[0])).map(linha).join('')}</div></section>`; }
+{ const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelPlano(); if(!h) return;
+    const fil=app.querySelector('.panel.filiais-eq'); if(fil) fil.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
