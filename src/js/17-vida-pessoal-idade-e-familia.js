@@ -16,6 +16,7 @@ function blocosPerdidos(){ const V=S.vida; if(!V) return 0; const n=(V.doente>0?
 function bonusVida(add){ const V=S.vida; if(!V) return;
   if(V.parceiro&&V.parceiro.pers==='juridico'&&V.parceiro.rel>=50) add('Conselhos de casa (parceiro da área jurídica)',2);
   if(V.felicidade>80) add('Felicidade',3); if(V.felicidade<25) add('Infelicidade',-3); if(V.saude<40) add('Saúde frágil',-4); }
+const MAX_FILHOS=10; // limite de filhos por família
 const temFamilia=()=>!!S.vida.parceiro||S.vida.filhos.length>0;
 function rowsVida(free){
   return `<div class="row"><span class="name">${temFamilia()?'Família':'Vida social (conhecer pessoas)'}</span>${stepper('familia',0,S.agenda.familia||0,free)}</div>
@@ -62,7 +63,7 @@ async function semanaVida(){
         [{t:'Ainda não',v:0,cls:'ghost'},{t:'Casar',v:1,cls:'brass',dis:dinheiroPessoal()<30000}]);
       if(v){ pagarPessoal(30000); P.status='casado'; P.rel=clamp(P.rel+10,0,100); V.felicidade=clamp(V.felicidade+20,0,100); addLog(`Você se casou com ${P.nome}.`,'g'); }
       else P.rel=clamp(P.rel-5,0,100);
-    } else if(P.status==='casado'&&!V.gravidez&&P.rel>=55&&V.filhos.length<4&&id<48&&Math.random()<.06){
+    } else if(P.status==='casado'&&!V.gravidez&&P.rel>=55&&V.filhos.length<MAX_FILHOS&&id<48&&Math.random()<.06){
       const v=await modal(`<h2>Aumentar a família?</h2><p>${esc(P.nome)} quer ter ${V.filhos.length?'mais um filho':'um filho'}. Cada filho custa cerca de ${brl(400)} por mês até os 22 anos e pede tempo de família na agenda.</p>`,
         [{t:'Agora não',v:0,cls:'ghost'},{t:'Vamos ter um filho',v:1,cls:'brass'}]);
       if(v){ V.gravidez=S.semana+9; addLog('Vocês vão ter um bebê daqui a 9 meses.','g'); } else P.rel=clamp(P.rel-4,0,100);

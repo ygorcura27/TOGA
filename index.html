@@ -2870,6 +2870,7 @@ function blocosPerdidos(){ const V=S.vida; if(!V) return 0; const n=(V.doente>0?
 function bonusVida(add){ const V=S.vida; if(!V) return;
   if(V.parceiro&&V.parceiro.pers==='juridico'&&V.parceiro.rel>=50) add('Conselhos de casa (parceiro da área jurídica)',2);
   if(V.felicidade>80) add('Felicidade',3); if(V.felicidade<25) add('Infelicidade',-3); if(V.saude<40) add('Saúde frágil',-4); }
+const MAX_FILHOS=10; // limite de filhos por família
 const temFamilia=()=>!!S.vida.parceiro||S.vida.filhos.length>0;
 function rowsVida(free){
   return `<div class="row"><span class="name">${temFamilia()?'Família':'Vida social (conhecer pessoas)'}</span>${stepper('familia',0,S.agenda.familia||0,free)}</div>
@@ -2916,7 +2917,7 @@ async function semanaVida(){
         [{t:'Ainda não',v:0,cls:'ghost'},{t:'Casar',v:1,cls:'brass',dis:dinheiroPessoal()<30000}]);
       if(v){ pagarPessoal(30000); P.status='casado'; P.rel=clamp(P.rel+10,0,100); V.felicidade=clamp(V.felicidade+20,0,100); addLog(`Você se casou com ${P.nome}.`,'g'); }
       else P.rel=clamp(P.rel-5,0,100);
-    } else if(P.status==='casado'&&!V.gravidez&&P.rel>=55&&V.filhos.length<4&&id<48&&Math.random()<.06){
+    } else if(P.status==='casado'&&!V.gravidez&&P.rel>=55&&V.filhos.length<MAX_FILHOS&&id<48&&Math.random()<.06){
       const v=await modal(`<h2>Aumentar a família?</h2><p>${esc(P.nome)} quer ter ${V.filhos.length?'mais um filho':'um filho'}. Cada filho custa cerca de ${brl(400)} por mês até os 22 anos e pede tempo de família na agenda.</p>`,
         [{t:'Agora não',v:0,cls:'ghost'},{t:'Vamos ter um filho',v:1,cls:'brass'}]);
       if(v){ V.gravidez=S.semana+9; addLog('Vocês vão ter um bebê daqui a 9 meses.','g'); } else P.rel=clamp(P.rel-4,0,100);
@@ -3186,7 +3187,7 @@ function acoesParceiroHtml(){ const V=S.vida, P=V.parceiro, A=V.acoes||{}, f=t=>
     ${b('viagem','Fim de semana fora · '+brl(4000)+' · −2 blocos',din<4000)}
     ${P.rel<60?b('conversa','Conversar sobre a relação · '+pct(chanceConversa())):''}
     ${P.status==='namoro'?b('casar','Pedir em casamento · '+brl(30000)+' · '+pct(chanceCasar()),din<30000):''}
-    ${P.status==='casado'&&!V.gravidez&&V.filhos.length<4&&idade()<48?b('filho','Propor ter um filho'):''}
+    ${P.status==='casado'&&!V.gravidez&&V.filhos.length<MAX_FILHOS&&idade()<48?b('filho','Propor ter um filho'):''}
     <button class="chip bad" data-act="pAcao" data-v="terminar">Terminar</button></div>`; }
 
 // ===================== FACULDADE E EXAME DA OAB =====================
@@ -5328,6 +5329,16 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-filcon],[
     return h.replace('<dl class="meta">',`<dl class="meta"><dt>Filial</dt><dd>equipe de ${esc(nomeLocal(c.cidade))} · +${blocosFil(U)} blocos/mês</dd>`); }; }
 // ===================== AJUDA: PERGUNTAS FREQUENTES =====================
 // aba "Ajuda" em todas as carreiras. Os números saem das próprias tabelas do jogo, para não ficarem desatualizados.
+const USO_SKILL={
+  oratoria:'Audiências: pesa nos momentos decisivos, no júri e nas audiências ao vivo (embalo, debates). Também ajuda em entrevistas à imprensa.',
+  escrita:'Peças e recursos: soma em todo caso e pesa muito nos recursos. Também é a base dos artigos acadêmicos e da coluna de opinião no Jornal.',
+  pesquisa:'Preparo: deixa os blocos de trabalho nos casos mais eficientes, equipa mais teses e acelera o estudo. Base da produção acadêmica.',
+  negociacao:'Acordos e conciliações (inclusive automáticos), custo dos apoios e das custas de recurso.',
+  analise:'Casos difíceis e complexos: reduz o efeito das reviravoltas e, no juiz, é a principal skill para acertar quem tem razão.',
+  didatica:'Aulas e palestras na Academia; melhora quem você contrata (estagiários e candidatos).',
+  gestao:'Liberar filiais (2★ outro bairro, 3★ outra cidade, 4★ outro país) e melhorar a organização do escritório.',
+  idiomas:'Filiais no exterior (3★, exceto Portugal) e bônus nos casos fora do país.',
+};
 const pularAjuda=k=>!(k in S.skills);
 function tabelaEstrelas(){ const faixas=k=>ehArea(k)||SK5.includes(k)?NIV_AREA:NIV;
   const prox=(v,k)=>{ const F=faixas(k), n=F.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${F.indexOf(n)+1}★`:'máximo'; };
@@ -5348,6 +5359,11 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
     <p><b>Skills gerais</b> não têm teto. Exemplo, Escrita: ${P.escrita.map((t,i)=>`${NIV[i]} = ${t.toLowerCase()}`).join('; ')}.</p>
     <p><b>Gestão</b> e <b>Idiomas</b> usam as mesmas faixas e liberam filiais (veja abaixo).</p>
     <span class="label">Suas skills agora</span>${tabelaEstrelas()}`],
+  ['Habilidades','Para que serve cada habilidade?',`
+    <p><b>Áreas do direito</b> (${Object.values(AREAS).map(a=>a.nome).join(', ')}): são a base da chance nos casos daquela área. Cada estrela dá bônus nos casos da área e traz mais casos dela. A chance de um caso mistura a área com skills gerais: ${Object.values(AREAS).map(a=>`${a.nome} = ${Object.entries(a.skills).map(([k,w])=>`${Math.round(w*100)}% ${SKILLS[k]}`).join(' + ')}`).join('; ')}.</p>
+    <table class="aj-tab"><thead><tr><th>Skill</th><th>Para que serve</th><th>Efeitos em ${NIV.join(' · ')}</th></tr></thead><tbody>
+    ${Object.entries(USO_SKILL).map(([k,u])=>`<tr><td><b>${SKILLS[k]}</b></td><td style="font-size:12.5px">${u}</td><td style="font-size:12px;color:var(--muted)">${PERKS[k]?PERKS[k].map((t,i)=>`${NIV[i]}: ${t}`).join('<br>'):'—'}</td></tr>`).join('')}
+    </tbody></table>`],
   ['Habilidades','Como subo as skills?',`<p>Com blocos de <b>Estudo</b> na agenda (escolha a skill), trabalhando nos casos da área, fazendo audiências e com cursos e títulos na Academia. Quanto mais alta a skill, mais devagar ela sobe.</p>`],
   ['Escritório de advocacia','Quais os requisitos para o escritório subir de nível?',`<p>O escritório sobe sozinho quando você cumpre <b>todos</b> os itens do próximo nível, um nível por vez. O painel <b>Nível do escritório</b>, na aba Estrutura e equipe, mostra o que falta.</p>${tabelaTiers()}
     <p>Os advogados das <b>filiais</b> contam junto com os da sede (estagiários não contam). O tempo de escritório conta desde a fundação.</p>`],

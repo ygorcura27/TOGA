@@ -1,5 +1,15 @@
 // ===================== AJUDA: PERGUNTAS FREQUENTES =====================
 // aba "Ajuda" em todas as carreiras. Os números saem das próprias tabelas do jogo, para não ficarem desatualizados.
+const USO_SKILL={
+  oratoria:'Audiências: pesa nos momentos decisivos, no júri e nas audiências ao vivo (embalo, debates). Também ajuda em entrevistas à imprensa.',
+  escrita:'Peças e recursos: soma em todo caso e pesa muito nos recursos. Também é a base dos artigos acadêmicos e da coluna de opinião no Jornal.',
+  pesquisa:'Preparo: deixa os blocos de trabalho nos casos mais eficientes, equipa mais teses e acelera o estudo. Base da produção acadêmica.',
+  negociacao:'Acordos e conciliações (inclusive automáticos), custo dos apoios e das custas de recurso.',
+  analise:'Casos difíceis e complexos: reduz o efeito das reviravoltas e, no juiz, é a principal skill para acertar quem tem razão.',
+  didatica:'Aulas e palestras na Academia; melhora quem você contrata (estagiários e candidatos).',
+  gestao:'Liberar filiais (2★ outro bairro, 3★ outra cidade, 4★ outro país) e melhorar a organização do escritório.',
+  idiomas:'Filiais no exterior (3★, exceto Portugal) e bônus nos casos fora do país.',
+};
 const pularAjuda=k=>!(k in S.skills);
 function tabelaEstrelas(){ const faixas=k=>ehArea(k)||SK5.includes(k)?NIV_AREA:NIV;
   const prox=(v,k)=>{ const F=faixas(k), n=F.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${F.indexOf(n)+1}★`:'máximo'; };
@@ -20,6 +30,11 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
     <p><b>Skills gerais</b> não têm teto. Exemplo, Escrita: ${P.escrita.map((t,i)=>`${NIV[i]} = ${t.toLowerCase()}`).join('; ')}.</p>
     <p><b>Gestão</b> e <b>Idiomas</b> usam as mesmas faixas e liberam filiais (veja abaixo).</p>
     <span class="label">Suas skills agora</span>${tabelaEstrelas()}`],
+  ['Habilidades','Para que serve cada habilidade?',`
+    <p><b>Áreas do direito</b> (${Object.values(AREAS).map(a=>a.nome).join(', ')}): são a base da chance nos casos daquela área. Cada estrela dá bônus nos casos da área e traz mais casos dela. A chance de um caso mistura a área com skills gerais: ${Object.values(AREAS).map(a=>`${a.nome} = ${Object.entries(a.skills).map(([k,w])=>`${Math.round(w*100)}% ${SKILLS[k]}`).join(' + ')}`).join('; ')}.</p>
+    <table class="aj-tab"><thead><tr><th>Skill</th><th>Para que serve</th><th>Efeitos em ${NIV.join(' · ')}</th></tr></thead><tbody>
+    ${Object.entries(USO_SKILL).map(([k,u])=>`<tr><td><b>${SKILLS[k]}</b></td><td style="font-size:12.5px">${u}</td><td style="font-size:12px;color:var(--muted)">${PERKS[k]?PERKS[k].map((t,i)=>`${NIV[i]}: ${t}`).join('<br>'):'—'}</td></tr>`).join('')}
+    </tbody></table>`],
   ['Habilidades','Como subo as skills?',`<p>Com blocos de <b>Estudo</b> na agenda (escolha a skill), trabalhando nos casos da área, fazendo audiências e com cursos e títulos na Academia. Quanto mais alta a skill, mais devagar ela sobe.</p>`],
   ['Escritório de advocacia','Quais os requisitos para o escritório subir de nível?',`<p>O escritório sobe sozinho quando você cumpre <b>todos</b> os itens do próximo nível, um nível por vez. O painel <b>Nível do escritório</b>, na aba Estrutura e equipe, mostra o que falta.</p>${tabelaTiers()}
     <p>Os advogados das <b>filiais</b> contam junto com os da sede (estagiários não contam). O tempo de escritório conta desde a fundação.</p>`],

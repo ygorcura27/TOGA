@@ -86,6 +86,6 @@ function acoesParceiroHtml(){ const V=S.vida, P=V.parceiro, A=V.acoes||{}, f=t=>
     ${b('viagem','Fim de semana fora · '+brl(4000)+' · −2 blocos',din<4000)}
     ${P.rel<60?b('conversa','Conversar sobre a relação · '+pct(chanceConversa())):''}
     ${P.status==='namoro'?b('casar','Pedir em casamento · '+brl(30000)+' · '+pct(chanceCasar()),din<30000):''}
-    ${P.status==='casado'&&!V.gravidez&&V.filhos.length<4&&idade()<48?b('filho','Propor ter um filho'):''}
+    ${P.status==='casado'&&!V.gravidez&&V.filhos.length<MAX_FILHOS&&idade()<48?b('filho','Propor ter um filho'):''}
     <button class="chip bad" data-act="pAcao" data-v="terminar">Terminar</button></div>`; }
 
