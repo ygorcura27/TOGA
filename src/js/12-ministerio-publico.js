@@ -135,8 +135,8 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
 
 function renderPromotoria(){
   const P=S.p, gab=gabinete(), expP=expPessoal(), gc=gabCasos(), tot=P.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gc,tot), pessoal=tot-gabUsed;
-  const free=livres(), inqs=P.casos.filter(c=>c.fase==='inq').sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta)), juizo=P.casos.filter(c=>c.fase==='juizo').sort((a,b)=>a.prazo-b.prazo);
-  const atras=inqs.filter(c=>c.idade>c.meta).length;
+  const free=livres(), inqAll=P.casos.filter(c=>c.fase==='inq'), inqs=pilha(inqAll.sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta))), juizo=P.casos.filter(c=>c.fase==='juizo').sort((a,b)=>a.prazo-b.prazo);
+  const atras=inqAll.filter(c=>c.idade>c.meta).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
   push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
   push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
@@ -170,9 +170,9 @@ function renderPromotoria(){
         <div class="cases">${juizo.length?juizo.map(mpCard).join(''):'<p class="empty">Nenhuma denúncia em julgamento. Denuncie um inquérito para levá-lo ao juiz.</p>'}</div>
       </section>
       <section class="panel" style="background:transparent;border:0;padding:0">
-        <div class="panel-head"><h2>Inquéritos</h2><span class="num">${inqs.length} · <span class="${atras?'lo':''}">${atras} atrasados</span></span></div>
+        <div class="panel-head"><h2>Inquéritos</h2><span class="num">${inqAll.length} · <span class="${atras?'lo':''}">${atras} atrasados</span></span></div>
         <p class="label" style="margin:0">Chegam ${novosInq(P.comarca)} por mês. Atrasado custa 0,3 de reputação por mês (no máximo 4) e prescreve 6 meses depois da meta.</p>
-        <div class="cases">${inqs.length?inqs.map(mpCard).join(''):'<p class="empty">Nenhum inquérito na mesa.</p>'}</div>
+        ${filtroPubHtml(inqAll.length,inqs.length)}<div class="cases">${inqs.length?inqs.map(mpCard).join(''):inqAll.length?vazioFiltro():'<p class="empty">Nenhum inquérito na mesa.</p>'}</div>
       </section>
       ${P.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${P.recursos.length}</span></div>
         <ul class="break">${P.recursos.map(r=>`<li><span>${esc(r.titulo)} · ${r.tipo==='defesa'?'defesa recorreu':'você recorreu'} · ${r.semanas} meses</span><span class="num ${cls(r.ch)}">${pct(r.ch)} a seu favor</span></li>`).join('')}</ul></section>`:''}

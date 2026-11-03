@@ -173,7 +173,7 @@ function renderGabinete(){
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
   const gabCells=celulasEquipe(gab,gabUsed);
-  const ordem=[...J.acervo].sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta));
+  const ordem=pilha([...J.acervo].sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta)));
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
@@ -199,7 +199,7 @@ function renderGabinete(){
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Acervo da vara</h2><span class="num">${J.acervo.length} processos · <span class="${atrasados?'lo':''}">${atrasados} atrasados</span></span></div>
         <p class="label" style="margin:0">Chegam ${novosPorSemana(J.comarca)} processos por mês. Cada processo atrasado custa 0,3 de reputação por mês (no máximo 4 por mês).</p>
-        <div class="cases">${ordem.length?ordem.map(procCard).join(''):'<p class="empty">Acervo zerado. Novos processos chegam no próximo mês.</p>'}</div>
+        ${filtroPubHtml(J.acervo.length,ordem.length)}<div class="cases">${ordem.length?ordem.map(procCard).join(''):J.acervo.length?vazioFiltro():'<p class="empty">Acervo zerado. Novos processos chegam no próximo mês.</p>'}</div>
       </section>
       ${J.recursos.length?`<section class="panel"><div class="panel-head"><h2>Suas sentenças em recurso</h2><span class="num">${J.recursos.length}</span></div>
         ${[...new Set(J.recursos.map(r=>r.inst))].map(t=>`<span class="label">${t} · ${J.recursos.filter(r=>r.inst===t).length}</span><ul class="break">${J.recursos.filter(r=>r.inst===t).map(r=>`<li><span>${esc(r.titulo)} · em ${r.semanas} meses</span><span class="num ${cls(r.ch)}">${pct(r.ch)} de manter</span></li>`).join('')}</ul>`).join('')}</section>`:''}

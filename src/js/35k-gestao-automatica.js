@@ -2,11 +2,11 @@
 // o escritório pode andar sozinho: aceitar casos com chance mínima, mandar a equipe às audiências e distribuir os blocos dela.
 // Automático é mais confortável, mas a skill dos advogados costuma ser menor que a sua: a chance cai nos casos que eles levam.
 const GESTAO_AUD={raras:'Eu vou às raras ou maiores',epicas:'Eu vou só às épicas e lendárias',nenhuma:'A equipe vai sempre que puder'};
-const gestao=()=>S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'raras'});
+const gestao=()=>{ const G=S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'raras'}); if(G.acordo===undefined){ G.acordo=false; G.minAc=.6; } return G; };
+// você mesmo vai (ou preside ao vivo) quando a raridade alcança a regra escolhida
+const euVou=c=>{ const G=gestao(), r=RORD.indexOf(c.rar); return G.aud==='raras'?r>=2:G.aud==='epicas'?r>=3:false; };
 // quem vai à audiência por padrão segue a regra escolhida; a hierarquia de quem pode ir continua valendo
-{ const m0=modoPadrao; modoPadrao=function(c){ if(papelAud()!=='adv') return m0(c); const G=gestao(), r=RORD.indexOf(c.rar);
-    const eu=G.aud==='raras'?r>=2:G.aud==='epicas'?r>=3:false;
-    if(eu&&vivoPermitido(c)) return 'vivo'; return melhorSub(c)?'enviar':'rapida'; }; }
+{ modoPadrao=function(c){ if(euVou(c)&&vivoPermitido(c)) return 'vivo'; return melhorSub(c)?'enviar':'rapida'; }; }
 function aceitarAutomatico(){ if(S.carreira!=='adv'||!gestao().aceitar) return 0; let n=0;
   const L=ofertasFiltradas().filter(c=>!(c.npcJuiz&&npcTipo(npcPor(c.npcJuiz))==='amigo')&&calcChance(c).ch>=gestao().minCh).sort((a,b)=>calcChance(b).ch-calcChance(a).ch);
   for(const c of L){ if(casos1()>=maxCasos()) break; S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x!==c); n++;
@@ -33,6 +33,6 @@ function painelGestao(){ if(S.carreira!=='adv') return ''; const G=gestao(), U=S
 document.addEventListener('change',e=>{ const k=e.target.dataset&&e.target.dataset.gestao; if(!k||!S) return; const G=gestao();
   if(k==='aceitar'){ G.aceitar=e.target.checked; if(G.aceitar) aceitarAutomatico(); }
   if(k==='minCh'){ G.minCh=+e.target.value; aceitarAutomatico(); }
-  if(k==='aud'){ G.aud=e.target.value; for(const c of S.casos) delete c.modoAud; } // volta todos os casos para a regra nova
+  if(k==='aud'){ G.aud=e.target.value; for(const c of [...S.casos,...(S.j?S.j.acervo:[]),...(S.p?S.p.casos:[]),...(S.d?S.d.casos:[])]) delete c.modoAud; } // volta todos os casos para a regra nova
   if(k==='dist') S.u.auto=e.target.checked;
   salvar(); render(); });

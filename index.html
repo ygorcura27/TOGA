@@ -1603,7 +1603,7 @@ function renderGabinete(){
   let grid='';
   for(let r=0;r<3;r++) for(let d=0;d<7;d++) grid+=`<div class="blk ${cells[d*3+r]||'descanso'}"></div>`;
   const gabCells=celulasEquipe(gab,gabUsed);
-  const ordem=[...J.acervo].sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta));
+  const ordem=pilha([...J.acervo].sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta)));
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">
@@ -1629,7 +1629,7 @@ function renderGabinete(){
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Acervo da vara</h2><span class="num">${J.acervo.length} processos · <span class="${atrasados?'lo':''}">${atrasados} atrasados</span></span></div>
         <p class="label" style="margin:0">Chegam ${novosPorSemana(J.comarca)} processos por mês. Cada processo atrasado custa 0,3 de reputação por mês (no máximo 4 por mês).</p>
-        <div class="cases">${ordem.length?ordem.map(procCard).join(''):'<p class="empty">Acervo zerado. Novos processos chegam no próximo mês.</p>'}</div>
+        ${filtroPubHtml(J.acervo.length,ordem.length)}<div class="cases">${ordem.length?ordem.map(procCard).join(''):J.acervo.length?vazioFiltro():'<p class="empty">Acervo zerado. Novos processos chegam no próximo mês.</p>'}</div>
       </section>
       ${J.recursos.length?`<section class="panel"><div class="panel-head"><h2>Suas sentenças em recurso</h2><span class="num">${J.recursos.length}</span></div>
         ${[...new Set(J.recursos.map(r=>r.inst))].map(t=>`<span class="label">${t} · ${J.recursos.filter(r=>r.inst===t).length}</span><ul class="break">${J.recursos.filter(r=>r.inst===t).map(r=>`<li><span>${esc(r.titulo)} · em ${r.semanas} meses</span><span class="num ${cls(r.ch)}">${pct(r.ch)} de manter</span></li>`).join('')}</ul>`).join('')}</section>`:''}
@@ -1917,8 +1917,8 @@ function mpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcCondenacao(c), i
 
 function renderPromotoria(){
   const P=S.p, gab=gabinete(), expP=expPessoal(), gc=gabCasos(), tot=P.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gc,tot), pessoal=tot-gabUsed;
-  const free=livres(), inqs=P.casos.filter(c=>c.fase==='inq').sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta)), juizo=P.casos.filter(c=>c.fase==='juizo').sort((a,b)=>a.prazo-b.prazo);
-  const atras=inqs.filter(c=>c.idade>c.meta).length;
+  const free=livres(), inqAll=P.casos.filter(c=>c.fase==='inq'), inqs=pilha(inqAll.sort((a,b)=>(b.idade-b.meta)-(a.idade-a.meta))), juizo=P.casos.filter(c=>c.fase==='juizo').sort((a,b)=>a.prazo-b.prazo);
+  const atras=inqAll.filter(c=>c.idade>c.meta).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
   push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
   push('descanso',Math.max(0,S.disp-expP-pessoal-S.agenda.estudo-S.agenda.lazer-vidaBlocos()-acadBlocos())); push('off',BLOCOS-S.disp);
@@ -1952,9 +1952,9 @@ function renderPromotoria(){
         <div class="cases">${juizo.length?juizo.map(mpCard).join(''):'<p class="empty">Nenhuma denúncia em julgamento. Denuncie um inquérito para levá-lo ao juiz.</p>'}</div>
       </section>
       <section class="panel" style="background:transparent;border:0;padding:0">
-        <div class="panel-head"><h2>Inquéritos</h2><span class="num">${inqs.length} · <span class="${atras?'lo':''}">${atras} atrasados</span></span></div>
+        <div class="panel-head"><h2>Inquéritos</h2><span class="num">${inqAll.length} · <span class="${atras?'lo':''}">${atras} atrasados</span></span></div>
         <p class="label" style="margin:0">Chegam ${novosInq(P.comarca)} por mês. Atrasado custa 0,3 de reputação por mês (no máximo 4) e prescreve 6 meses depois da meta.</p>
-        <div class="cases">${inqs.length?inqs.map(mpCard).join(''):'<p class="empty">Nenhum inquérito na mesa.</p>'}</div>
+        ${filtroPubHtml(inqAll.length,inqs.length)}<div class="cases">${inqs.length?inqs.map(mpCard).join(''):inqAll.length?vazioFiltro():'<p class="empty">Nenhum inquérito na mesa.</p>'}</div>
       </section>
       ${P.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${P.recursos.length}</span></div>
         <ul class="break">${P.recursos.map(r=>`<li><span>${esc(r.titulo)} · ${r.tipo==='defesa'?'defesa recorreu':'você recorreu'} · ${r.semanas} meses</span><span class="num ${cls(r.ch)}">${pct(r.ch)} a seu favor</span></li>`).join('')}</ul></section>`:''}
@@ -2275,7 +2275,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
 
 function renderDefensoria(){
   const D=S.d, gab=gabinete(), expP=expPessoal(), tot=D.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gabCasos(),tot), pessoal=tot-gabUsed;
-  const free=livres(), ordem=[...D.casos].sort((a,b)=>(a.prazo-b.prazo)||(b.preso-a.preso));
+  const free=livres(), ordem=pilha([...D.casos].sort((a,b)=>(a.prazo-b.prazo)||(b.preso-a.preso)));
   const presosSem=D.casos.filter(c=>c.preso&&!(c.prep+(c.semana||0))).length, estaSemana=D.casos.filter(c=>c.prazo<=1).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
   push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
@@ -2308,7 +2308,7 @@ function renderDefensoria(){
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Assistidos</h2><span class="num">${D.casos.length} · ${estaSemana} neste mês · <span class="${presosSem?'lo':''}">${presosSem} presos sem atendimento</span></span></div>
         <p class="label" style="margin:0">Chegam ${novosDP(D.comarca)} por mês. Você não dá conta de todos: escolha onde cada bloco faz mais diferença.</p>
-        <div class="cases">${ordem.map(dpCard).join('')}</div>
+        ${filtroPubHtml(D.casos.length,ordem.length)}<div class="cases">${ordem.length?ordem.map(dpCard).join(''):D.casos.length?vazioFiltro():''}</div>
       </section>
       ${D.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${D.recursos.length}</span></div>
         <ul class="break">${D.recursos.map(r=>`<li><span>${esc(r.titulo)} · ${r.semanas} meses</span><span class="num ${cls(r.ch)}">${pct(r.ch)} de reverter</span></li>`).join('')}</ul></section>`:''}
@@ -3711,7 +3711,8 @@ const titArea=k=>{ const T=S.ac&&S.ac.titulos; return T&&T.areas?T.areas[k]||0:0
 const tetoArea=k=>TETO_AREA[titArea(k)];
 const estrelas=k=>NIV_AREA.filter(x=>S.skills[k]>=x).length;
 function aplicarTetos(){ if(!S||!S.skills) return; for(const k in AREAS) if(S.skills[k]>tetoArea(k)) S.skills[k]=tetoArea(k); }
-function estrelasHtml(k){ if(!ehArea(k)) return `${'★'.repeat(estrelas(k))}<span style="opacity:.35">${'☆'.repeat(5-estrelas(k))}</span>`;
+// skills gerais têm 3 estrelas, nos mesmos pontos em que os efeitos abrem (NIV: 40 · 60 · 80)
+function estrelasHtml(k){ if(!ehArea(k)){ const n=nivel(k); return `<span title="Efeitos em ${NIV.join(', ')}">${'★'.repeat(n)}<span style="opacity:.35">${'☆'.repeat(3-n)}</span></span>`; }
   const e=estrelas(k), lib=[3,4,5][titArea(k)];
   return `<span title="${lib===3?'Estudando sozinho: até 3 estrelas. Especialização na área libera a 4ª, mestrado ou doutorado a 5ª.':lib===4?'Especialização: até 4 estrelas. Mestrado ou doutorado na área libera a 5ª.':'Mestrado ou doutorado: até 5 estrelas.'}">${'★'.repeat(e)}${'☆'.repeat(Math.max(0,lib-e))}<span style="opacity:.25">${'☆'.repeat(5-Math.max(lib,e))}</span></span>`; }
 function bonusArea(c,add){ const e=estrelas(c.area); if(e<2) return;
@@ -4549,7 +4550,7 @@ function audienciaAoVivo(c){
 // (Análise e o estudo do processo), decide objeções, determina perícia, resolve incidentes e sentencia. Acertar a verdade
 // faz o tribunal manter a sentença; errar faz reformar; objeções mal decididas podem anular. Cabem VIVO_MES por mês.
 const vivoJuizOk=p=>RORD.indexOf(p.rar)>=2;
-const modoJuiz=p=>p.modoAud||(vivoJuizOk(p)?'vivo':'gabinete');
+const modoJuiz=p=>p.modoAud||(vivoJuizOk(p)&&euVou(p)?'vivo':'gabinete');
 { const c0=procCard; procCard=function(p){ const h=c0(p); if(!vivoJuizOk(p)) return h; const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES;
     const b=(v,t,tt)=>`<button class="chip ${m===v?'on':''}" data-act="modoAud" data-id="${p.id}" data-v="${v}" title="${tt}">${t}</button>`;
     return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Audiência</span><div class="chips">${b('vivo','Presidir ao vivo',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`)}${b('gabinete','Pelo gabinete','Sentença pelo estudo do processo, como sempre.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências ao vivo neste mês: esta vai pelo gabinete.</small>`:''}</div><div class="ctl">`); }; }
@@ -5107,11 +5108,11 @@ document.addEventListener('change',e=>{ const id=e.target.dataset&&e.target.data
 // o escritório pode andar sozinho: aceitar casos com chance mínima, mandar a equipe às audiências e distribuir os blocos dela.
 // Automático é mais confortável, mas a skill dos advogados costuma ser menor que a sua: a chance cai nos casos que eles levam.
 const GESTAO_AUD={raras:'Eu vou às raras ou maiores',epicas:'Eu vou só às épicas e lendárias',nenhuma:'A equipe vai sempre que puder'};
-const gestao=()=>S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'raras'});
+const gestao=()=>{ const G=S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'raras'}); if(G.acordo===undefined){ G.acordo=false; G.minAc=.6; } return G; };
+// você mesmo vai (ou preside ao vivo) quando a raridade alcança a regra escolhida
+const euVou=c=>{ const G=gestao(), r=RORD.indexOf(c.rar); return G.aud==='raras'?r>=2:G.aud==='epicas'?r>=3:false; };
 // quem vai à audiência por padrão segue a regra escolhida; a hierarquia de quem pode ir continua valendo
-{ const m0=modoPadrao; modoPadrao=function(c){ if(papelAud()!=='adv') return m0(c); const G=gestao(), r=RORD.indexOf(c.rar);
-    const eu=G.aud==='raras'?r>=2:G.aud==='epicas'?r>=3:false;
-    if(eu&&vivoPermitido(c)) return 'vivo'; return melhorSub(c)?'enviar':'rapida'; }; }
+{ modoPadrao=function(c){ if(euVou(c)&&vivoPermitido(c)) return 'vivo'; return melhorSub(c)?'enviar':'rapida'; }; }
 function aceitarAutomatico(){ if(S.carreira!=='adv'||!gestao().aceitar) return 0; let n=0;
   const L=ofertasFiltradas().filter(c=>!(c.npcJuiz&&npcTipo(npcPor(c.npcJuiz))==='amigo')&&calcChance(c).ch>=gestao().minCh).sort((a,b)=>calcChance(b).ch-calcChance(a).ch);
   for(const c of L){ if(casos1()>=maxCasos()) break; S.casos.push(c); S.ofertas=S.ofertas.filter(x=>x!==c); n++;
@@ -5138,7 +5139,7 @@ function painelGestao(){ if(S.carreira!=='adv') return ''; const G=gestao(), U=S
 document.addEventListener('change',e=>{ const k=e.target.dataset&&e.target.dataset.gestao; if(!k||!S) return; const G=gestao();
   if(k==='aceitar'){ G.aceitar=e.target.checked; if(G.aceitar) aceitarAutomatico(); }
   if(k==='minCh'){ G.minCh=+e.target.value; aceitarAutomatico(); }
-  if(k==='aud'){ G.aud=e.target.value; for(const c of S.casos) delete c.modoAud; } // volta todos os casos para a regra nova
+  if(k==='aud'){ G.aud=e.target.value; for(const c of [...S.casos,...(S.j?S.j.acervo:[]),...(S.p?S.p.casos:[]),...(S.d?S.d.casos:[])]) delete c.modoAud; } // volta todos os casos para a regra nova
   if(k==='dist') S.u.auto=e.target.checked;
   salvar(); render(); });
 // ===================== GESTÃO E IDIOMAS: SKILLS DO TITULAR PARA CRESCER =====================
@@ -5234,9 +5235,10 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-filcon],[
 // ===================== AJUDA: PERGUNTAS FREQUENTES =====================
 // aba "Ajuda" em todas as carreiras. Os números saem das próprias tabelas do jogo, para não ficarem desatualizados.
 const pularAjuda=k=>!(k in S.skills);
-function tabelaEstrelas(){ const prox=v=>{ const n=NIV_AREA.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${NIV_AREA.indexOf(n)+1}★`:'máximo'; };
+function tabelaEstrelas(){ const faixas=k=>ehArea(k)||SK5.includes(k)?NIV_AREA:NIV;
+  const prox=(v,k)=>{ const F=faixas(k), n=F.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${F.indexOf(n)+1}★`:'máximo'; };
   const linhas=Object.entries(SKILLS).filter(([k])=>!pularAjuda(k)).map(([k,nome])=>{ const v=S.skills[k]||0, teto=ehArea(k)?tetoArea(k):100;
-    return `<tr><td>${esc(nome)}</td><td class="num">${Math.floor(v)}${teto<100?`<small style="color:var(--muted)"> /${teto}</small>`:''}</td><td style="color:var(--brass)">${estrelasHtml(k)}</td><td style="color:var(--muted);font-size:12px">${v>=teto&&teto<100?'no teto: precisa de título':prox(v)}</td></tr>`; }).join('');
+    return `<tr><td>${esc(nome)}</td><td class="num">${Math.floor(v)}${teto<100?`<small style="color:var(--muted)"> /${teto}</small>`:''}</td><td style="color:var(--brass)">${estrelasHtml(k)}</td><td style="color:var(--muted);font-size:12px">${v>=teto&&teto<100?'no teto: precisa de título':prox(v,k)}</td></tr>`; }).join('');
   return `<table class="aj-tab"><thead><tr><th>Skill</th><th>Valor</th><th>Estrelas</th><th>Próxima</th></tr></thead><tbody>${linhas}</tbody></table>`; }
 function tabelaTiers(){ const R=t=>{ const r=t.req; if(!r) return 'ponto de partida'; const it=[];
     if(r.imovel!=null) it.push(IMOVEIS.adv[r.imovel].nome.toLowerCase()); if(r.advs) it.push(`${r.advs} advogados`); if(r.filiais) it.push(`${r.filiais} filial`);
@@ -5246,10 +5248,10 @@ function tabelaTiers(){ const R=t=>{ const r=t.req; if(!r) return 'ponto de part
 function faq(){ const P=PERKS, A=PERK_AREA5;
   return [
   ['Habilidades','Quanto de skill preciso para cada estrela?',`
-    <p>Toda skill vai de 0 a 100. As estrelas acendem em <b>${NIV_AREA.map((x,i)=>`${x} (${i+1}★)`).join(' · ')}</b>.</p>
+    <p>Toda skill vai de 0 a 100. <b>Áreas do direito</b>, <b>Gestão</b> e <b>Idiomas</b> têm 5 estrelas, que acendem em <b>${NIV_AREA.map((x,i)=>`${x} (${i+1}★)`).join(' · ')}</b>. As <b>skills gerais</b> (Oratória, Escrita, Pesquisa, Negociação, Análise, Didática) têm 3 estrelas, em <b>${NIV.map((x,i)=>`${x} (${i+1}★)`).join(' · ')}</b>, e cada estrela abre um efeito.</p>
     <p><b>Áreas do direito</b> (Penal, Cível, Trabalho…) têm teto: estudando sozinho você chega a <b>${TETO_AREA[0]}</b> (3★). Uma <b>especialização</b> na área sobe o teto para ${TETO_AREA[1]} (4★) e <b>mestrado ou doutorado</b> para ${TETO_AREA[2]} (5★). Os títulos se fazem na aba Academia.</p>
     <p>O que cada estrela de área dá: ${A.map((t,i)=>`${i+1}★ ${t.toLowerCase()}`).join('; ')}.</p>
-    <p><b>Skills gerais</b> (Oratória, Escrita, Pesquisa…) não têm teto. Os efeitos especiais delas abrem em <b>${NIV.join(', ')}</b>, por exemplo Escrita: ${P.escrita.map((t,i)=>`${NIV[i]} = ${t.toLowerCase()}`).join('; ')}.</p>
+    <p><b>Skills gerais</b> não têm teto. Exemplo, Escrita: ${P.escrita.map((t,i)=>`${NIV[i]} = ${t.toLowerCase()}`).join('; ')}.</p>
     <p><b>Gestão</b> e <b>Idiomas</b> usam as mesmas faixas e liberam filiais (veja abaixo).</p>
     <span class="label">Suas skills agora</span>${tabelaEstrelas()}`],
   ['Habilidades','Como subo as skills?',`<p>Com blocos de <b>Estudo</b> na agenda (escolha a skill), trabalhando nos casos da área, fazendo audiências e com cursos e títulos na Academia. Quanto mais alta a skill, mais devagar ela sobe.</p>`],
@@ -5289,6 +5291,69 @@ function renderAjuda(){ const L=faq(), grupos=[...new Set(L.map(x=>x[0]))];
     return /<span class="label" style="align-self:center;margin-left:auto">/.test(h)?h.replace('<span class="label" style="align-self:center;margin-left:auto">',bt+'<span class="label" style="align-self:center;margin-left:auto">')
       :h.replace(/(<nav class="tabs"[^>]*>[\s\S]*?)(<\/nav>)/,`$1${bt}$2`); }; }
 { const r0=render; render=function(){ if(S&&view==='ajuda'){ renderAjuda(); return; } r0(); }; }
+// ===================== GESTÃO E FILTRO NAS CARREIRAS PÚBLICAS =====================
+// Juiz, promotor e defensor seguem o mesmo padrão da advocacia: a pilha de casos tem filtro e ordem,
+// e no topo da aba Estrutura e equipe ficam a regra das audiências, os acordos automáticos e a distribuição da equipe.
+const chancePub=c=>S.carreira==='juiz'?calcAcerto(c).ch:S.carreira==='promotor'?calcCondenacao(c).ch:calcDefesa(c).ch;
+const NOME_PILHA={juiz:['processo','processos'],promotor:['inquérito','inquéritos'],defensor:['assistido','assistidos']};
+// ---------- filtro e ordem da pilha ----------
+const PUB_ORDEM={padrao:'Mais urgentes',raridade:'Maior raridade',chance:'Maior chance',chanceMenor:'Menor chance',dificil:'Maior dificuldade'};
+const pubFiltros=()=>({todos:'Todos',urgentes:S.carreira==='defensor'?'Audiência neste mês ou no próximo':'Atrasados',raro:'Raros ou maiores',
+  ...(S.carreira==='defensor'?{presos:'Assistidos presos'}:{}),ch50:'Chance abaixo de 50%',area:'Só da área de especialização'});
+const filtroPub=()=>S.filtroPub||(S.filtroPub={ordem:'padrao',filtro:'todos'});
+function pilha(L){ const F=filtroPub(), D=S.carreira==='defensor';
+  const passa={todos:()=>true,urgentes:c=>D?c.prazo<=2:c.idade>c.meta,raro:c=>RORD.indexOf(c.rar)>=2,presos:c=>!!c.preso,ch50:c=>chancePub(c)<.5,area:c=>c.area===S.espec}[F.filtro]||(()=>true);
+  const ord={raridade:(a,b)=>RORD.indexOf(b.rar)-RORD.indexOf(a.rar),chance:(a,b)=>chancePub(b)-chancePub(a),chanceMenor:(a,b)=>chancePub(a)-chancePub(b),dificil:(a,b)=>b.d-a.d}[F.ordem];
+  const r=L.filter(passa); return ord?r.sort(ord):r; }
+function filtroPubHtml(total,n){ if(!total) return ''; const F=filtroPub(), [um,v]=NOME_PILHA[S.carreira];
+  const sel=(id,opts,val)=>`<select id="${id}" data-filtro-pub="${id}">${Object.entries(opts).map(([k,t])=>`<option value="${k}" ${val===k?'selected':''}>${t}</option>`).join('')}</select>`;
+  return `<div class="filtro-of"><label class="label" for="pub-ordem">Ordenar</label>${sel('pub-ordem',PUB_ORDEM,F.ordem)}<label class="label" for="pub-filtro">Mostrar</label>${sel('pub-filtro',pubFiltros(),F.filtro)}
+    <span class="label">${n===total?`${n} ${n>1?v:um}`:`${n} de ${total} ${v}`}</span></div>`; }
+const vazioFiltro=()=>`<p class="empty">Nenhum ${NOME_PILHA[S.carreira][0]} com esse filtro. Troque em “Mostrar”.</p>`;
+document.addEventListener('change',e=>{ const id=e.target.dataset&&e.target.dataset.filtroPub; if(!id||!S) return;
+  const F=filtroPub(); if(id==='pub-ordem') F.ordem=e.target.value; else F.filtro=e.target.value; salvar(); render(); });
+// ---------- acordos automáticos (conciliação no juiz, ANPP no promotor, acordo no defensor) ----------
+function candidatosAcordo(){ const G=gestao();
+  if(S.carreira==='juiz') return S.j.acervo.filter(p=>concilia(p)&&!p.concFalhou&&chanceConc()>=G.minAc).map(p=>[p,chanceConc()]);
+  if(S.carreira==='promotor') return S.p.casos.filter(c=>c.acordo&&!c.acordoFalhou&&chanceAcordoMP()>=G.minAc).map(c=>[c,chanceAcordoMP()]);
+  if(S.carreira==='defensor') return S.d.casos.filter(c=>c.acordo&&!c.acordoFalhou&&chanceAcordoDP()>=G.minAc).map(c=>[c,chanceAcordoDP()]);
+  return []; }
+function acordosAutomaticos(){ if(!pubAtual()||!gestao().acordo) return; let ok=0, nao=0;
+  for(const [c,ch] of candidatosAcordo()){ const deu=Math.random()<ch, g=RAR[c.rar].ganho/2;
+    if(S.carreira==='juiz'){ if(deu){ S.prest=clamp(S.prest+g,0,100); S.j.sentencas++; S.j.transitadas++; S.j.acervo=S.j.acervo.filter(x=>x!==c); } else c.concFalhou=true; }
+    else if(S.carreira==='promotor'){ if(deu){ S.prest=clamp(S.prest+g,0,100); S.p.acordos++; S.p.casos=S.p.casos.filter(x=>x!==c); } else c.acordoFalhou=true; }
+    else { if(deu){ S.prest=clamp(S.prest+g,0,100); S.d.acordos++; S.d.atendimentos++; S.d.vitorias++; S.d.casos=S.d.casos.filter(x=>x!==c); } else c.acordoFalhou=true; }
+    if(deu){ ok++; addLog(`Acordo automático em “${c.titulo}” (chance ${pct(ch)}). ${sgn(g)} reputação.`,'g'); } else nao++; }
+  if(nao) addLog(`${nao} tentativa(s) automática(s) de acordo sem sucesso.`,'r'); }
+{ const j0=fimSemanaJuiz; fimSemanaJuiz=async function(){ if(!ocupado) acordosAutomaticos(); return j0(); }; }
+{ const m0=fimSemanaMP; fimSemanaMP=async function(){ if(!ocupado) acordosAutomaticos(); return m0(); }; }
+{ const d0=fimSemanaDP; fimSemanaDP=async function(){ if(!ocupado) acordosAutomaticos(); return d0(); }; }
+// ---------- painel de gestão para as carreiras públicas ----------
+const GESTAO_AUD_PUB=()=>S.carreira==='juiz'
+  ?{raras:'Presido ao vivo as raras ou maiores',epicas:'Presido ao vivo só as épicas e lendárias',nenhuma:'Tudo pelo gabinete'}
+  :{raras:'Eu vou às raras ou maiores',epicas:'Eu vou só às épicas e lendárias',nenhuma:'O assessor vai sempre que puder'};
+const NOME_ACORDO={juiz:'Tentar conciliação sozinho nos processos que admitem acordo',promotor:'Propor acordo de não persecução sozinho quando couber',defensor:'Fechar acordo sozinho quando couber'};
+function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, g=gestorAtual(), J=S.carreira==='juiz';
+  const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
+  const nt=t=>`<p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">${t}</p>`;
+  const cand=candidatosAcordo().length;
+  return `<section class="panel gestao" style="margin-bottom:16px"><div class="panel-head"><h2>Gestão ${J?'do gabinete':S.carreira==='promotor'?'da promotoria':'da defensoria'}</h2><span class="label">${G.acordo||(U.auto&&g)||G.aud!=='raras'?'automática':'manual'}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 24px;align-items:start">
+    <div style="display:grid;gap:8px"><span class="label">Acordos</span>
+      <label class="row"><input type="checkbox" data-gestao="acordo" ${G.acordo?'checked':''}> <span>${NOME_ACORDO[S.carreira]}</span></label>
+      <div class="row"><span class="name">Chance mínima</span><select data-gestao="minAc" ${G.acordo?'':'disabled'}>${opt({'0.4':'40%','0.5':'50%','0.6':'60%','0.7':'70%'},G.minAc)}</select></div>
+      ${nt(`Tenta no fechamento do mês, sem abrir janela. Hoje ${cand} ${cand===1?'caso passa':'casos passam'} na regra. Se não der acordo, o caso segue normal.`)}</div>
+    <div style="display:grid;gap:8px"><span class="label">Audiências</span>
+      <select data-gestao="aud">${opt(GESTAO_AUD_PUB(),G.aud)}</select>
+      ${nt(J?`Ao vivo você preside e investiga quem tem razão (até ${VIVO_MES} por mês). Pelo gabinete, a sentença sai pela chance de acerto.`:`Quem vai no seu lugar é o assessor com a skill dele; sem assessor, a audiência é rápida. Ao vivo cabem ${VIVO_MES} por mês.`)}</div>
+    <div style="display:grid;gap:8px"><span class="label">Equipe</span>
+      <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:`Distribuir os blocos da equipe: nomeie um ${nomeGestor().toLowerCase()}`}</span></label></div>
+    </div></section>`; }
+{ const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelGestaoPub(); if(!h) return;
+    const alvo=[...app.children].find(el=>!el.matches('header.top,.ticker,.tut')); if(alvo) alvo.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
+document.addEventListener('change',e=>{ const k=e.target.dataset&&e.target.dataset.gestao; if(!S||!pubAtual()) return;
+  if(k==='acordo'){ gestao().acordo=e.target.checked; salvar(); render(); }
+  if(k==='minAc'){ gestao().minAc=+e.target.value; salvar(); render(); } });
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;

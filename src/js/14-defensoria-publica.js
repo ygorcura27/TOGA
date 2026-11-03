@@ -118,7 +118,7 @@ function dpCard(c){ const R=RAR[c.rar], A=AREAS[c.area], cc=calcDefesa(c), n=c.p
 
 function renderDefensoria(){
   const D=S.d, gab=gabinete(), expP=expPessoal(), tot=D.casos.reduce((a,c)=>a+(c.semana||0),0), gabUsed=Math.min(gabCasos(),tot), pessoal=tot-gabUsed;
-  const free=livres(), ordem=[...D.casos].sort((a,b)=>(a.prazo-b.prazo)||(b.preso-a.preso));
+  const free=livres(), ordem=pilha([...D.casos].sort((a,b)=>(a.prazo-b.prazo)||(b.preso-a.preso)));
   const presosSem=D.casos.filter(c=>c.preso&&!(c.prep+(c.semana||0))).length, estaSemana=D.casos.filter(c=>c.prazo<=1).length;
   const cells=[]; const push=(k,n)=>{for(let i=0;i<n;i++) cells.push(k);};
   push('exp',expP); push('case',pessoal); push('estudo',S.agenda.estudo+acadBlocos()); push('lazer',S.agenda.lazer); push('familia',S.agenda.familia||0); push('saude',S.agenda.saude||0);
@@ -151,7 +151,7 @@ function renderDefensoria(){
       <section class="panel" style="background:transparent;border:0;padding:0">
         <div class="panel-head"><h2>Assistidos</h2><span class="num">${D.casos.length} · ${estaSemana} neste mês · <span class="${presosSem?'lo':''}">${presosSem} presos sem atendimento</span></span></div>
         <p class="label" style="margin:0">Chegam ${novosDP(D.comarca)} por mês. Você não dá conta de todos: escolha onde cada bloco faz mais diferença.</p>
-        <div class="cases">${ordem.map(dpCard).join('')}</div>
+        ${filtroPubHtml(D.casos.length,ordem.length)}<div class="cases">${ordem.length?ordem.map(dpCard).join(''):D.casos.length?vazioFiltro():''}</div>
       </section>
       ${D.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${D.recursos.length}</span></div>
         <ul class="break">${D.recursos.map(r=>`<li><span>${esc(r.titulo)} · ${r.semanas} meses</span><span class="num ${cls(r.ch)}">${pct(r.ch)} de reverter</span></li>`).join('')}</ul></section>`:''}

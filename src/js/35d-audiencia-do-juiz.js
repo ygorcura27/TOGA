@@ -3,7 +3,7 @@
 // (Análise e o estudo do processo), decide objeções, determina perícia, resolve incidentes e sentencia. Acertar a verdade
 // faz o tribunal manter a sentença; errar faz reformar; objeções mal decididas podem anular. Cabem VIVO_MES por mês.
 const vivoJuizOk=p=>RORD.indexOf(p.rar)>=2;
-const modoJuiz=p=>p.modoAud||(vivoJuizOk(p)?'vivo':'gabinete');
+const modoJuiz=p=>p.modoAud||(vivoJuizOk(p)&&euVou(p)?'vivo':'gabinete');
 { const c0=procCard; procCard=function(p){ const h=c0(p); if(!vivoJuizOk(p)) return h; const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES;
     const b=(v,t,tt)=>`<button class="chip ${m===v?'on':''}" data-act="modoAud" data-id="${p.id}" data-v="${v}" title="${tt}">${t}</button>`;
     return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Audiência</span><div class="chips">${b('vivo','Presidir ao vivo',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`)}${b('gabinete','Pelo gabinete','Sentença pelo estudo do processo, como sempre.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências ao vivo neste mês: esta vai pelo gabinete.</small>`:''}</div><div class="ctl">`); }; }

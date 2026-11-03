@@ -1,9 +1,10 @@
 // ===================== AJUDA: PERGUNTAS FREQUENTES =====================
 // aba "Ajuda" em todas as carreiras. Os números saem das próprias tabelas do jogo, para não ficarem desatualizados.
 const pularAjuda=k=>!(k in S.skills);
-function tabelaEstrelas(){ const prox=v=>{ const n=NIV_AREA.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${NIV_AREA.indexOf(n)+1}★`:'máximo'; };
+function tabelaEstrelas(){ const faixas=k=>ehArea(k)||SK5.includes(k)?NIV_AREA:NIV;
+  const prox=(v,k)=>{ const F=faixas(k), n=F.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${F.indexOf(n)+1}★`:'máximo'; };
   const linhas=Object.entries(SKILLS).filter(([k])=>!pularAjuda(k)).map(([k,nome])=>{ const v=S.skills[k]||0, teto=ehArea(k)?tetoArea(k):100;
-    return `<tr><td>${esc(nome)}</td><td class="num">${Math.floor(v)}${teto<100?`<small style="color:var(--muted)"> /${teto}</small>`:''}</td><td style="color:var(--brass)">${estrelasHtml(k)}</td><td style="color:var(--muted);font-size:12px">${v>=teto&&teto<100?'no teto: precisa de título':prox(v)}</td></tr>`; }).join('');
+    return `<tr><td>${esc(nome)}</td><td class="num">${Math.floor(v)}${teto<100?`<small style="color:var(--muted)"> /${teto}</small>`:''}</td><td style="color:var(--brass)">${estrelasHtml(k)}</td><td style="color:var(--muted);font-size:12px">${v>=teto&&teto<100?'no teto: precisa de título':prox(v,k)}</td></tr>`; }).join('');
   return `<table class="aj-tab"><thead><tr><th>Skill</th><th>Valor</th><th>Estrelas</th><th>Próxima</th></tr></thead><tbody>${linhas}</tbody></table>`; }
 function tabelaTiers(){ const R=t=>{ const r=t.req; if(!r) return 'ponto de partida'; const it=[];
     if(r.imovel!=null) it.push(IMOVEIS.adv[r.imovel].nome.toLowerCase()); if(r.advs) it.push(`${r.advs} advogados`); if(r.filiais) it.push(`${r.filiais} filial`);
@@ -13,10 +14,10 @@ function tabelaTiers(){ const R=t=>{ const r=t.req; if(!r) return 'ponto de part
 function faq(){ const P=PERKS, A=PERK_AREA5;
   return [
   ['Habilidades','Quanto de skill preciso para cada estrela?',`
-    <p>Toda skill vai de 0 a 100. As estrelas acendem em <b>${NIV_AREA.map((x,i)=>`${x} (${i+1}★)`).join(' · ')}</b>.</p>
+    <p>Toda skill vai de 0 a 100. <b>Áreas do direito</b>, <b>Gestão</b> e <b>Idiomas</b> têm 5 estrelas, que acendem em <b>${NIV_AREA.map((x,i)=>`${x} (${i+1}★)`).join(' · ')}</b>. As <b>skills gerais</b> (Oratória, Escrita, Pesquisa, Negociação, Análise, Didática) têm 3 estrelas, em <b>${NIV.map((x,i)=>`${x} (${i+1}★)`).join(' · ')}</b>, e cada estrela abre um efeito.</p>
     <p><b>Áreas do direito</b> (Penal, Cível, Trabalho…) têm teto: estudando sozinho você chega a <b>${TETO_AREA[0]}</b> (3★). Uma <b>especialização</b> na área sobe o teto para ${TETO_AREA[1]} (4★) e <b>mestrado ou doutorado</b> para ${TETO_AREA[2]} (5★). Os títulos se fazem na aba Academia.</p>
     <p>O que cada estrela de área dá: ${A.map((t,i)=>`${i+1}★ ${t.toLowerCase()}`).join('; ')}.</p>
-    <p><b>Skills gerais</b> (Oratória, Escrita, Pesquisa…) não têm teto. Os efeitos especiais delas abrem em <b>${NIV.join(', ')}</b>, por exemplo Escrita: ${P.escrita.map((t,i)=>`${NIV[i]} = ${t.toLowerCase()}`).join('; ')}.</p>
+    <p><b>Skills gerais</b> não têm teto. Exemplo, Escrita: ${P.escrita.map((t,i)=>`${NIV[i]} = ${t.toLowerCase()}`).join('; ')}.</p>
     <p><b>Gestão</b> e <b>Idiomas</b> usam as mesmas faixas e liberam filiais (veja abaixo).</p>
     <span class="label">Suas skills agora</span>${tabelaEstrelas()}`],
   ['Habilidades','Como subo as skills?',`<p>Com blocos de <b>Estudo</b> na agenda (escolha a skill), trabalhando nos casos da área, fazendo audiências e com cursos e títulos na Academia. Quanto mais alta a skill, mais devagar ela sobe.</p>`],
