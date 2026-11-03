@@ -4,7 +4,7 @@ const CQ_TIER={comum:{nome:'Comum',pts:10},raro:{nome:'Rara',pts:25},epico:{nome
 const CQ_CAT={casos:'Tribunais',escritorio:'Escritório',publica:'Carreira pública',academia:'Academia',vida:'Vida e patrimônio',dinastia:'Dinastia'};
 const pubsDe=t=>S.ac?S.ac.pubs.filter(p=>!t||p.tipo===t):[];
 const ehCasado=()=>S.vida.parceiro&&S.vida.parceiro.status==='casado';
-const invTotal=()=>{ const I=S.vida.inv; return I?(I.rf||0)+(I.acoes||0)+(I.fii?I.fii.v||0:0):0; };
+const invTotal=()=>{ const I=S.vida.inv, v=x=>x?(typeof x==='number'?x:x.v||0):0; return I?v(I.rf)+v(I.acoes)+v(I.fii):0; }; // renda fixa + ações + fundos (cada um é {v,ap})
 const CONQUISTAS=[
   {id:'vit1',cat:'casos',tier:'comum',nome:'Primeira vitória',desc:'Vença o primeiro caso.',ok:()=>S.vitorias>=1},
   {id:'vit50',cat:'casos',tier:'raro',nome:'Cinquenta vitórias',desc:'Some 50 vitórias como advogado.',ok:()=>S.vitorias>=50,prog:()=>[S.vitorias,50]},
