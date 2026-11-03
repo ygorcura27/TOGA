@@ -423,6 +423,10 @@ select,.field input{border-radius:6px}
 .step .step-n{width:42px;min-width:30px;height:26px;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);text-align:center;font-family:var(--f-mono);font-size:13px;padding:0;-moz-appearance:textfield;appearance:textfield}
 .step .step-n::-webkit-outer-spin-button,.step .step-n::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .step .step-n:focus{outline:2px solid var(--brass);outline-offset:-2px;background:var(--brass-soft)}
+/* desafios */
+.dsf .opts .opt:disabled{opacity:.5}
+.dsf-it{padding:8px 0;border-top:1px solid var(--line)}
+.dsf-ins{background:color-mix(in srgb,var(--gold, var(--brass)) 22%,transparent);color:var(--ink);text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:600}
 </style>
 
 <div id="app"></div>
@@ -5362,6 +5366,7 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
   ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a <b>postura nas audiências</b> por raridade (você é sempre o titular: no juiz, audiência completa, julgamento rápido ou sentença direta; no promotor e no defensor, ao vivo ou rápida) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
   ['Casos','Como funcionam os recursos?',`<p>Recurso não ocupa vaga de caso. Cada instância acima da primeira tira <b>13 pontos</b> da chance (tribunal −13, STJ −26, STF −39). Se a decisão anterior foi a seu favor, você ganha +10; se foi contra, perde 10. Escrita ${NIV[2]} dá +8 em recursos.</p>`],
   ['Casos','Como sobe a chance de um caso?',`<p>Blocos de trabalho no caso (com retorno decrescente), skills da área, estrelas, teses e apoios na pasta do caso, estrutura do escritório e o seu estado (energia e estresse). Abaixo de 30 de energia você perde 10 de chance.</p>`],
+  ['Rotina','O que são os desafios?',`<p>Na aba Conquistas. São objetivos grandes que <b>você escolhe</b> (no máximo ${DSF_MAX} ao mesmo tempo), com prazo, como chegar a Regional em 4 anos, vencer 3 épicos seguidos ou passar um ano invicto. Cumpridos, dão prestígio, dinheiro ou capital político e uma insígnia. Desistir não custa nada; deixar o prazo vencer conta como falha. As <b>metas</b> são diferentes: o jogo sorteia três objetivos curtos por vez.</p>`],
   ['Rotina','Como a energia recarrega?',`<ul class="aj-lista">
     <li>Cada bloco <b>livre</b> no mês vira descanso: cerca de <b>+3</b> de energia.</li>
     <li>Cada bloco de <b>lazer</b>: +1,5 de energia e −6 de estresse.</li>
@@ -5606,6 +5611,91 @@ pasta=comSelo(pasta); procCard=comSelo(procCard); mpCard=comSelo(mpCard); dpCard
     noticia('caso',`${S.nome} vence caso símbolo da época: ${c.titulo}`,`Em meio a ${c.epocaTag.toLowerCase().startsWith('reforma')||c.epocaTag.startsWith('Novo')||c.epocaTag.startsWith('Nova')||c.epocaTag.startsWith('Marco')||c.epocaTag.startsWith('Estatuto')||c.epocaTag.startsWith('Pacote')?`mudanças da ${c.epocaTag}`:c.epocaTag.toLowerCase()}, o resultado virou referência no meio jurídico.`,3);
     addLog(`Caso de época vencido: “${c.titulo}”. ${sgn(g)} ${S.carreira==='adv'?'prestígio':'reputação'}.`,'g');
     S.cq=S.cq||{}; S.cq.cont=S.cq.cont||{}; S.cq.cont.epocaV=(S.cq.cont.epocaV||0)+1; }; }
+// ===================== DESAFIOS =====================
+// Diferente das metas (curtas e sorteadas), os desafios são escolhidos por você: objetivos grandes, com prazo, no máximo 2 ativos.
+// Cumprir dá recompensa maior e uma insígnia na aba Conquistas. Desistir não custa nada; deixar o prazo vencer conta como falha.
+const DSF_MAX=2;
+const DSF=()=>S.dsf||(S.dsf={ativos:[],feitos:[],falhas:0,seq:0,viradas:0,mes:0});
+const cargoPub=()=>S.carreira==='juiz'?S.j.cargo:S.carreira==='promotor'?S.p.cargo:S.carreira==='defensor'?S.d.cargo:0;
+// tipos: 'delta' (conta o que você fez desde que aceitou), 'nivel' (chegar a um valor), 'seq' (meses seguidos cumprindo uma condição)
+const DESAFIOS=[
+  {id:'regional',car:'adv',t:'Escritório Regional em 4 anos',desc:'Chegue ao nível Regional antes de completar 4 anos de escritório.',tipo:'nivel',alvo:2,val:()=>tierEscritorio(),
+    pode:()=>tierEscritorio()<2&&anosEscritorio()<3,prazo:()=>Math.max(6,((S.u.fundado||S.semana)+48)-S.semana),rec:{prest:5,din:60000}},
+  {id:'nacional',car:'adv',t:'Escritório Nacional em 7 anos',desc:'Chegue ao nível Nacional antes de completar 7 anos de escritório.',tipo:'nivel',alvo:3,val:()=>tierEscritorio(),
+    pode:()=>tierEscritorio()===2&&anosEscritorio()<6,prazo:()=>Math.max(6,((S.u.fundado||S.semana)+84)-S.semana),rec:{prest:8,din:200000}},
+  {id:'epicos',car:'adv',t:'Três épicos seguidos',desc:'Vença 3 casos épicos ou lendários seguidos. Perder um deles zera a sequência.',tipo:'nivel',alvo:3,val:()=>DSF().seq,ini:()=>{ DSF().seq=0; },prazo:()=>36,rec:{prest:7,din:80000}},
+  {id:'invicto',car:'adv',t:'Um ano invicto',desc:'Passe 12 meses sem perder nenhum caso, com pelo menos 6 vitórias no período.',tipo:'invicto',alvo:6,prazo:()=>12,rec:{prest:6,din:50000}},
+  {id:'clientes',car:'adv',t:'Carteira de clientes',desc:'Tenha 6 clientes fixos ao mesmo tempo.',tipo:'nivel',alvo:6,val:()=>(S.clientes||[]).length,pode:()=>(S.clientes||[]).length<4,prazo:()=>36,rec:{prest:5,din:40000}},
+  {id:'viradas',car:'adv',t:'Mestre da virada',desc:'Vença 3 audiências ao vivo que começaram com chance abaixo de 50%.',tipo:'nivel',alvo:3,val:()=>DSF().viradas,ini:()=>{ DSF().viradas=0; },prazo:()=>24,rec:{prest:6}},
+  {id:'filiais',car:'adv',t:'Bandeira em três cidades',desc:'Tenha filiais em 3 lugares diferentes.',tipo:'nivel',alvo:3,val:()=>S.filiais.length,pode:()=>S.filiais.length<2,prazo:()=>48,rec:{prest:6,din:100000}},
+  {id:'zero',car:'juiz',t:'Vara em dia',desc:'Fique 6 meses seguidos sem nenhum processo atrasado.',tipo:'seq',alvo:6,cond:()=>atrasadosPub()===0,prazo:()=>24,rec:{prest:6,pol:6}},
+  {id:'mantidas',car:'juiz',t:'Sentenças que resistem',desc:'Tenha 10 sentenças mantidas pelo tribunal.',tipo:'delta',alvo:10,val:()=>S.j.mantidas||0,prazo:()=>30,rec:{prest:6,pol:5}},
+  {id:'sentencas',car:'juiz',t:'Mutirão de sentenças',desc:'Profira 40 sentenças.',tipo:'delta',alvo:40,val:()=>S.j.sentencas||0,prazo:()=>12,rec:{prest:4,pol:4}},
+  {id:'cond',car:'promotor',t:'Acusação implacável',desc:'Obtenha 15 condenações.',tipo:'delta',alvo:15,val:()=>S.p.condenacoes||0,prazo:()=>24,rec:{prest:6,pol:5}},
+  {id:'anpp',car:'promotor',t:'Justiça negociada',desc:'Feche 8 acordos de não persecução penal.',tipo:'delta',alvo:8,val:()=>S.p.acordos||0,prazo:()=>18,rec:{prest:4,pol:5}},
+  {id:'zeroMP',car:'promotor',t:'Mesa limpa',desc:'Fique 6 meses seguidos sem inquérito atrasado.',tipo:'seq',alvo:6,cond:()=>atrasadosPub()===0,prazo:()=>24,rec:{prest:6,pol:6}},
+  {id:'soltos',car:'defensor',t:'Portas abertas',desc:'Liberte 6 assistidos presos por habeas corpus.',tipo:'delta',alvo:6,val:()=>S.d.solturas||0,prazo:()=>24,rec:{prest:6,pol:6}},
+  {id:'vitDP',car:'defensor',t:'Defesa que vence',desc:'Consiga 20 vitórias para os seus assistidos.',tipo:'delta',alvo:20,val:()=>S.d.vitorias||0,prazo:()=>24,rec:{prest:5,pol:5}},
+  {id:'promo',car:'pub',t:'Ascensão rápida',desc:'Seja promovido ao próximo cargo em até 4 anos.',tipo:'nivel',alvo:1,val:()=>cargoPub()-((DSF().promoBase??cargoPub())),ini:()=>{ DSF().promoBase=cargoPub(); },prazo:()=>48,rec:{prest:5,pol:8}},
+  {id:'calma',car:'*',t:'Cabeça fria',desc:'Termine 12 meses seguidos com estresse abaixo de 50.',tipo:'seq',alvo:12,cond:()=>S.estresse<50,prazo:()=>24,rec:{prest:3,din:20000}},
+  {id:'milhao',car:'*',t:'Primeiro milhão',desc:'Junte R$ 1 milhão de patrimônio.',tipo:'nivel',alvo:1000000,val:()=>Math.round(patrimonio()),dinheiro:true,pode:()=>patrimonio()<500000,prazo:()=>96,rec:{prest:4}},
+  {id:'autoridade',car:'*',t:'Autoridade no assunto',desc:'Chegue a 5 estrelas numa área do direito (exige mestrado ou doutorado na área).',tipo:'nivel',alvo:5,val:()=>Math.max(...Object.keys(AREAS).map(k=>estrelas(k))),pode:()=>Object.keys(AREAS).every(k=>estrelas(k)<5),prazo:()=>72,rec:{prest:6,din:50000}},
+];
+const dsfDe=id=>DESAFIOS.find(d=>d.id===id);
+const dsfCarreira=d=>d.car==='*'||d.car===S.carreira||(d.car==='pub'&&['juiz','promotor','defensor'].includes(S.carreira));
+const dsfNoJogo=()=>['adv','juiz','promotor','defensor'].includes(S.carreira);
+function dsfDisponiveis(){ const D=DSF(); return DESAFIOS.filter(d=>dsfCarreira(d)&&!D.feitos.includes(d.id)&&!D.ativos.some(a=>a.id===d.id)&&(!d.pode||d.pode())); }
+function dsfProg(a){ const d=dsfDe(a.id); if(!d) return 0;
+  if(d.tipo==='delta') return Math.max(0,d.val()-a.base);
+  if(d.tipo==='seq') return a.seq||0;
+  if(d.tipo==='invicto') return Math.max(0,S.vitorias-a.base);
+  return Math.max(0,d.val()); }
+function aceitarDesafio(id){ const D=DSF(), d=dsfDe(id); if(!d||D.ativos.length>=DSF_MAX||D.ativos.some(a=>a.id===id)) return;
+  if(d.ini) d.ini();
+  const a={id,ini:S.semana,ate:S.semana+d.prazo(),car:S.carreira};
+  if(d.tipo==='delta') a.base=d.val(); if(d.tipo==='invicto'){ a.base=S.vitorias; a.der=S.derrotas; } if(d.tipo==='seq') a.seq=0;
+  D.ativos.push(a); addLog(`Desafio aceito: ${d.t}. Prazo até o mês ${a.ate}.`); salvar(); render(); }
+function desistirDesafio(id){ const D=DSF(), d=dsfDe(id); D.ativos=D.ativos.filter(a=>a.id!==id); if(d) addLog(`Você desistiu do desafio “${d.t}”.`); salvar(); render(); }
+function cumprirDesafio(a,d){ const D=DSF(), r=d.rec; D.ativos=D.ativos.filter(x=>x!==a); D.feitos.push(d.id);
+  if(r.prest) S.prest=clamp(S.prest+r.prest,0,100); if(r.din) pagarPessoal(-r.din); if(r.pol) S.pol=clamp((S.pol??10)+r.pol,0,100);
+  addLog(`Desafio cumprido: ${d.t}! ${recTxt(r)}.`,'g'); noticia('meta',`${S.nome} cumpre o desafio “${d.t}”`,`${d.desc} Recompensa: ${recTxt(r)}.`,3);
+  if(typeof toastMeta==='function') toastMeta({t:`Desafio: ${d.t}`,rec:r}); }
+// uma vez por mês: sequências, invicto, prazo
+function checarDesafios(){ if(!S||!dsfNoJogo()) return; const D=DSF(); const novoMes=D.mes!==S.semana; D.mes=S.semana;
+  for(const a of [...D.ativos]){ const d=dsfDe(a.id); if(!d||a.car!==S.carreira){ D.ativos=D.ativos.filter(x=>x!==a); continue; }
+    if(novoMes&&d.tipo==='seq') a.seq=d.cond()?(a.seq||0)+1:0;
+    if(d.tipo==='invicto'&&S.derrotas>a.der){ D.ativos=D.ativos.filter(x=>x!==a); D.falhas++; addLog(`Desafio perdido: ${d.t} (houve uma derrota).`,'r'); continue; }
+    const ok=d.tipo==='invicto'?(S.semana>=a.ate&&dsfProg(a)>=d.alvo):dsfProg(a)>=d.alvo;
+    if(ok){ cumprirDesafio(a,d); continue; }
+    if(S.semana>a.ate){ D.ativos=D.ativos.filter(x=>x!==a); D.falhas++; addLog(`Prazo do desafio “${d.t}” venceu.`,'r'); } } }
+{ const f0=fimSemana; fimSemana=async function(){ const r=await f0(); if(S&&!S.fim){ checarDesafios(); salvar(); render(); } return r; }; }
+// sequência de épicos e viradas ao vivo
+{ const d0=depoisDoVeredito; depoisDoVeredito=function(c,ganhou){ const ini=c._vivoIni, D=S&&DSF();
+    if(D&&RORD.indexOf(c.rar)>=3) D.seq=ganhou?(D.seq||0)+1:0;
+    if(D&&ganhou&&ini!==undefined&&ini<.5) D.viradas=(D.viradas||0)+1;
+    d0(c,ganhou); }; }
+// ---------- telas ----------
+const fmtDsf=(d,v)=>d.dinheiro?brl(v):Math.floor(v);
+function cartaoDesafio(a){ const d=dsfDe(a.id), p=dsfProg(a), alvo=d.tipo==='invicto'?d.alvo:d.alvo, f=Math.min(1,p/alvo), falta=a.ate-S.semana;
+  const extra=d.tipo==='invicto'?` · ${falta>0?`${falta} meses sem perder`:'último mês'}`:d.tipo==='seq'?' meses seguidos':'';
+  return `<div class="meta-it dsf-it"><div class="meta-top"><span><b>${esc(d.t)}</b></span><span class="num">${fmtDsf(d,p)}/${fmtDsf(d,alvo)}${extra}</span></div>
+    <div class="meter"><i style="width:${f*100}%"></i></div><small>${esc(d.desc)} · ${recTxt(d.rec)} · ${falta>=0?`até o mês ${a.ate} (${falta} ${falta===1?'mês':'meses'})`:'vencido'}</small></div>`; }
+function painelDesafios(completo){ if(!S||!dsfNoJogo()) return ''; const D=DSF(), A=D.ativos.filter(a=>dsfDe(a.id)), L=dsfDisponiveis();
+  if(!completo) return A.length?`<section class="panel"><div class="panel-head"><h2>Desafios</h2><span class="label">${A.length}/${DSF_MAX} ativos</span></div>${A.map(cartaoDesafio).join('')}</section>`:'';
+  const ins=D.feitos.map(dsfDe).filter(Boolean);
+  return `<section class="panel dsf"><div class="panel-head"><h2>Desafios</h2><span class="label">${D.feitos.length} cumpridos · ${D.falhas} falhas</span></div>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Escolha até ${DSF_MAX} objetivos grandes, com prazo. Cumpridos, dão recompensa e uma insígnia. Desistir não custa nada; deixar o prazo vencer conta como falha.</p>
+    ${A.length?`<span class="label">Em andamento</span>${A.map(a=>cartaoDesafio(a).replace('</small></div>',`</small><button class="chip" data-act="dsfDesistir" data-v="${a.id}" style="align-self:flex-start">Desistir</button></div>`)).join('')}`:''}
+    <span class="label">Disponíveis</span>
+    ${L.length?`<div class="opts">${L.map(d=>`<button class="opt" data-act="dsfAceitar" data-v="${d.id}" ${A.length>=DSF_MAX?'disabled':''}><span>${esc(d.t)}</span><b class="num">${d.prazo()} meses</b><small>${esc(d.desc)} · ${recTxt(d.rec)}</small></button>`).join('')}</div>`:'<p class="empty">Nenhum desafio disponível agora. Novos aparecem conforme a carreira avança.</p>'}
+    ${A.length>=DSF_MAX?`<small class="lo">Você já tem ${DSF_MAX} desafios em andamento. Cumpra ou desista de um para aceitar outro.</small>`:''}
+    ${ins.length?`<span class="label">Insígnias</span><div class="chips">${ins.map(d=>`<span class="tag dsf-ins" title="${esc(d.desc)}">🏅 ${esc(d.t)}</span>`).join('')}</div>`:''}
+  </section>`; }
+{ const r0=renderConquistas; renderConquistas=function(){ r0(); const h=painelDesafios(true); if(!h) return;
+    const alvo=[...app.children].find(el=>!el.matches('header.top,.ticker,.tut')); if(alvo) alvo.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
+{ const d0=painelDiario; painelDiario=function(){ return painelDesafios(false)+d0(); }; }
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=dsfAceitar],[data-act=dsfDesistir]'); if(!b||b.disabled||!S) return;
+  if(b.dataset.act==='dsfAceitar') aceitarDesafio(b.dataset.v); else desistirDesafio(b.dataset.v); });
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
