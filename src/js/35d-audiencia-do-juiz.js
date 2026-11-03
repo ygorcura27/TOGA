@@ -3,15 +3,45 @@
 // (Análise e o estudo do processo), decide objeções, determina perícia, resolve incidentes e sentencia. Acertar a verdade
 // faz o tribunal manter a sentença; errar faz reformar; objeções mal decididas podem anular. Cabem VIVO_MES por mês.
 const vivoJuizOk=p=>RORD.indexOf(p.rar)>=2;
-const modoJuiz=p=>p.modoAud||(vivoJuizOk(p)&&euVou(p)?'vivo':'gabinete');
-{ const c0=procCard; procCard=function(p){ const h=c0(p); if(!vivoJuizOk(p)) return h; const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES;
+const RAPIDO_MES=6;
+const rapidosUsados=()=>S.jRap&&S.jRap.mes===S.semana?S.jRap.n:0;
+const usarRapido=()=>{ if(!S.jRap||S.jRap.mes!==S.semana) S.jRap={mes:S.semana,n:0}; S.jRap.n++; };
+// o juiz é sempre o titular: audiência completa (raros ou maiores), julgamento rápido ou sentença direta pelos autos
+const modoJuiz=p=>{ if(p.modoAud) return p.modoAud==='vivo'&&!vivoJuizOk(p)?'rapido':p.modoAud; const d=modoDesejado(p);
+  return d==='vivo'?(vivoJuizOk(p)?'vivo':'rapido'):d==='rapido'?'rapido':'gabinete'; };
+{ const c0=procCard; procCard=function(p){ const h=c0(p); const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES, cheioR=m==='rapido'&&rapidosUsados()>=RAPIDO_MES;
     const b=(v,t,tt)=>`<button class="chip ${m===v?'on':''}" data-act="modoAud" data-id="${p.id}" data-v="${v}" title="${tt}">${t}</button>`;
-    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Audiência</span><div class="chips">${b('vivo','Presidir ao vivo',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`)}${b('gabinete','Pelo gabinete','Sentença pelo estudo do processo, como sempre.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências ao vivo neste mês: esta vai pelo gabinete.</small>`:''}</div><div class="ctl">`); }; }
+    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${RAPIDO_MES} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${RAPIDO_MES} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
 async function audienciaJuizSe(p){
-  if(modoJuiz(p)!=='vivo') return null;
-  if(vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências ao vivo: “${p.titulo}” foi sentenciado pelo gabinete.`); return null; }
+  let m=modoJuiz(p);
+  if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências completas: “${p.titulo}” foi para julgamento rápido.`); m='rapido'; }
+  if(m==='rapido'&&rapidosUsados()>=RAPIDO_MES){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
+  if(m==='gabinete') return null;
   if(MODO_TESTE&&!window.__vivo) return null;
+  if(m==='rapido'){ usarRapido(); return julgamentoRapido(p); }
   usarVivo(); return audienciaJuiz(p); }
+// ---------- julgamento rápido: duas decisões ----------
+async function julgamentoRapido(p){ const base=calcAcerto(p).ch, rec=chanceRecursoJ(p); let d=0, recMais=0; const notas=[];
+  const op=(v,t,b,s)=>`<button class="opt" data-mv="${v}"><span>${t}</span><b class="num">${b}</b><small>${s}</small></button>`;
+  const cab=`<span class="label">Julgamento rápido · ${RAR[p.rar].nome} · ${AREAS[p.area].nome}</span><h2>${esc(p.titulo)}</h2><p class="num" style="margin:0">Chance de acertar a decisão: <b>${pct(base)}</b>${rec?` · chance de recurso ${pct(rec)}`:''}</p>`;
+  const anal=Math.round(S.skills.analise), area=Math.round(S.skills[p.area]||0);
+  const v1=await modal(`${cab}<p>Como você instrui o processo?</p><div class="opts">
+    ${op('autos','Examinar os autos a fundo',`+${Math.round((2+anal/12))} acerto · −4 energia`,`Usa Análise (${anal}).`)}
+    ${op('partes','Ouvir as partes rapidamente','+4, às vezes +12 · −2 energia','Às vezes aparece o detalhe que decide o caso.')}
+    ${op('relatorio','Decidir pelo relatório da secretaria','−3 acerto · sem custo','Mais rápido, mais arriscado.')}</div>`,[]);
+  if(v1==='autos'){ d+=(2+anal/12)/100; S.energia=clamp(S.energia-4,0,100); }
+  else if(v1==='partes'){ const achou=Math.random()<.35; d+=achou?.12:.04; S.energia=clamp(S.energia-2,0,100); if(achou) notas.push('Na oitiva, um detalhe mudou a leitura do caso.'); }
+  else d-=.03;
+  const v2=await modal(`${cab}<p>Como você fundamenta a sentença?</p><div class="opts">
+    ${op('robusta','Fundamentação robusta',`recurso −10 · −3 energia`,'O tribunal tende a manter. Treina Escrita.')}
+    ${op('precedente','Seguir o precedente do tribunal',`+${area>=55?5:2} acerto · recurso −5`,`Bom quando você domina a área (${AREAS[p.area].nome} ${area}).`)}
+    ${op('objetiva','Sentença objetiva','recurso +8 · sem custo','Rápida, mas dá margem para recurso.')}</div>`,[]);
+  if(v2==='robusta'){ recMais-=.10; S.energia=clamp(S.energia-3,0,100); S.skills.escrita=clamp(S.skills.escrita+.4,0,100); }
+  else if(v2==='precedente'){ d+=area>=55?.05:.02; recMais-=.05; }
+  else recMais+=.08;
+  const ch=clamp(base+d,.05,.97);
+  addLog(`Julgamento rápido em “${p.titulo}”: chance de acerto ${pct(base)} → ${pct(ch)}.${notas.length?' '+notas[0]:''}`);
+  return {ch,recMais}; }
 
 function audienciaJuiz(p){ return new Promise(fim=>{
   const penal=p.area==='penal';

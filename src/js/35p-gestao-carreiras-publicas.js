@@ -36,9 +36,6 @@ function acordosAutomaticos(){ if(!pubAtual()||!gestao().acordo) return; let ok=
 { const m0=fimSemanaMP; fimSemanaMP=async function(){ if(!ocupado) acordosAutomaticos(); return m0(); }; }
 { const d0=fimSemanaDP; fimSemanaDP=async function(){ if(!ocupado) acordosAutomaticos(); return d0(); }; }
 // ---------- painel de gestão para as carreiras públicas ----------
-const GESTAO_AUD_PUB=()=>S.carreira==='juiz'
-  ?{raras:'Presido ao vivo as raras ou maiores',epicas:'Presido ao vivo só as épicas e lendárias',nenhuma:'Tudo pelo gabinete'}
-  :{raras:'Eu vou às raras ou maiores',epicas:'Eu vou só às épicas e lendárias',nenhuma:'O assessor vai sempre que puder'};
 const NOME_ACORDO={juiz:'Tentar conciliação sozinho nos processos que admitem acordo',promotor:'Propor acordo de não persecução sozinho quando couber',defensor:'Fechar acordo sozinho quando couber'};
 function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, g=gestorAtual(), J=S.carreira==='juiz';
   const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
@@ -52,7 +49,7 @@ function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, 
       ${nt(`Tenta no fechamento do mês, sem abrir janela. Hoje ${cand} ${cand===1?'caso passa':'casos passam'} na regra. Se não der acordo, o caso segue normal.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Audiências</span>
       ${tabelaModos()}
-      ${nt(J?`Ao vivo você preside e investiga quem tem razão (até ${VIVO_MES} por mês). Pelo gabinete, a sentença sai pela chance de acerto.`:`Quem vai no seu lugar é o assessor, com a skill dele; sem assessor, a audiência é rápida. Ao vivo cabem ${VIVO_MES} por mês${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
+      ${nt(J?`Você é sempre o titular. Audiência completa: você preside e investiga quem tem razão (só raros ou maiores, até ${VIVO_MES} por mês). Julgamento rápido: duas decisões, instrução e fundamentação (até ${RAPIDO_MES} por mês). Sentença direta: pelos autos, sem audiência.`:`Você é sempre o titular: ninguém vai no seu lugar. Ao vivo cabem ${VIVO_MES} por mês; as outras são rápidas${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Equipe</span>
       <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:`Distribuir os blocos da equipe: nomeie um ${nomeGestor().toLowerCase()}`}</span></label></div>
     </div></section>`; }

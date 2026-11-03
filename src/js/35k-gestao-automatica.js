@@ -7,8 +7,9 @@ const gestao=()=>{ const G=S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'rara
 const GRUPOS_AUD={alta:'Épicos e lendários',media:'Raros e incomuns',baixa:'Comuns'};
 const INST_AUD={1:'1ª instância',2:'2ª instância',3:'STJ',4:'STF'};
 const grupoAud=c=>{ const r=RORD.indexOf(c.rar); return r>=3?'alta':r>=1?'media':'baixa'; };
-const MODOS_AUD=()=>S.carreira==='juiz'?{vivo:'Presidir ao vivo',rapida:'Pelo gabinete'}
-  :{vivo:'Sempre ao vivo',rapida:'Rápida',enviar:papelAud()==='adv'?'Enviar advogado':'Enviar assessor'};
+// advogado pode delegar; juiz, promotor e defensor são titulares e conduzem sempre
+const MODOS_AUD=()=>S.carreira==='juiz'?{vivo:'Audiência completa',rapido:'Julgamento rápido',rapida:'Sentença direta'}
+  :papelAud()==='adv'?{vivo:'Sempre ao vivo',rapida:'Rápida',enviar:'Enviar advogado'}:{vivo:'Sempre ao vivo',rapida:'Rápida'};
 // converte a regra antiga (um seletor só) na tabela nova
 function modosIniciais(aud){ const eu={alta:aud!=='nenhuma',media:aud==='raras',baixa:false}, M={};
   for(const g in GRUPOS_AUD){ M[g]={}; for(const i in INST_AUD) M[g][i]=eu[g]?'vivo':'enviar'; } return M; }

@@ -4330,7 +4330,7 @@ const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'ad
 // quem pode ir no seu lugar: advogados com área no escritório; nas carreiras públicas, assessores
 function substitutos(c){ const eq=[...(S.u?S.u.equipe:[]),...(papelAud()==='adv'&&S.filU&&S.filU[c.cidade]?S.filU[c.cidade].equipe:[])];
   if(papelAud()==='adv') return eq.filter(f=>f.ae&&podeIr(f,c)).map(f=>({f,sk:Math.round(f.area===c.area?f.ae:f.q*.85)}));
-  return eq.filter(f=>f.funcao==='assessor').map(f=>({f,sk:Math.round(f.q*.9)})); }
+  return []; } // promotor e defensor são titulares: conduzem sempre (ao vivo ou rápida)
 // hierarquia: caso épico ou lendário só o titular ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado
 const RANK_ADV={associado:1,junior:1,pleno:2,senior:3,socio:4}, RANK_CASO={comum:1,incomum:2,raro:3,epico:4,lendario:4};
 const NOME_RANK={1:'júnior ou associado',2:'pleno',3:'sênior',4:'sócio'};
@@ -4352,7 +4352,7 @@ function seletorModo(c){ const m=modoDe(c), sub=melhorSub(c), cheio=vivoUsadas()
   return `<div class="modo-aud"><span class="label">Audiência</span><div class="chips">
     ${vivoPermitido(c)?b('vivo','Ao vivo',false,`Você conduz a audiência. Cabem ${VIVO_MES} por mês.`):''}
     ${b('rapida','Rápida',false,'A balança de sempre, com o momento decisivo.')}
-    ${b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:papelAud()==='adv'?`Enviar · precisa de ${NOME_RANK[RANK_CASO[c.rar]]}+`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:(papelAud()==='adv'?`Este caso pede advogado ${NOME_RANK[RANK_CASO[c.rar]]} ou acima${RANK_CASO[c.rar]===4?' (só você ou um sócio)':''}.`:'Contrate assessores para enviar à audiência.'))}
+    ${papelAud()!=='adv'?'':b('enviar',sub?`Enviar ${esc(sub.f.nome.split(' ')[0])} · ${sub.sk}`:papelAud()==='adv'?`Enviar · precisa de ${NOME_RANK[RANK_CASO[c.rar]]}+`:'Enviar ninguém',!sub,sub?`${nomeFuncao(sub.f)} vai no seu lugar. A chance usa a skill dele no caso (${sub.sk}) no lugar da sua (${Math.round(skillTitular(c))}).`:(papelAud()==='adv'?`Este caso pede advogado ${NOME_RANK[RANK_CASO[c.rar]]} ou acima${RANK_CASO[c.rar]===4?' (só você ou um sócio)':''}.`:'Contrate assessores para enviar à audiência.'))}
   </div>${cheio?`<small class="lo">Você já tem ${VIVO_MES} audiências ao vivo neste mês: esta vai ${sub?'com '+esc(sub.f.nome.split(' ')[0]):'rápida'}.</small>`:''}</div>`; }
 { const p0=pasta; pasta=function(c,ativo){ const h=p0(c,ativo); if(!ativo||!S.casos.includes(c)) return h;
     const sel=(c.inst||1)>1?seletorModo(c).replace('<span class="label">Audiência</span>','<span class="label">Sustentação oral no tribunal</span>'):seletorModo(c);
@@ -4584,15 +4584,45 @@ function audienciaAoVivo(c){
 // (Análise e o estudo do processo), decide objeções, determina perícia, resolve incidentes e sentencia. Acertar a verdade
 // faz o tribunal manter a sentença; errar faz reformar; objeções mal decididas podem anular. Cabem VIVO_MES por mês.
 const vivoJuizOk=p=>RORD.indexOf(p.rar)>=2;
-const modoJuiz=p=>p.modoAud||(vivoJuizOk(p)&&euVou(p)?'vivo':'gabinete');
-{ const c0=procCard; procCard=function(p){ const h=c0(p); if(!vivoJuizOk(p)) return h; const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES;
+const RAPIDO_MES=6;
+const rapidosUsados=()=>S.jRap&&S.jRap.mes===S.semana?S.jRap.n:0;
+const usarRapido=()=>{ if(!S.jRap||S.jRap.mes!==S.semana) S.jRap={mes:S.semana,n:0}; S.jRap.n++; };
+// o juiz é sempre o titular: audiência completa (raros ou maiores), julgamento rápido ou sentença direta pelos autos
+const modoJuiz=p=>{ if(p.modoAud) return p.modoAud==='vivo'&&!vivoJuizOk(p)?'rapido':p.modoAud; const d=modoDesejado(p);
+  return d==='vivo'?(vivoJuizOk(p)?'vivo':'rapido'):d==='rapido'?'rapido':'gabinete'; };
+{ const c0=procCard; procCard=function(p){ const h=c0(p); const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES, cheioR=m==='rapido'&&rapidosUsados()>=RAPIDO_MES;
     const b=(v,t,tt)=>`<button class="chip ${m===v?'on':''}" data-act="modoAud" data-id="${p.id}" data-v="${v}" title="${tt}">${t}</button>`;
-    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Audiência</span><div class="chips">${b('vivo','Presidir ao vivo',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`)}${b('gabinete','Pelo gabinete','Sentença pelo estudo do processo, como sempre.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências ao vivo neste mês: esta vai pelo gabinete.</small>`:''}</div><div class="ctl">`); }; }
+    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${RAPIDO_MES} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${RAPIDO_MES} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
 async function audienciaJuizSe(p){
-  if(modoJuiz(p)!=='vivo') return null;
-  if(vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências ao vivo: “${p.titulo}” foi sentenciado pelo gabinete.`); return null; }
+  let m=modoJuiz(p);
+  if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências completas: “${p.titulo}” foi para julgamento rápido.`); m='rapido'; }
+  if(m==='rapido'&&rapidosUsados()>=RAPIDO_MES){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
+  if(m==='gabinete') return null;
   if(MODO_TESTE&&!window.__vivo) return null;
+  if(m==='rapido'){ usarRapido(); return julgamentoRapido(p); }
   usarVivo(); return audienciaJuiz(p); }
+// ---------- julgamento rápido: duas decisões ----------
+async function julgamentoRapido(p){ const base=calcAcerto(p).ch, rec=chanceRecursoJ(p); let d=0, recMais=0; const notas=[];
+  const op=(v,t,b,s)=>`<button class="opt" data-mv="${v}"><span>${t}</span><b class="num">${b}</b><small>${s}</small></button>`;
+  const cab=`<span class="label">Julgamento rápido · ${RAR[p.rar].nome} · ${AREAS[p.area].nome}</span><h2>${esc(p.titulo)}</h2><p class="num" style="margin:0">Chance de acertar a decisão: <b>${pct(base)}</b>${rec?` · chance de recurso ${pct(rec)}`:''}</p>`;
+  const anal=Math.round(S.skills.analise), area=Math.round(S.skills[p.area]||0);
+  const v1=await modal(`${cab}<p>Como você instrui o processo?</p><div class="opts">
+    ${op('autos','Examinar os autos a fundo',`+${Math.round((2+anal/12))} acerto · −4 energia`,`Usa Análise (${anal}).`)}
+    ${op('partes','Ouvir as partes rapidamente','+4, às vezes +12 · −2 energia','Às vezes aparece o detalhe que decide o caso.')}
+    ${op('relatorio','Decidir pelo relatório da secretaria','−3 acerto · sem custo','Mais rápido, mais arriscado.')}</div>`,[]);
+  if(v1==='autos'){ d+=(2+anal/12)/100; S.energia=clamp(S.energia-4,0,100); }
+  else if(v1==='partes'){ const achou=Math.random()<.35; d+=achou?.12:.04; S.energia=clamp(S.energia-2,0,100); if(achou) notas.push('Na oitiva, um detalhe mudou a leitura do caso.'); }
+  else d-=.03;
+  const v2=await modal(`${cab}<p>Como você fundamenta a sentença?</p><div class="opts">
+    ${op('robusta','Fundamentação robusta',`recurso −10 · −3 energia`,'O tribunal tende a manter. Treina Escrita.')}
+    ${op('precedente','Seguir o precedente do tribunal',`+${area>=55?5:2} acerto · recurso −5`,`Bom quando você domina a área (${AREAS[p.area].nome} ${area}).`)}
+    ${op('objetiva','Sentença objetiva','recurso +8 · sem custo','Rápida, mas dá margem para recurso.')}</div>`,[]);
+  if(v2==='robusta'){ recMais-=.10; S.energia=clamp(S.energia-3,0,100); S.skills.escrita=clamp(S.skills.escrita+.4,0,100); }
+  else if(v2==='precedente'){ d+=area>=55?.05:.02; recMais-=.05; }
+  else recMais+=.08;
+  const ch=clamp(base+d,.05,.97);
+  addLog(`Julgamento rápido em “${p.titulo}”: chance de acerto ${pct(base)} → ${pct(ch)}.${notas.length?' '+notas[0]:''}`);
+  return {ch,recMais}; }
 
 function audienciaJuiz(p){ return new Promise(fim=>{
   const penal=p.area==='penal';
@@ -5147,8 +5177,9 @@ const gestao=()=>{ const G=S.gestao||(S.gestao={aceitar:false,minCh:.5,aud:'rara
 const GRUPOS_AUD={alta:'Épicos e lendários',media:'Raros e incomuns',baixa:'Comuns'};
 const INST_AUD={1:'1ª instância',2:'2ª instância',3:'STJ',4:'STF'};
 const grupoAud=c=>{ const r=RORD.indexOf(c.rar); return r>=3?'alta':r>=1?'media':'baixa'; };
-const MODOS_AUD=()=>S.carreira==='juiz'?{vivo:'Presidir ao vivo',rapida:'Pelo gabinete'}
-  :{vivo:'Sempre ao vivo',rapida:'Rápida',enviar:papelAud()==='adv'?'Enviar advogado':'Enviar assessor'};
+// advogado pode delegar; juiz, promotor e defensor são titulares e conduzem sempre
+const MODOS_AUD=()=>S.carreira==='juiz'?{vivo:'Audiência completa',rapido:'Julgamento rápido',rapida:'Sentença direta'}
+  :papelAud()==='adv'?{vivo:'Sempre ao vivo',rapida:'Rápida',enviar:'Enviar advogado'}:{vivo:'Sempre ao vivo',rapida:'Rápida'};
 // converte a regra antiga (um seletor só) na tabela nova
 function modosIniciais(aud){ const eu={alta:aud!=='nenhuma',media:aud==='raras',baixa:false}, M={};
   for(const g in GRUPOS_AUD){ M[g]={}; for(const i in INST_AUD) M[g][i]=eu[g]?'vivo':'enviar'; } return M; }
@@ -5323,7 +5354,7 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
   ['Escritório de advocacia','Como funciona a gestão automática?',`<p>No topo da aba Estrutura e equipe. Você pode deixar o escritório aceitar casos sozinho acima de uma chance mínima, escolher a sua postura padrão nas audiências, por raridade e por instância (sempre ao vivo, rápida ou enviar advogado) e, com um gestor administrativo, deixar a distribuição dos blocos da equipe automática.</p>`],
   ['Escritório de advocacia','Como promovo alguém da equipe?',`<p>No painel <b>Plano de carreira</b> (aba Estrutura e equipe). Cada promoção pede tempo no cargo e skill: ${Object.entries(REQ_PLANO).map(([k,r])=>`${FUNCOES.adv[k].nome.toLowerCase()}: ${r.meses} meses e skill ${r.sk}`).join('; ')}. Cada audiência que a pessoa vence no seu lugar adianta 1 mês, até a metade do prazo.</p>
     <p>Quem fica pronto e não é promovido perde moral depois de 3 meses. Depois de 6, um escritório rival pode oferecer a vaga: você promove, dá um aumento de 20% para ganhar tempo ou deixa ir (o rival fica mais forte e às vezes leva um cliente). Sênior com 1 ano de casa e moral alta pede sociedade, se houver vaga: cada nível do escritório tem um limite de sócios (veja a tabela de níveis).</p>`],
-  ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a regra de <b>audiências</b> (quais você faz ao vivo; nas outras vai o assessor, ou sai pelo gabinete) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
+  ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a <b>postura nas audiências</b> por raridade (você é sempre o titular: no juiz, audiência completa, julgamento rápido ou sentença direta; no promotor e no defensor, ao vivo ou rápida) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
   ['Casos','Como funcionam os recursos?',`<p>Recurso não ocupa vaga de caso. Cada instância acima da primeira tira <b>13 pontos</b> da chance (tribunal −13, STJ −26, STF −39). Se a decisão anterior foi a seu favor, você ganha +10; se foi contra, perde 10. Escrita ${NIV[2]} dá +8 em recursos.</p>`],
   ['Casos','Como sobe a chance de um caso?',`<p>Blocos de trabalho no caso (com retorno decrescente), skills da área, estrelas, teses e apoios na pasta do caso, estrutura do escritório e o seu estado (energia e estresse). Abaixo de 30 de energia você perde 10 de chance.</p>`],
   ['Rotina','Como a energia recarrega?',`<ul class="aj-lista">
@@ -5386,9 +5417,6 @@ function acordosAutomaticos(){ if(!pubAtual()||!gestao().acordo) return; let ok=
 { const m0=fimSemanaMP; fimSemanaMP=async function(){ if(!ocupado) acordosAutomaticos(); return m0(); }; }
 { const d0=fimSemanaDP; fimSemanaDP=async function(){ if(!ocupado) acordosAutomaticos(); return d0(); }; }
 // ---------- painel de gestão para as carreiras públicas ----------
-const GESTAO_AUD_PUB=()=>S.carreira==='juiz'
-  ?{raras:'Presido ao vivo as raras ou maiores',epicas:'Presido ao vivo só as épicas e lendárias',nenhuma:'Tudo pelo gabinete'}
-  :{raras:'Eu vou às raras ou maiores',epicas:'Eu vou só às épicas e lendárias',nenhuma:'O assessor vai sempre que puder'};
 const NOME_ACORDO={juiz:'Tentar conciliação sozinho nos processos que admitem acordo',promotor:'Propor acordo de não persecução sozinho quando couber',defensor:'Fechar acordo sozinho quando couber'};
 function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, g=gestorAtual(), J=S.carreira==='juiz';
   const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
@@ -5402,7 +5430,7 @@ function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, 
       ${nt(`Tenta no fechamento do mês, sem abrir janela. Hoje ${cand} ${cand===1?'caso passa':'casos passam'} na regra. Se não der acordo, o caso segue normal.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Audiências</span>
       ${tabelaModos()}
-      ${nt(J?`Ao vivo você preside e investiga quem tem razão (até ${VIVO_MES} por mês). Pelo gabinete, a sentença sai pela chance de acerto.`:`Quem vai no seu lugar é o assessor, com a skill dele; sem assessor, a audiência é rápida. Ao vivo cabem ${VIVO_MES} por mês${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
+      ${nt(J?`Você é sempre o titular. Audiência completa: você preside e investiga quem tem razão (só raros ou maiores, até ${VIVO_MES} por mês). Julgamento rápido: duas decisões, instrução e fundamentação (até ${RAPIDO_MES} por mês). Sentença direta: pelos autos, sem audiência.`:`Você é sempre o titular: ninguém vai no seu lugar. Ao vivo cabem ${VIVO_MES} por mês; as outras são rápidas${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Equipe</span>
       <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:`Distribuir os blocos da equipe: nomeie um ${nomeGestor().toLowerCase()}`}</span></label></div>
     </div></section>`; }
