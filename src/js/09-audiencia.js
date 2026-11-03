@@ -70,7 +70,9 @@ async function audiencia(c){
     if(pool.length){ const [n,b]=pick(pool); novaTese={nome:n,bonus:b,area:c.area}; S.teses.push(novaTese);
       linhas.push(`Nova tese colecionável: <b>${n}</b> (+${b} em ${AREAS[c.area].nome})`);} }
   linhas.push(win?'Skills do caso evoluíram.':'Skills do caso evoluíram 50% mais (derrota ensina).');
-  await modal(`<span class="label">Veredito · ${INST[c.inst]} · ${esc(c.titulo)}</span>
+  // caso delegado: o advogado enviado cuida de tudo; você vê só o resultado no resumo do mês
+  const deleg=c._modo==='enviar', quem=deleg&&typeof acharMembro==='function'&&acharMembro(c._sub)?acharMembro(c._sub)[0].nome:null;
+  if(!deleg) await modal(`<span class="label">Veredito · ${INST[c.inst]} · ${esc(c.titulo)}</span>
     <h2>${c.juizNome} vai decidir</h2>
     <p class="num">Chance final: <b class="${cls(ch)}">${pct(ch)}</b>${c.juri?' · júri':''}</p>
     ${htmlBalanca(ch,ch*.15)}
@@ -78,7 +80,7 @@ async function audiencia(c){
     <div class="res" hidden>${linhas.join('<br>')}</div>`,[{t:'Continuar',v:1,dis:true}],async box=>{
       await balanca(box,ch,r); box.querySelector('.verdict').hidden=false; box.querySelector('.res').hidden=false;
       const b=box.querySelector('[data-mi]'); b.disabled=false; b.focus();});
-  addLog(`${win?'Vitória':'Derrota'} em “${c.titulo}” · ${INST[c.inst]} · chance ${pct(ch)} · ${sgn(dPrest)} prestígio.`, win?'g':'r');
+  addLog(`${win?'Vitória':'Derrota'} em “${c.titulo}”${quem?` (por ${quem})`:''} · ${INST[c.inst]} · chance ${pct(ch)} · ${sgn(dPrest)} prestígio.`, win?'g':'r');
   // escândalo por atalho
   if(c.apoios.atalho && Math.random()<.25+(80-S.integ)/200){
     S.prest=clamp(S.prest-12,0,100);
@@ -91,7 +93,7 @@ async function audiencia(c){
     const ca=podeApelar?chanceApeloAdv(c,res==='historica'):0;
     let apelou=false;
     if(podeApelar){
-      apelou=await rolar('A outra parte vai recorrer?',`${ADV[c.adv].nome}. Base ${RAR[c.rar].nome} ${pct(RAR[c.rar].apelo)} ${ADV[c.adv].apelo>=0?'+':'−'} ${pct(Math.abs(ADV[c.adv].apelo))}${res==='historica'?' − 25% (vitória histórica)':''}.`,ca,'Recorreu','Não recorreu');
+      apelou=deleg?Math.random()<=ca:await rolar('A outra parte vai recorrer?',`${ADV[c.adv].nome}. Base ${RAR[c.rar].nome} ${pct(RAR[c.rar].apelo)} ${ADV[c.adv].apelo>=0?'+':'−'} ${pct(Math.abs(ADV[c.adv].apelo))}${res==='historica'?' − 25% (vitória histórica)':''}.`,ca,'Recorreu','Não recorreu');
     }
     if(apelou){
       if(!c.retido){ S.aReceber+=c.hon; }
@@ -107,7 +109,8 @@ async function audiencia(c){
       const prox={...c,inst:c.inst+1,lado:'recorrente',prep:0,semana:0,apoios:{},mod:0,estrategia:'equilibrada'};
       const chP=calcChance(prox).ch, custas=Math.round(c.valor*(tem('negociacao',2)?.005:.01));
       const perdaOrig = c.lado==='recorrente'?c.perdaOrig:Math.abs(dPrest);
-      const v=await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer ao ${INST[c.inst+1]}?</h2>
+      // delegado: recorre sozinho se a chance de reverter for de 45% ou mais (e houver caixa para as custas)
+      const v=deleg?(chP>=REC_AUTO&&S.caixa>=custas?'sim':'nao'):await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer ao ${INST[c.inst+1]}?</h2>
         <dl class="meta">
           <dt>Chance de reverter (sem preparação)</dt><dd class="num ${cls(chP)}">${pct(chP)}</dd>
           <dt>Custas do recurso (1% da causa)</dt><dd class="num">${brl(custas)}</dd>
@@ -116,7 +119,8 @@ async function audiencia(c){
           <dt>Se perder de novo</dt><dd class="lo">${sgn(-RAR[c.rar].perda/2)} prestígio</dd>
         </dl><p style="font-size:12px;color:var(--muted)">Você poderá preparar o recurso com blocos e apoios, como um caso novo.</p>`,
         [{t:'Aceitar a derrota',v:'nao',cls:'ghost'},{t:S.caixa<custas?'Caixa insuficiente':'Recorrer',v:'sim',dis:S.caixa<custas}]);
-      if(v==='sim'){ S.caixa-=custas; criarRecurso(c,'recorrente',false,perdaOrig); addLog(`Você recorreu de “${c.titulo}” (custas ${brl(custas)}).`); }
+      if(v==='sim'){ S.caixa-=custas; criarRecurso(c,'recorrente',false,perdaOrig); addLog(deleg?`${quem||'O advogado'} recorreu de “${c.titulo}” ao ${INST[c.inst+1]} (chance ${pct(chP)}, custas ${brl(custas)}).`:`Você recorreu de “${c.titulo}” (custas ${brl(custas)}).`); }
+      else if(deleg) addLog(`${quem||'O advogado'} não recorreu de “${c.titulo}”: chance de reverter de ${pct(chP)}, abaixo de ${pct(REC_AUTO)}${chP>=REC_AUTO?' (faltou caixa para as custas)':''}.`);
     }
   }
 }

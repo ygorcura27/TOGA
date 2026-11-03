@@ -708,6 +708,7 @@ function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].niv
 function tierEscritorio(){ if(!S.u||S.carreira!=='adv') return 0; let t=0; for(let i=1;i<TIERS.length;i++){ if(checarTier(TIERS[i].req).every(x=>x.ok)) t=i; else break; } return t; }
 // casos em 1ª instância ocupam vaga; recursos ficam numa fila própria e não limitam a entrada de casos novos
 const casos1=()=>S.casos.filter(c=>(c.inst||1)===1).length;
+const REC_AUTO=.45; // advogado delegado recorre sozinho a partir desta chance de reverter
 const PRAZO_REC={2:2,3:3,4:4}; // meses até o julgamento: tribunal, STJ/TST, STF (sem poder antecipar)
 function pesosRaridade(C){const p=S.prest, f=S.filiais.length;
   return {comum:Math.max(10,60-p*.6),incomum:30,raro:8+p*.3+C.pop*1.5+f*2+(C.rarBonus||0),
@@ -1311,7 +1312,9 @@ async function audiencia(c){
     if(pool.length){ const [n,b]=pick(pool); novaTese={nome:n,bonus:b,area:c.area}; S.teses.push(novaTese);
       linhas.push(`Nova tese colecionável: <b>${n}</b> (+${b} em ${AREAS[c.area].nome})`);} }
   linhas.push(win?'Skills do caso evoluíram.':'Skills do caso evoluíram 50% mais (derrota ensina).');
-  await modal(`<span class="label">Veredito · ${INST[c.inst]} · ${esc(c.titulo)}</span>
+  // caso delegado: o advogado enviado cuida de tudo; você vê só o resultado no resumo do mês
+  const deleg=c._modo==='enviar', quem=deleg&&typeof acharMembro==='function'&&acharMembro(c._sub)?acharMembro(c._sub)[0].nome:null;
+  if(!deleg) await modal(`<span class="label">Veredito · ${INST[c.inst]} · ${esc(c.titulo)}</span>
     <h2>${c.juizNome} vai decidir</h2>
     <p class="num">Chance final: <b class="${cls(ch)}">${pct(ch)}</b>${c.juri?' · júri':''}</p>
     ${htmlBalanca(ch,ch*.15)}
@@ -1319,7 +1322,7 @@ async function audiencia(c){
     <div class="res" hidden>${linhas.join('<br>')}</div>`,[{t:'Continuar',v:1,dis:true}],async box=>{
       await balanca(box,ch,r); box.querySelector('.verdict').hidden=false; box.querySelector('.res').hidden=false;
       const b=box.querySelector('[data-mi]'); b.disabled=false; b.focus();});
-  addLog(`${win?'Vitória':'Derrota'} em “${c.titulo}” · ${INST[c.inst]} · chance ${pct(ch)} · ${sgn(dPrest)} prestígio.`, win?'g':'r');
+  addLog(`${win?'Vitória':'Derrota'} em “${c.titulo}”${quem?` (por ${quem})`:''} · ${INST[c.inst]} · chance ${pct(ch)} · ${sgn(dPrest)} prestígio.`, win?'g':'r');
   // escândalo por atalho
   if(c.apoios.atalho && Math.random()<.25+(80-S.integ)/200){
     S.prest=clamp(S.prest-12,0,100);
@@ -1332,7 +1335,7 @@ async function audiencia(c){
     const ca=podeApelar?chanceApeloAdv(c,res==='historica'):0;
     let apelou=false;
     if(podeApelar){
-      apelou=await rolar('A outra parte vai recorrer?',`${ADV[c.adv].nome}. Base ${RAR[c.rar].nome} ${pct(RAR[c.rar].apelo)} ${ADV[c.adv].apelo>=0?'+':'−'} ${pct(Math.abs(ADV[c.adv].apelo))}${res==='historica'?' − 25% (vitória histórica)':''}.`,ca,'Recorreu','Não recorreu');
+      apelou=deleg?Math.random()<=ca:await rolar('A outra parte vai recorrer?',`${ADV[c.adv].nome}. Base ${RAR[c.rar].nome} ${pct(RAR[c.rar].apelo)} ${ADV[c.adv].apelo>=0?'+':'−'} ${pct(Math.abs(ADV[c.adv].apelo))}${res==='historica'?' − 25% (vitória histórica)':''}.`,ca,'Recorreu','Não recorreu');
     }
     if(apelou){
       if(!c.retido){ S.aReceber+=c.hon; }
@@ -1348,7 +1351,8 @@ async function audiencia(c){
       const prox={...c,inst:c.inst+1,lado:'recorrente',prep:0,semana:0,apoios:{},mod:0,estrategia:'equilibrada'};
       const chP=calcChance(prox).ch, custas=Math.round(c.valor*(tem('negociacao',2)?.005:.01));
       const perdaOrig = c.lado==='recorrente'?c.perdaOrig:Math.abs(dPrest);
-      const v=await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer ao ${INST[c.inst+1]}?</h2>
+      // delegado: recorre sozinho se a chance de reverter for de 45% ou mais (e houver caixa para as custas)
+      const v=deleg?(chP>=REC_AUTO&&S.caixa>=custas?'sim':'nao'):await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer ao ${INST[c.inst+1]}?</h2>
         <dl class="meta">
           <dt>Chance de reverter (sem preparação)</dt><dd class="num ${cls(chP)}">${pct(chP)}</dd>
           <dt>Custas do recurso (1% da causa)</dt><dd class="num">${brl(custas)}</dd>
@@ -1357,7 +1361,8 @@ async function audiencia(c){
           <dt>Se perder de novo</dt><dd class="lo">${sgn(-RAR[c.rar].perda/2)} prestígio</dd>
         </dl><p style="font-size:12px;color:var(--muted)">Você poderá preparar o recurso com blocos e apoios, como um caso novo.</p>`,
         [{t:'Aceitar a derrota',v:'nao',cls:'ghost'},{t:S.caixa<custas?'Caixa insuficiente':'Recorrer',v:'sim',dis:S.caixa<custas}]);
-      if(v==='sim'){ S.caixa-=custas; criarRecurso(c,'recorrente',false,perdaOrig); addLog(`Você recorreu de “${c.titulo}” (custas ${brl(custas)}).`); }
+      if(v==='sim'){ S.caixa-=custas; criarRecurso(c,'recorrente',false,perdaOrig); addLog(deleg?`${quem||'O advogado'} recorreu de “${c.titulo}” ao ${INST[c.inst+1]} (chance ${pct(chP)}, custas ${brl(custas)}).`:`Você recorreu de “${c.titulo}” (custas ${brl(custas)}).`); }
+      else if(deleg) addLog(`${quem||'O advogado'} não recorreu de “${c.titulo}”: chance de reverter de ${pct(chP)}, abaixo de ${pct(REC_AUTO)}${chP>=REC_AUTO?' (faltou caixa para as custas)':''}.`);
     }
   }
 }
@@ -5351,7 +5356,7 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
     <li>Na advocacia, só você ou um sócio podem ir à audiência de um épico ou lendário.</li></ul>`],
   ['Escritório de advocacia','Como funcionam as filiais?',`<p>Abra pela aba Região ou Brasil. Exige <b>2★ em Gestão</b> para outro bairro, <b>3★</b> para outra cidade ou estado e <b>4★ em Gestão + 3★ em Idiomas</b> para outro país (Portugal dispensa o idioma).</p>
     <p>Cada filial tem imóvel e equipe próprios, no painel <b>Filiais</b> da aba Estrutura e equipe. A equipe de lá trabalha nos casos daquela cidade sem gastar a sua energia, pode ir às audiências de lá e cada advogado dela soma uma vaga de caso.</p>`],
-  ['Escritório de advocacia','Como funciona a gestão automática?',`<p>No topo da aba Estrutura e equipe. Você pode deixar o escritório aceitar casos sozinho acima de uma chance mínima, escolher a sua postura padrão nas audiências, por raridade e por instância (sempre ao vivo, rápida ou enviar advogado) e, com um gestor administrativo, deixar a distribuição dos blocos da equipe automática.</p>`],
+  ['Escritório de advocacia','Como funciona a gestão automática?',`<p>No topo da aba Estrutura e equipe. Você pode deixar o escritório aceitar casos sozinho acima de uma chance mínima, escolher a sua postura padrão nas audiências, por raridade e por instância (sempre ao vivo, rápida ou enviar advogado). Casos que você delega correm sem abrir a balança na sua tela: o resultado aparece no resumo do mês. Se o advogado perder, ele recorre sozinho quando a chance de reverter for de ${pct(REC_AUTO)} ou mais e, com um gestor administrativo, deixar a distribuição dos blocos da equipe automática.</p>`],
   ['Escritório de advocacia','Como promovo alguém da equipe?',`<p>No painel <b>Plano de carreira</b> (aba Estrutura e equipe). Cada promoção pede tempo no cargo e skill: ${Object.entries(REQ_PLANO).map(([k,r])=>`${FUNCOES.adv[k].nome.toLowerCase()}: ${r.meses} meses e skill ${r.sk}`).join('; ')}. Cada audiência que a pessoa vence no seu lugar adianta 1 mês, até a metade do prazo.</p>
     <p>Quem fica pronto e não é promovido perde moral depois de 3 meses. Depois de 6, um escritório rival pode oferecer a vaga: você promove, dá um aumento de 20% para ganhar tempo ou deixa ir (o rival fica mais forte e às vezes leva um cliente). Sênior com 1 ano de casa e moral alta pede sociedade, se houver vaga: cada nível do escritório tem um limite de sócios (veja a tabela de níveis).</p>`],
   ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a <b>postura nas audiências</b> por raridade (você é sempre o titular: no juiz, audiência completa, julgamento rápido ou sentença direta; no promotor e no defensor, ao vivo ou rápida) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
