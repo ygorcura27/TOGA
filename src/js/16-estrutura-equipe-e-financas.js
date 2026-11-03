@@ -74,7 +74,7 @@ function despesasEscritorio(){ const U=S.u, im=IMOVEIS.adv[U.imovel];
   const sal=U.equipe.reduce((a,f)=>a+f.sal,0), mant=U.salas.reduce((a,k)=>a+(k?COMODOS[k].mant:0),0), fil=S.filiais.reduce((a,f)=>a+aluguel(LOC[f]),0);
   return {aluguel:im.aluguel,sal,mant,fil,total:im.aluguel+sal+mant+fil}; }
 const despesasPub=()=>S.u.equipe.reduce((a,f)=>a+f.sal,0)+S.u.salas.reduce((a,k)=>a+(k?COMODOS[k].mant:0),0);
-const receitaPub=()=>Math.round(ORC_BASE[cargoAtual()]*(.5+S.u.efet/100));
+const receitaPub=()=>Math.round(ORC_BASE[cargoAtual()]*Math.max(.8,.5+S.u.efet/100)); // piso: nunca abaixo de 80% do orçamento base
 function concluidos(){ return S.carreira==='juiz'?S.j.sentencas:S.carreira==='promotor'?S.p.denuncias+S.p.acordos+S.p.arquivados:S.d.atendimentos; }
 function atrasadosPub(){ return S.carreira==='juiz'?S.j.acervo.filter(p=>p.idade>p.meta).length:S.carreira==='promotor'?S.p.casos.filter(c=>c.fase==='inq'&&c.idade>c.meta).length:S.d.casos.filter(c=>c.preso&&!c.prep).length; }
 
@@ -121,7 +121,7 @@ function semanaEstruturaAdv(){ const U=S.u, d=despesasEscritorio();
   semanaAreasEquipe(); semanaEquipe(); }
 function semanaEstruturaPub(novos){ const U=S.u, conc=concluidos()-U.lastConcl; U.lastConcl=concluidos();
   const org=organizacao(), atr=atrasadosPub();
-  const eS=clamp(60+30*(conc-novos)/Math.max(1,novos)-3*atr+(org-50)/5,0,100);
+  const eS=clamp(60+30*(conc-novos)/Math.max(1,novos)-1.5*atr+(org-50)/5,0,100); // cada processo atrasado tira 1,5 ponto
   U.efet=Math.round((U.efet*.7+eS*.3)*10)/10;
   const rec=receitaPub(), desp=despesasPub(); U.orc+=rec-desp;
   const linhas=[`Índice de efetividade: <b>${U.efet.toLocaleString('pt-BR')}</b> (${conc} concluídos e ${novos} novos neste mês)`,
@@ -280,7 +280,7 @@ function painelFinancas(){ const U=S.u;
       <dt>Repasse do tribunal por mês</dt><dd class="num hi">${brl(rec)}</dd><dt>Equipe e manutenção por mês</dt><dd class="num lo">${brl(desp)}</dd>
       <dt>Índice de efetividade</dt><dd class="num ${cls(U.efet/100)}">${U.efet.toLocaleString('pt-BR')}</dd></dl>
     <div class="bar"><i style="width:${U.efet}%;background:var(--brass)"></i></div>
-    <p style="margin:0;font-size:12px;color:var(--muted)">O tribunal repassa entre 50% e 150% de ${brl(ORC_BASE[cargoAtual()])} por mês conforme a efetividade: concluir mais casos do que chegam, sem atrasos e com boa organização. Com 80 ou mais, você ganha gratificação de 10% do salário. O salário em si é fixo.</p>
+    <p style="margin:0;font-size:12px;color:var(--muted)">O tribunal repassa entre 80% e 150% de ${brl(ORC_BASE[cargoAtual()])} por mês conforme a efetividade: concluir mais casos do que chegam, sem atrasos (cada processo atrasado tira 1,5 ponto) e com boa organização. Com 80 ou mais, você ganha gratificação de 10% do salário. O salário em si é fixo.</p>
   </section>`; }
 function painelOrganizacao(){ const U=S.u, o=organizacao(), g=gestorAtual(), q=qualEquipe();
   return `<section class="panel"><div class="panel-head"><h2>Organização</h2><span class="num ${cls(o/100)}">${o}</span></div>
