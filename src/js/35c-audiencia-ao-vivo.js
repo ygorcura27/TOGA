@@ -9,7 +9,8 @@ const VIVO_MES=3;
 // metade do fôlego gasto, no máximo AV_CUSTO_MAX. Exausto (abaixo de AV_EXAUSTO), a audiência não vai ao vivo.
 const AV_FOLEGO_MIN=30, AV_CUSTO_MAX=25, AV_EXAUSTO=15;
 const folegoInicial=()=>vip('nervos')?100:Math.max(AV_FOLEGO_MIN,S.energia);
-const custoAoVivo=(ini,fim,extra=0)=>Math.max(0,Math.min(AV_CUSTO_MAX,Math.round(Math.max(0,ini-fim)*.5))-extra);
+const AV_CUSTO_MAX_J=15; // o juiz preside, não disputa: a audiência completa cansa menos
+const custoAoVivo=(ini,fim,extra=0,max=AV_CUSTO_MAX)=>Math.max(0,Math.min(max,Math.round(Math.max(0,ini-fim)*.5))-extra);
 const vivoUsadas=()=>S.vivo&&S.vivo.mes===S.semana?S.vivo.n:0;
 const usarVivo=()=>{ if(!S.vivo||S.vivo.mes!==S.semana) S.vivo={mes:S.semana,n:0}; S.vivo.n++; };
 const papelAud=()=>S.carreira==='promotor'?'mp':S.carreira==='defensor'?'dp':'adv';

@@ -27,17 +27,17 @@ async function julgamentoRapido(p){ const base=calcAcerto(p).ch, rec=chanceRecur
   const cab=`<span class="label">Julgamento rápido · ${RAR[p.rar].nome} · ${AREAS[p.area].nome}</span><h2>${esc(p.titulo)}</h2><p class="num" style="margin:0">Chance de acertar a decisão: <b>${pct(base)}</b>${rec?` · chance de recurso ${pct(rec)}`:''}</p>`;
   const anal=Math.round(S.skills.analise), area=Math.round(S.skills[p.area]||0);
   const v1=await modal(`${cab}<p>Como você instrui o processo?</p><div class="opts">
-    ${op('autos','Examinar os autos a fundo',`+${Math.round((2+anal/12))} acerto · −4 energia`,`Usa Análise (${anal}).`)}
-    ${op('partes','Ouvir as partes rapidamente','+4, às vezes +12 · −2 energia','Às vezes aparece o detalhe que decide o caso.')}
+    ${op('autos','Examinar os autos a fundo',`+${Math.round((2+anal/12))} acerto · −2 energia`,`Usa Análise (${anal}).`)}
+    ${op('partes','Ouvir as partes rapidamente','+4, às vezes +12 · −1 energia','Às vezes aparece o detalhe que decide o caso.')}
     ${op('relatorio','Decidir pelo relatório da secretaria','−3 acerto · sem custo','Mais rápido, mais arriscado.')}</div>`,[]);
-  if(v1==='autos'){ d+=(2+anal/12)/100; S.energia=clamp(S.energia-4,0,100); }
-  else if(v1==='partes'){ const achou=Math.random()<.35; d+=achou?.12:.04; S.energia=clamp(S.energia-2,0,100); if(achou) notas.push('Na oitiva, um detalhe mudou a leitura do caso.'); }
+  if(v1==='autos'){ d+=(2+anal/12)/100; S.energia=clamp(S.energia-2,0,100); }
+  else if(v1==='partes'){ const achou=Math.random()<.35; d+=achou?.12:.04; S.energia=clamp(S.energia-1,0,100); if(achou) notas.push('Na oitiva, um detalhe mudou a leitura do caso.'); }
   else d-=.03;
   const v2=await modal(`${cab}<p>Como você fundamenta a sentença?</p><div class="opts">
-    ${op('robusta','Fundamentação robusta',`recurso −10 · −3 energia`,'O tribunal tende a manter. Treina Escrita.')}
+    ${op('robusta','Fundamentação robusta',`recurso −10 · −1 energia`,'O tribunal tende a manter. Treina Escrita.')}
     ${op('precedente','Seguir o precedente do tribunal',`+${area>=55?5:2} acerto · recurso −5`,`Bom quando você domina a área (${AREAS[p.area].nome} ${area}).`)}
     ${op('objetiva','Sentença objetiva','recurso +8 · sem custo','Rápida, mas dá margem para recurso.')}</div>`,[]);
-  if(v2==='robusta'){ recMais-=.10; S.energia=clamp(S.energia-3,0,100); S.skills.escrita=clamp(S.skills.escrita+.4,0,100); }
+  if(v2==='robusta'){ recMais-=.10; S.energia=clamp(S.energia-1,0,100); S.skills.escrita=clamp(S.skills.escrita+.4,0,100); }
   else if(v2==='precedente'){ d+=area>=55?.05:.02; recMais-=.05; }
   else recMais+=.08;
   const ch=clamp(base+d,.05,.97);
@@ -64,7 +64,7 @@ function audienciaJuiz(p){ return new Promise(fim=>{
   const pista=(t,l)=>s.pistas.unshift({t,l});
   const box=document.createElement('div'); box.className='av-ov'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('aria-label','Audiência do juiz');
   document.body.appendChild(box); let timer;
-  function encerrar(){ clearTimeout(timer); const g=custoAoVivo(s.f0,s.folego,s.extra); S.energia=clamp(S.energia-g,0,100); if(g) addLog(`A audiência completa custou ${g} de energia.`); box.remove(); fim(s.res); }
+  function encerrar(){ clearTimeout(timer); const g=custoAoVivo(s.f0,s.folego,s.extra,AV_CUSTO_MAX_J); S.energia=clamp(S.energia-g,0,100); if(g) addLog(`A audiência completa custou ${g} de energia.`); box.remove(); fim(s.res); }
   function concluir(){ s.fim=true; s.rodando=false; lance('Instrução encerrada. Os autos vêm conclusos para sentença.',''); }
   function passo(){ if(!s.rodando||s.decisao||s.fim) return; s.min++; s.folego=Math.min(100,s.folego+.3);
     if([20,36,46].includes(s.min)&&!s.feitos[s.min]){ s.feitos[s.min]=1; s.rodando=false;
