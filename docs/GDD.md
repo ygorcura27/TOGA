@@ -290,8 +290,8 @@ As três funcionam do mesmo jeito; mudam a gameplay dos casos e os nomes.
 - **Concurso da magistratura (muito difícil):**
   - **Requisitos para prestar:**
     - **4★ em todas as áreas** do direito (skill 82 ou mais);
-    - **5★ em Oratória** (92 ou mais);
-    - 4★ em Escrita e em Análise;
+    - **Oratória 92** ou mais;
+    - Escrita e Análise 82 ou mais;
     - **3 anos de prática jurídica** depois da OAB.
   - **Curso preparatório para a magistratura:** como estudar sozinho para em 3★, este curso da academia (18 meses, R$ 1.500 por mês) libera a 4ª estrela em todas as áreas de uma vez. Para se inscrever, é preciso ter **3★ em todas as áreas**. O curso não dá estrelas: ele sobe o teto de 81 para 91, e as estrelas continuam vindo dos pontos de skill.
   - **Provas:** mais difíceis que as de promotor e defensor (dificuldade 75, 76 e 80).

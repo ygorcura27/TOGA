@@ -17,7 +17,8 @@ const REQ_CONC={
 };
 function reqConcurso(tipo){ const R=REQ_CONC[tipo], L=[];
   for(const k in AREAS){ const n=R.areas[k]||R.areas.todas; L.push({l:`${AREAS[k].nome} ${n}★`,ok:S.skills[k]>=EST[n],v:Math.floor(S.skills[k])}); }
-  for(const [k,n] of Object.entries(R.skills)) L.push({l:`${SKILLS[k]} ${n}★`,ok:S.skills[k]>=EST[n],v:Math.floor(S.skills[k])});
+  // skills gerais têm 3 estrelas na tela: o requisito aparece como número (ex.: Oratória 92)
+  for(const [k,n] of Object.entries(R.skills)) L.push({l:`${SKILLS[k]} ${EST[n]}`,ok:S.skills[k]>=EST[n],v:Math.floor(S.skills[k])});
   const m=S.semana-(S.semanaFormatura||0); L.push({l:`${tempoTxt(R.pratica)} de prática jurídica após a OAB`,ok:m>=R.pratica,v:tempoTxt(Math.max(0,m))}); return L; }
 const aptoConc=tipo=>reqConcurso(tipo).every(x=>x.ok);
 const reqMagistratura=()=>reqConcurso('juiz'), aptoMag=()=>aptoConc('juiz');

@@ -14,6 +14,8 @@ const CONQUISTAS=[
   {id:'lend5',cat:'casos',tier:'lendario',nome:'Lenda dos tribunais',desc:'Vença 5 casos lendários.',ok:()=>S.cq.cont.lend>=5,prog:()=>[S.cq.cont.lend,5]},
   {id:'prest90',cat:'casos',tier:'epico',nome:'Nome nacional',desc:'Chegue a 90 de prestígio.',ok:()=>S.prest>=90,prog:()=>[Math.round(S.prest),90]},
   {id:'filial',cat:'escritorio',tier:'comum',nome:'Segundo endereço',desc:'Abra a primeira filial.',ok:()=>S.filiais.length>=1},
+  {id:'regiao',cat:'escritorio',tier:'epico',nome:'Dono da região',desc:'Tenha escritório em todos os bairros e cidades do mapa Região (São Paulo e Rio).',ok:()=>S.carreira==='adv'&&Object.keys(LOC).filter(k=>LOC[k].nivel==='regional'&&!LOC[k].centro).every(k=>temEscritorio(k))},
+  {id:'mundo',cat:'escritorio',tier:'lendario',nome:'Bandeira no mundo inteiro',desc:'Tenha escritório em todos os países do mapa Mundo.',ok:()=>S.carreira==='adv'&&Object.keys(LOC).filter(k=>LOC[k].nivel==='global').every(k=>temEscritorio(k))},
   {id:'rede',cat:'escritorio',tier:'raro',nome:'Rede de escritórios',desc:'Tenha 5 filiais ao mesmo tempo.',ok:()=>S.filiais.length>=5,prog:()=>[S.filiais.length,5]},
   {id:'intl',cat:'escritorio',tier:'epico',nome:'Escritório internacional',desc:'Abra um escritório fora do Brasil.',ok:()=>S.filiais.some(f=>LOC[f]&&LOC[f].nivel==='global')},
   {id:'socio',cat:'escritorio',tier:'raro',nome:'Primeiro sócio',desc:'Aceite um advogado sênior como sócio.',ok:()=>S.carreira==='adv'&&S.u&&S.u.equipe.some(f=>f.funcao==='socio')},
