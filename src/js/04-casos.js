@@ -1,7 +1,7 @@
 // ===================== CASOS =====================
 function temEscritorio(k){ const C=LOC[k]; if(!C) return false; if(S.carreira!=='adv') return k===comarcaAtual(); if(C.centro) return temEscritorio(C.parent); return k===S.sede||S.filiais.includes(k); }
 function longe(c){ const C=LOC[c.cidade]; return !temEscritorio(c.cidade) && !(C.nivel==='regional' && temEscritorio(C.parent)); }
-const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length+(S.carreira==='adv'?advsFil():0); // advsFil: equipe das filiais
+const maxCasos=()=>3+advsEquipe()+Math.floor(estagEquipe()/2)+S.filiais.length+(S.carreira==='adv'?advsFil()+vagasFoco():0); // vagasFoco: foco Jurídico // advsFil: equipe das filiais
 const custoSemanal=()=>despesasEscritorio().total;
 function pickW(arr,w){const ws=arr.map(w); let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   for(let i=0;i<arr.length;i++){ r-=ws[i]; if(r<=0) return arr[i]; } return arr[arr.length-1];}
@@ -11,8 +11,8 @@ const TIERS=[
   {nome:'Escritório iniciante',socios:1,rarMax:2,valor:.85,partido:1},
   {nome:'Escritório local',socios:2,rarMax:3,valor:1.25,partido:1.2,req:{imovel:1,advs:2}},
   {nome:'Escritório regional',socios:3,rarMax:3,valor:1.2,partido:1.4,req:{imovel:1,advs:4,filiais:1,clientes:2,prest:45,anos:2}},
-  {nome:'Escritório nacional',socios:5,rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:5}},
-  {nome:'Escritório High Tier',socios:8,rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
+  {nome:'Escritório nacional',socios:4,rarMax:4,valor:1.05,partido:1.6,req:{imovel:2,advs:8,estados:1,clientes:4,areas:3,prest:65,anos:5}},
+  {nome:'Escritório High Tier',socios:5,rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
 ];
 // sócios da sede (os sócios locais das filiais no exterior não contam)
 const sociosSede=()=>S.u?S.u.equipe.filter(f=>f.funcao==='socio').length:0;
@@ -77,7 +77,7 @@ function calcChance(c,extra=0){
   const cg=cargaCaso(c,false), blocos=cg.prep;
   let pb=prepCaso(c,blocos); if(c.juiz==='impaciente') pb*=.6;
   add(`Preparação (${blocos} de ~${prepIdeal(c)} blocos ideais)`,Math.round(pb*10)/10);
-  if(cg.atraso) add(`Prazos e peças atrasados (${cg.atraso} bloco${cg.atraso>1?'s':''})`,penAtraso(cg.atraso));
+  if(cg.atraso) add(`Prazos e peças atrasados (${cg.atraso} bloco${cg.atraso>1?'s':''})`,penAtraso(cg.atraso)*fatorPrazoFoco());
   if(faltaPorte(c)) add(`Escritório pequeno para o porte (faltam ${faltaPorte(c)} advogado${faltaPorte(c)>1?'s':''} na equipe)`,-6*faltaPorte(c));
   const lg=longe(c);
   for(const k in c.apoios) if(c.apoios[k] && (!APOIOS[k].longe||lg)) add(APOIOS[k].nome,APOIOS[k].bonus);

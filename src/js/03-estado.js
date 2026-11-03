@@ -4,7 +4,7 @@ function novoJogo(nome,espec,traits,sede='sp'){
   const skills={}; for(const k in SKILLS) skills[k]=25;
   for(const a in AREAS) skills[a]=20;
   skills[espec]=35;
-  S={nome,espec,traits,carreira:'adv',sede,filiais:[],semana:1,caixa:20000,prest:20,energia:80,estresse:20,integ:80,
+  S={nome,espec,traits,carreira:'adv',sede,filiais:[],semana:1,caixa:15000,prest:20,energia:80,estresse:20,integ:80,
     skills,teses:[],casos:[],ofertas:[],agenda:{estudo:0,estudoSkill:espec,lazer:0,familia:0,saude:0,curso:0,pesquisa:0,docencia:0},
     disp:BLOCOS,log:[],vitorias:0,derrotas:0,metaAtingida:false,mesV:1,fim:null,aReceber:0};
   S.u=estruturaInicial(false); S.bolso=3000; S.vida=vidaInicial(); S.ac=acadInicial(); criarColegas();

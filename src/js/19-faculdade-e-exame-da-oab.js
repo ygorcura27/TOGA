@@ -89,7 +89,7 @@ function formar(cam){ const F=S.fac, cr=F.cr||6; for(const n of (S.npcs||[])) if
   S.formacao={tier:F.tier,cr,contatos:{...F.contatos}}; S.semanaFormatura=S.semana;
   const pessoal=S.caixa;
   if(cam==='academico'){ iniciarAcademico(); S.caixa=pessoal; addLog('Você escolheu a carreira acadêmica. Comece pela seleção do mestrado.','g'); return; }
-  S.carreira='adv'; S.u=estruturaInicial(false); S.bolso=pessoal; S.caixa=15000; S.casos=[]; S.filiais=[];
+  S.carreira='adv'; S.u=estruturaInicial(false); S.bolso=pessoal; S.caixa=10000; // começo mais apertado S.casos=[]; S.filiais=[];
   S.prest=clamp(Math.round(12+FACS[F.tier].prest+(cr-6)*3+F.contatos.adv/10),5,40);
   Object.assign(S.agenda,{aulas:0,estagio:0,nucleo:0,ic:0,bico:0});
   gerarOfertas(); addLog(`Formado e aprovado na OAB, você abriu escritório em ${CIDADES[S.sede].nome} com prestígio ${S.prest}.`,'g'); view='escritorio';

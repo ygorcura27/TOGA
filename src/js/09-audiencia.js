@@ -110,7 +110,7 @@ async function audiencia(c){
       const chP=calcChance(prox).ch, custas=Math.round(c.valor*(tem('negociacao',2)?.005:.01));
       const perdaOrig = c.lado==='recorrente'?c.perdaOrig:Math.abs(dPrest);
       // delegado: recorre sozinho se a chance de reverter for de 45% ou mais (e houver caixa para as custas)
-      const v=deleg?(chP>=REC_AUTO&&S.caixa>=custas?'sim':'nao'):await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer ao ${INST[c.inst+1]}?</h2>
+      const v=deleg&&recursoAutomatico()?(chP>=recMinimo()&&S.caixa>=custas?'sim':'nao'):await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer ao ${INST[c.inst+1]}?</h2>
         <dl class="meta">
           <dt>Chance de reverter (sem preparação)</dt><dd class="num ${cls(chP)}">${pct(chP)}</dd>
           <dt>Custas do recurso (1% da causa)</dt><dd class="num">${brl(custas)}</dd>
@@ -120,7 +120,7 @@ async function audiencia(c){
         </dl><p style="font-size:12px;color:var(--muted)">Você poderá preparar o recurso com blocos e apoios, como um caso novo.</p>`,
         [{t:'Aceitar a derrota',v:'nao',cls:'ghost'},{t:S.caixa<custas?'Caixa insuficiente':'Recorrer',v:'sim',dis:S.caixa<custas}]);
       if(v==='sim'){ S.caixa-=custas; criarRecurso(c,'recorrente',false,perdaOrig); addLog(deleg?`${quem||'O advogado'} recorreu de “${c.titulo}” ao ${INST[c.inst+1]} (chance ${pct(chP)}, custas ${brl(custas)}).`:`Você recorreu de “${c.titulo}” (custas ${brl(custas)}).`); }
-      else if(deleg) addLog(`${quem||'O advogado'} não recorreu de “${c.titulo}”: chance de reverter de ${pct(chP)}, abaixo de ${pct(REC_AUTO)}${chP>=REC_AUTO?' (faltou caixa para as custas)':''}.`);
+      else if(deleg&&recursoAutomatico()) addLog(`${quem||'O advogado'} não recorreu de “${c.titulo}”: chance de reverter de ${pct(chP)}, abaixo de ${pct(recMinimo())}${chP>=recMinimo()?' (faltou caixa para as custas)':''}.`);
     }
   }
 }
