@@ -121,7 +121,7 @@ function semanaEstruturaAdv(){ const U=S.u, d=despesasEscritorio();
   semanaAreasEquipe(); semanaEquipe(); }
 function semanaEstruturaPub(novos){ const U=S.u, conc=concluidos()-U.lastConcl; U.lastConcl=concluidos();
   const org=organizacao(), atr=atrasadosPub();
-  const eS=clamp(60+30*(conc-novos)/Math.max(1,novos)-1.5*atr+(org-50)/5,0,100); // cada processo atrasado tira 1,5 ponto
+  const eS=clamp(60+30*(conc-novos)/Math.max(1,novos)-1.5*atr*fatorAtrasoPub()+(org-50)/5,0,100); // cada processo atrasado tira 1,5 ponto
   U.efet=Math.round((U.efet*.7+eS*.3)*10)/10;
   const rec=receitaPub(), desp=despesasPub(); U.orc+=rec-desp;
   const linhas=[`Índice de efetividade: <b>${U.efet.toLocaleString('pt-BR')}</b> (${conc} concluídos e ${novos} novos neste mês)`,

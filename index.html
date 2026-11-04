@@ -469,6 +469,11 @@ select,.field input{border-radius:6px}
 @media (max-width:640px){.rec-inst{grid-template-columns:minmax(0,1fr)}}
 .rec-inst>div{border:1px solid var(--line);border-radius:8px;padding:10px;display:grid;gap:2px}
 .rec-inst>div.falta{border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
+/* palavra final do titular */
+.pf-box{border:1px solid var(--brass);border-radius:10px;padding:12px;display:grid;gap:8px;background:var(--brass-soft)}
+.pf-it{display:grid;gap:4px;padding-top:8px;border-top:1px solid color-mix(in srgb,var(--brass) 35%,transparent)}
+.pf-it:first-of-type{border-top:0;padding-top:0}
+.pf-it small{font-size:12.5px}
 </style>
 
 <div id="app"></div>
@@ -2688,7 +2693,7 @@ function semanaEstruturaAdv(){ const U=S.u, d=despesasEscritorio();
   semanaAreasEquipe(); semanaEquipe(); }
 function semanaEstruturaPub(novos){ const U=S.u, conc=concluidos()-U.lastConcl; U.lastConcl=concluidos();
   const org=organizacao(), atr=atrasadosPub();
-  const eS=clamp(60+30*(conc-novos)/Math.max(1,novos)-1.5*atr+(org-50)/5,0,100); // cada processo atrasado tira 1,5 ponto
+  const eS=clamp(60+30*(conc-novos)/Math.max(1,novos)-1.5*atr*fatorAtrasoPub()+(org-50)/5,0,100); // cada processo atrasado tira 1,5 ponto
   U.efet=Math.round((U.efet*.7+eS*.3)*10)/10;
   const rec=receitaPub(), desp=despesasPub(); U.orc+=rec-desp;
   const linhas=[`Índice de efetividade: <b>${U.efet.toLocaleString('pt-BR')}</b> (${conc} concluídos e ${novos} novos neste mês)`,
@@ -4654,19 +4659,20 @@ function audienciaAoVivo(c){
 // faz o tribunal manter a sentença; errar faz reformar; objeções mal decididas podem anular. Cabem VIVO_MES por mês.
 const vivoJuizOk=p=>RORD.indexOf(p.rar)>=2;
 const RAPIDO_MES=6;
+function limRapidos(){ return RAPIDO_MES+(focoPubAtivo('mutirao')?3:0); } // foco Mutirão do chefe: +3
 const rapidosUsados=()=>S.jRap&&S.jRap.mes===S.semana?S.jRap.n:0;
 const usarRapido=()=>{ if(!S.jRap||S.jRap.mes!==S.semana) S.jRap={mes:S.semana,n:0}; S.jRap.n++; };
 // o juiz é sempre o titular: audiência completa (raros ou maiores), julgamento rápido ou sentença direta pelos autos
 const modoJuiz=p=>{ if(p.modoAud) return p.modoAud==='vivo'&&!vivoJuizOk(p)?'rapido':p.modoAud; const d=modoDesejado(p);
   return d==='vivo'?(vivoJuizOk(p)?'vivo':'rapido'):d==='rapido'?'rapido':'gabinete'; };
-{ const c0=procCard; procCard=function(p){ const h=c0(p); const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES, cheioR=m==='rapido'&&rapidosUsados()>=RAPIDO_MES;
+{ const c0=procCard; procCard=function(p){ const h=c0(p); const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES, cheioR=m==='rapido'&&rapidosUsados()>=limRapidos();
     const b=(v,t,tt)=>`<button class="chip ${m===v?'on':''}" data-act="modoAud" data-id="${p.id}" data-v="${v}" title="${tt}">${t}</button>`;
-    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${RAPIDO_MES} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${RAPIDO_MES} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
+    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${limRapidos()} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${limRapidos()} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
 async function audienciaJuizSe(p){
   let m=modoJuiz(p);
   if(m==='vivo'&&S.energia<AV_EXAUSTO&&!vip('nervos')){ addLog(`Você está exausto (energia ${Math.round(S.energia)}): “${p.titulo}” foi para julgamento rápido.`,'r'); m='rapido'; }
   if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências completas: “${p.titulo}” foi para julgamento rápido.`); m='rapido'; }
-  if(m==='rapido'&&rapidosUsados()>=RAPIDO_MES){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
+  if(m==='rapido'&&rapidosUsados()>=limRapidos()){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
   if(m==='gabinete') return null;
   if(MODO_TESTE&&!window.__vivo) return null;
   if(m==='rapido'){ usarRapido(); return julgamentoRapido(p); }
@@ -5442,7 +5448,9 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
 
   ['Escritório de advocacia','Como promovo alguém da equipe?',`<p>No painel <b>Plano de carreira</b> (aba Estrutura e equipe). Cada promoção pede tempo no cargo e skill: ${Object.entries(REQ_PLANO).map(([k,r])=>`${FUNCOES.adv[k].nome.toLowerCase()}: ${r.meses} meses e skill ${r.sk}`).join('; ')}. Cada audiência que a pessoa vence no seu lugar adianta 1 mês, até a metade do prazo.</p>
     <p>Quem fica pronto e não é promovido perde moral depois de 3 meses. Depois de 6, um escritório rival pode oferecer a vaga: você promove, dá um aumento de 20% para ganhar tempo ou deixa ir (o rival fica mais forte e às vezes leva um cliente). Sênior com 1 ano de casa e moral alta pede sociedade, se houver vaga: cada nível do escritório tem um limite de sócios (veja a tabela de níveis).</p>`],
-  ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> (conciliação no juiz, acordo de não persecução no promotor, acordo no defensor) acima de uma chance mínima, a <b>postura nas audiências</b> por raridade (você é sempre o titular: no juiz, audiência completa, julgamento rápido ou sentença direta; no promotor e no defensor, ao vivo ou rápida) e a <b>distribuição da equipe</b> pelo chefe. A pilha de processos, inquéritos ou assistidos tem filtro e ordem.</p>`],
+  ['Carreiras públicas','Dá para automatizar no juiz, promotor e defensor?',`<p>Sim, no topo da aba Estrutura e equipe: <b>acordos automáticos</b> acima de uma chance mínima e a <b>postura nas audiências</b> por raridade (você é sempre o titular). Com um <b>chefe</b> (de gabinete, de secretaria ou coordenador de atendimento) na equipe, ele escolhe o <b>foco do mês</b> (Jurídico: +4 nas decisões; Administrativo: equipe +20%; Mutirão: mais julgamentos rápidos e atrasos pesando metade, com a moral da equipe caindo) e cuida de férias, carga de trabalho e conflitos.</p>
+    <p>A <b>palavra final é sempre sua</b>: pedidos de férias em mês de mutirão, conflitos graves e tudo o que você marcar em “Eu decido” vão para a fila “Sua palavra final”. O que ficar sem resposta até o fim do mês segue a recomendação do chefe.</p>`],
+
   ['Escritório de advocacia','Como o gestor melhora?',`<p>O gestor (nas carreiras públicas, o chefe de gabinete, de secretaria ou coordenador) tem a skill de <b>gestão</b>. Ela soma na organização do escritório, que mexe na chance de todos os casos, e decide se ele acerta a prioridade ao distribuir os blocos da equipe.</p>
     <p>A gestão cresce sozinha com o tempo no cargo, cerca de 3 pontos no primeiro ano e mais devagar quanto mais alta. No cartão dele há um <b>curso de gestão</b> (${brl(CURSO_GESTAO.custo)}, +${CURSO_GESTAO.ganho} na hora, um a cada ${CURSO_GESTAO.intervalo} meses). O máximo é ${CURSO_GESTAO.teto}.</p>`],
   ['Casos','Como funcionam os recursos?',`<p>Recurso não ocupa vaga de caso. Cada instância acima da primeira tira <b>13 pontos</b> da chance (tribunal −13, STJ −26, STF −39). Se a decisão anterior foi a seu favor, você ganha +10; se foi contra, perde 10. Escrita ${NIV[2]} dá +8 em recursos.</p>
@@ -5522,7 +5530,7 @@ function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, 
       ${nt(`Tenta no fechamento do mês, sem abrir janela. Hoje ${cand} ${cand===1?'caso passa':'casos passam'} na regra. Se não der acordo, o caso segue normal.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Audiências</span>
       ${tabelaModos()}
-      ${nt(J?`Você é sempre o titular. Audiência completa: você preside e investiga quem tem razão (só raros ou maiores, até ${VIVO_MES} por mês). Julgamento rápido: duas decisões, instrução e fundamentação (até ${RAPIDO_MES} por mês). Sentença direta: pelos autos, sem audiência.`:`Você é sempre o titular: ninguém vai no seu lugar. Ao vivo cabem ${VIVO_MES} por mês; as outras são rápidas${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
+      ${nt(J?`Você é sempre o titular. Audiência completa: você preside e investiga quem tem razão (só raros ou maiores, até ${VIVO_MES} por mês). Julgamento rápido: duas decisões, instrução e fundamentação (até ${limRapidos()} por mês). Sentença direta: pelos autos, sem audiência.`:`Você é sempre o titular: ninguém vai no seu lugar. Ao vivo cabem ${VIVO_MES} por mês; as outras são rápidas${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
     <div style="display:grid;gap:8px"><span class="label">Equipe</span>
       <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:`Distribuir os blocos da equipe: nomeie um ${nomeGestor().toLowerCase()}`}</span></label></div>
     </div></section>`; }
@@ -5813,7 +5821,7 @@ function previsaoEnergiaPub(){ const L=listaPub(), tot=L.reduce((a,c)=>a+(c.sema
   const fim=clamp(Math.round(S.energia-3.2*pessoal*wk+3*desc+1.5*lazer),0,traco('insone')?85:100);
   let custo=0; const partes=[];
   if(S.carreira==='juiz'){ const pauta=L.filter(p=>(p.semana||0)>0&&(p.estudo||0)+p.semana>=minSent(p));
-    const nc=Math.min(Math.max(0,VIVO_MES-vivoUsadas()),pauta.filter(p=>modoJuiz(p)==='vivo').length), nr=Math.min(Math.max(0,RAPIDO_MES-rapidosUsados()),pauta.filter(p=>modoJuiz(p)==='rapido').length);
+    const nc=Math.min(Math.max(0,VIVO_MES-vivoUsadas()),pauta.filter(p=>modoJuiz(p)==='vivo').length), nr=Math.min(Math.max(0,limRapidos()-rapidosUsados()),pauta.filter(p=>modoJuiz(p)==='rapido').length);
     if(nc){ custo+=nc*AV_CUSTO_MAX_J; partes.push(`${nc} audiência${nc>1?'s':''} completa${nc>1?'s':''} (até −${AV_CUSTO_MAX_J} cada)`); }
     if(nr){ custo+=nr*RAPIDO_CUSTO_MAX; partes.push(`${nr} julgamento${nr>1?'s':''} rápido${nr>1?'s':''} (até −${RAPIDO_CUSTO_MAX} cada)`); } }
   else { const n=Math.min(Math.max(0,VIVO_MES-vivoUsadas()),L.filter(c=>c.prazo<=1&&(c.fase===undefined||c.fase==='juizo')&&modoDe(c)==='vivo'&&vivoPermitido(c)).length);
@@ -6097,6 +6105,90 @@ function painelRecursos(){ if(!S||!['adv','juiz','promotor','defensor'].includes
 { const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelRecursos(); if(!h) return; const fil=app.querySelector('.panel.filiais-eq'); if(fil) fil.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
 // texto de ajuda da skill
 if(typeof USO_SKILL==='object') USO_SKILL.recursos='Recursos no tribunal, no STJ/TST e no STF: Apelação pede 1★, Recurso Especial 3★, Recurso Extraordinário 5★. Cada estrela que falta tira 3 (até −9); ter as estrelas dá +3. No juiz, reduz a chance de recurso contra as suas sentenças. Sobe com experiência em recursos e com congresso (uma vez por ano).';
+// ===================== CHEFE DE SECRETARIA: GESTÃO DO CARTÓRIO (juiz, promotor e defensor) =====================
+// O chefe (chefe de gabinete, de secretaria ou coordenador de atendimento) escolhe o foco do mês e cuida de férias,
+// carga de trabalho e conflitos da equipe. O titular dá sempre a palavra final: decisões sensíveis vão para uma fila
+// "Sua palavra final". O que ficar sem resposta até o fim do mês segue a recomendação do chefe.
+const FOCOS_PUB={
+  juridico:{nome:'Jurídico',lema:'Decisões mais bem feitas',ef:()=>['revisão: +4 de chance nas decisões e peças','menos reforma no tribunal'],custo:'equipe rende 5% menos'},
+  administrativo:{nome:'Administrativo',lema:'Cartório em dia',ef:()=>['equipe +20% de blocos por mês','+1 bloco de folga no expediente'],custo:'sem bônus nas decisões'},
+  mutirao:{nome:'Mutirão',lema:'Zerar o acervo',ef:()=>[S.carreira==='juiz'?'+3 julgamentos rápidos no mês':'atendimento em lote: +2 blocos da equipe','atrasos pesam metade na efetividade'],custo:'moral da equipe −3 por mês'},
+};
+const pubCarreira=()=>!!S&&['juiz','promotor','defensor'].includes(S.carreira);
+const chefeAtivo=()=>pubCarreira()&&!!S.u&&!!gestorAtual();
+const GP=()=>{ const G=gestao(); if(!G.pub) G.pub={focoMes:'juridico',deleg:{ferias:'auto',carga:'auto',conflitos:'auto'}}; if(!S.pf) S.pf=[]; return G.pub; };
+function focoPubAtivo(k){ return chefeAtivo()&&GP().focoMes===k; }
+function fatorAtrasoPub(){ return focoPubAtivo('mutirao')?.5:1; }
+const delegPub=k=>chefeAtivo()&&GP().deleg[k]==='auto';
+// ---------- efeitos ----------
+{ const c0=calcAcerto; calcAcerto=function(p){ const r=c0(p); if(focoPubAtivo('juridico')){ r.items=r.items||[]; r.items.push(['Foco jurídico: revisão',4]); r.ch=clamp(r.ch+.04,.05,.95); } return r; }; }
+for(const nome of ['calcCondenacao','calcDefesa']){ const f0=nome==='calcCondenacao'?calcCondenacao:calcDefesa;
+  const f=function(c){ const r=f0(c); if(focoPubAtivo('juridico')){ r.items=r.items||[]; r.items.push(['Foco jurídico: revisão',4]); r.ch=clamp(r.ch+.04,.05,.95); } return r; };
+  if(nome==='calcCondenacao') calcCondenacao=f; else calcDefesa=f; }
+{ const s0=staffBlocos; staffBlocos=function(){ let b=s0(); if(!pubCarreira()) return b;
+    const fer=S.u.equipe.filter(f=>f.ferias===S.semana).reduce((a,f)=>a+FX()[f.funcao].bl*(.6+f.moral/250),0); b=Math.max(0,b-Math.floor(fer));
+    if(focoPubAtivo('administrativo')) b=Math.floor(b*1.2)+1;
+    if(focoPubAtivo('juridico')) b=Math.floor(b*.95);
+    if(focoPubAtivo('mutirao')&&S.carreira!=='juiz') b+=2;
+    return b; }; }
+// ---------- palavra final ----------
+let pfId=0;
+function pedirPalavra(d){ GP(); if(S.pf.some(x=>x.chave&&x.chave===d.chave)) return; S.pf.push({id:++pfId+'-'+S.semana,mes:S.semana,...d}); }
+function aplicarPalavra(x,v){ const op=x.ops.find(o=>o.v===v)||x.ops[0]; const L=S.u.equipe, a=L.find(f=>f.id===x.a), b=x.b?L.find(f=>f.id===x.b):null;
+  if(x.tipo==='ferias'&&a){ if(v==='sim'){ a.ferias=S.semana+1; a.feriasEm=S.semana; a.moral=clamp(a.moral+18,0,100); } else a.moral=clamp(a.moral-6,0,100); }
+  if(x.tipo==='conflito'&&a&&b){ if(v==='advertir'){ a.moral=clamp(a.moral-5,0,100); b.moral=clamp(b.moral+8,0,100); } else if(v==='setor'){ a.moral=clamp(a.moral+5,0,100); b.moral=clamp(b.moral+5,0,100); a.ferias=a.ferias; S.u.perdaSetor=S.semana; } else { a.moral=clamp(a.moral-4,0,100); b.moral=clamp(b.moral-4,0,100); } }
+  addLog(`Palavra final: ${op.log}`,op.cls||''); S.pf=S.pf.filter(y=>y!==x); }
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-pf]'); if(!b||!S||!S.pf) return; const x=S.pf.find(y=>y.id===b.dataset.pf); if(!x) return; aplicarPalavra(x,b.dataset.v); salvar(); render(); });
+// ---------- o chefe no fim do mês ----------
+function semanaChefe(){ const U=S.u, G=GP(), rel=[]; U.auto=chefeAtivo()&&G.deleg.carga==='auto';
+  // decisões sem resposta seguem a recomendação do chefe (ou a opção mais neutra, sem chefe)
+  for(const x of [...S.pf].filter(x=>x.mes<S.semana)){ const v=x.rec||x.ops[0].v; /* sem chefe, o padrão protege a equipe (aprovar férias, mudar de setor) */ aplicarPalavra(x,v); rel.push(['',`Sem resposta: “${x.titulo}” seguiu ${x.rec?'a recomendação do chefe':'o padrão (a primeira opção)'}.`]); }
+  if(focoPubAtivo('mutirao')) for(const f of U.equipe) f.moral=clamp(f.moral-3,0,100);
+  const chefe=chefeAtivo();
+  if(chefe) rel.push(['b',`Foco do mês: ${FOCOS_PUB[G.focoMes].nome}.`]);
+  // férias: o chefe marca para quem está com moral baixa; em mês de mutirão ou sem chefe, a decisão é sua
+  const cansados=U.equipe.filter(f=>f.id!==U.gestorId&&f.moral<45&&(!f.feriasEm||S.semana-f.feriasEm>=6)).slice(0,2);
+  for(const f of cansados){
+    if(chefe&&G.deleg.ferias==='auto'&&!focoPubAtivo('mutirao')){ f.ferias=S.semana+1; f.feriasEm=S.semana; const a=Math.round(f.moral); f.moral=clamp(f.moral+18,0,100); rel.push(['g',`${f.nome} sai de férias no próximo mês (moral ${a} → ${Math.round(f.moral)}).`]); }
+    else pedirPalavra({tipo:'ferias',chave:'f'+f.id,a:f.id,titulo:`${f.nome} pediu férias`,txt:`${nomeFuncao(f)}, moral ${Math.round(f.moral)}.${focoPubAtivo('mutirao')?' O cartório está em mutirão.':''}`,
+      rec:chefe?'sim':null,recTxt:chefe?'O chefe recomenda aprovar: com a moral baixa, a pessoa pode pedir remoção.':'',
+      ops:[{v:'sim',t:'Aprovar férias',log:`férias de ${f.nome} aprovadas.`,cls:'g'},{v:'nao',t:'Negar',log:`férias de ${f.nome} negadas.`,cls:'r'}]}); }
+  // conflitos: com 4 ou mais pessoas, às vezes duas se desentendem
+  const L=U.equipe.filter(f=>f.id!==U.gestorId);
+  if(L.length>=3&&Math.random()<.12){ const [a,b]=[...L].sort(()=>Math.random()-.5); a.moral=clamp(a.moral-8,0,100); b.moral=clamp(b.moral-8,0,100);
+    const grave=Math.random()<.35;
+    if(chefe&&G.deleg.conflitos==='auto'&&!grave){ a.moral=clamp(a.moral+8,0,100); b.moral=clamp(b.moral+8,0,100); rel.push(['g',`Desentendimento entre ${a.nome.split(' ')[0]} e ${b.nome.split(' ')[0]} mediado pelo chefe.`]); }
+    else pedirPalavra({tipo:'conflito',chave:'c'+a.id+'-'+b.id,a:a.id,b:b.id,titulo:`Conflito entre ${a.nome.split(' ')[0]} e ${b.nome.split(' ')[0]}`,txt:grave?'A discussão passou do ponto e chegou à corregedoria interna.':'Os dois não estão conseguindo trabalhar juntos.',
+      rec:chefe?'setor':null,recTxt:chefe?'O chefe recomenda mudar um deles de setor.':'',
+      ops:[{v:'setor',t:'Mudar de setor',log:`${a.nome} mudou de setor; o clima melhorou.`,cls:'g'},{v:'advertir',t:`Advertir ${a.nome.split(' ')[0]}`,log:`${a.nome} foi advertido.`},{v:'nada',t:'Deixar como está',log:'o conflito ficou sem solução.',cls:'r'}]}); }
+  if(chefe&&G.deleg.carga==='auto') rel.push(['','Expediente e processos distribuídos entre a equipe.']);
+  if(S.pf.length) rel.push(['r',`${S.pf.length} decisão(ões) esperando a sua palavra final.`]);
+  S.relChefe={mes:S.semana,l:rel}; }
+{ const s0=semanaEstruturaPub; semanaEstruturaPub=function(...a){ const r=s0(...a); if(pubCarreira()) semanaChefe(); return r; }; }
+// ---------- painel ----------
+function blocoChefe(){ const G=GP(), chefe=chefeAtivo(), nome=nomeGestor();
+  const cards=Object.entries(FOCOS_PUB).map(([k,f])=>{ const on=chefe&&G.focoMes===k;
+    return `<button class="gx-foco ${on?'on':''}" data-pfoco="${k}" ${chefe?'':'aria-disabled="true"'} aria-pressed="${on}"><span class="gx-ft"><b>${f.nome}</b><span class="num">${on?'este mês':''}</span></span>
+      <small class="gx-mut">${f.lema}</small><ul>${f.ef().map(x=>`<li>${x}</li>`).join('')}</ul><small class="gx-mut">Em troca: ${f.custo}</small></button>`; }).join('');
+  const DL=[['ferias','Férias da equipe','marca férias para quem está com moral baixa; em mutirão, pede a sua palavra'],['carga','Carga de trabalho','distribui o expediente e os processos entre a equipe'],['conflitos','Conflitos','media os desentendimentos leves; os graves vêm para você']];
+  const deleg=DL.map(([k,t,d])=>{ const m=chefe?G.deleg[k]:'manual'; return `<div class="gx-row"><span><b>${t}</b><br><small class="gx-mut">${m==='auto'?d:'tudo vem para a sua palavra final'}</small></span>
+    <span class="gx-seg"><button data-pdeleg="${k}" data-v="auto" class="${m==='auto'?'on':''}" ${chefe?'':'disabled'}>Chefe</button><button data-pdeleg="${k}" data-v="manual" class="${m==='manual'?'on':''}" ${chefe?'':'disabled'}>Eu decido</button></span></div>`; }).join('');
+  const pf=S.pf.length?`<div class="pf-box"><span class="label">Sua palavra final</span>${S.pf.map(x=>`<div class="pf-it"><b>${esc(x.titulo)}</b><small>${esc(x.txt)}${x.recTxt?` ${esc(x.recTxt)}`:''}</small>
+      <div class="chips">${x.ops.map(o=>`<button class="chip ${x.rec===o.v?'on':''}" data-pf="${x.id}" data-v="${o.v}">${esc(o.t)}</button>`).join('')}</div></div>`).join('')}
+      <small class="gx-mut">O que ficar sem resposta até o fim do mês segue ${chefe?'a recomendação do chefe':'o padrão'}.</small></div>`:'';
+  const R=S.relChefe&&S.relChefe.l.length?`<span class="label">Relatório do chefe · mês ${S.relChefe.mes}</span><ul class="gx-rel">${S.relChefe.l.map(([c,t])=>`<li><i class="${c}"></i><span>${t}</span></li>`).join('')}</ul>`:'';
+  return `${chefe?'':`<div class="gx-lock"><b>Sem ${nome.toLowerCase()}, a gestão do cartório é sua</b><p class="gx-nt">Nomeie um ${nome.toLowerCase()} na equipe para escolher o foco do mês e delegar férias, carga e conflitos. Você continua com a palavra final.</p></div>`}
+    ${pf}
+    <span class="label">Foco do mês · ${chefe?'clique para escolher':'precisa de um '+nome.toLowerCase()}</span><div class="gx-focos">${cards}</div>
+    <div class="gx-cols"><div class="gx-col"><span class="label">O que o chefe cuida</span><div class="gx-rows">${deleg}</div></div><div class="gx-col">${R}</div></div>`; }
+{ const p0=painelGestaoPub; painelGestaoPub=function(){ let h=p0(); if(!h) return h;
+    h=h.replace(/<div style="display:grid;gap:8px"><span class="label">Equipe<\/span>[\s\S]*?<\/label><\/div>/,''); // a distribuição agora é a delegação "Carga de trabalho"
+    return h.replace(/<\/section>\s*$/,blocoChefe()+'</section>'); }; }
+document.addEventListener('click',e=>{ if(!pubCarreira()) return; const b=e.target.closest('[data-pfoco],[data-pdeleg]'); if(!b||b.disabled||b.getAttribute('aria-disabled')==='true') return; const G=GP();
+  if(b.dataset.pfoco){ G.focoMes=b.dataset.pfoco; addLog(`Foco do mês do cartório: ${FOCOS_PUB[G.focoMes].nome}.`); } else G.deleg[b.dataset.pdeleg]=b.dataset.v; salvar(); render(); });
+// aviso na tela principal quando há decisão esperando
+{ const d0=painelDiario; painelDiario=function(){ const h=d0(); if(!pubCarreira()||!S.pf||!S.pf.length) return h;
+    return `<section class="panel"><div class="panel-head"><h2>Sua palavra final</h2><span class="label">${S.pf.length} esperando</span></div><p class="gx-nt">${S.pf.map(x=>esc(x.titulo)).join(' · ')}</p><button class="btn ghost" data-act="view" data-v="estrutura">Decidir na aba Estrutura e equipe</button></section>`+h; }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;

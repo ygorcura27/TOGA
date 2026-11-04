@@ -7,7 +7,7 @@ function previsaoEnergiaPub(){ const L=listaPub(), tot=L.reduce((a,c)=>a+(c.sema
   const fim=clamp(Math.round(S.energia-3.2*pessoal*wk+3*desc+1.5*lazer),0,traco('insone')?85:100);
   let custo=0; const partes=[];
   if(S.carreira==='juiz'){ const pauta=L.filter(p=>(p.semana||0)>0&&(p.estudo||0)+p.semana>=minSent(p));
-    const nc=Math.min(Math.max(0,VIVO_MES-vivoUsadas()),pauta.filter(p=>modoJuiz(p)==='vivo').length), nr=Math.min(Math.max(0,RAPIDO_MES-rapidosUsados()),pauta.filter(p=>modoJuiz(p)==='rapido').length);
+    const nc=Math.min(Math.max(0,VIVO_MES-vivoUsadas()),pauta.filter(p=>modoJuiz(p)==='vivo').length), nr=Math.min(Math.max(0,limRapidos()-rapidosUsados()),pauta.filter(p=>modoJuiz(p)==='rapido').length);
     if(nc){ custo+=nc*AV_CUSTO_MAX_J; partes.push(`${nc} audiência${nc>1?'s':''} completa${nc>1?'s':''} (até −${AV_CUSTO_MAX_J} cada)`); }
     if(nr){ custo+=nr*RAPIDO_CUSTO_MAX; partes.push(`${nr} julgamento${nr>1?'s':''} rápido${nr>1?'s':''} (até −${RAPIDO_CUSTO_MAX} cada)`); } }
   else { const n=Math.min(Math.max(0,VIVO_MES-vivoUsadas()),L.filter(c=>c.prazo<=1&&(c.fase===undefined||c.fase==='juizo')&&modoDe(c)==='vivo'&&vivoPermitido(c)).length);

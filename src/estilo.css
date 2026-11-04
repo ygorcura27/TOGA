@@ -463,3 +463,8 @@ select,.field input{border-radius:6px}
 @media (max-width:640px){.rec-inst{grid-template-columns:minmax(0,1fr)}}
 .rec-inst>div{border:1px solid var(--line);border-radius:8px;padding:10px;display:grid;gap:2px}
 .rec-inst>div.falta{border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
+/* palavra final do titular */
+.pf-box{border:1px solid var(--brass);border-radius:10px;padding:12px;display:grid;gap:8px;background:var(--brass-soft)}
+.pf-it{display:grid;gap:4px;padding-top:8px;border-top:1px solid color-mix(in srgb,var(--brass) 35%,transparent)}
+.pf-it:first-of-type{border-top:0;padding-top:0}
+.pf-it small{font-size:12.5px}

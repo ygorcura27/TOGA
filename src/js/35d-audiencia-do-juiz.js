@@ -4,19 +4,20 @@
 // faz o tribunal manter a sentença; errar faz reformar; objeções mal decididas podem anular. Cabem VIVO_MES por mês.
 const vivoJuizOk=p=>RORD.indexOf(p.rar)>=2;
 const RAPIDO_MES=6;
+function limRapidos(){ return RAPIDO_MES+(focoPubAtivo('mutirao')?3:0); } // foco Mutirão do chefe: +3
 const rapidosUsados=()=>S.jRap&&S.jRap.mes===S.semana?S.jRap.n:0;
 const usarRapido=()=>{ if(!S.jRap||S.jRap.mes!==S.semana) S.jRap={mes:S.semana,n:0}; S.jRap.n++; };
 // o juiz é sempre o titular: audiência completa (raros ou maiores), julgamento rápido ou sentença direta pelos autos
 const modoJuiz=p=>{ if(p.modoAud) return p.modoAud==='vivo'&&!vivoJuizOk(p)?'rapido':p.modoAud; const d=modoDesejado(p);
   return d==='vivo'?(vivoJuizOk(p)?'vivo':'rapido'):d==='rapido'?'rapido':'gabinete'; };
-{ const c0=procCard; procCard=function(p){ const h=c0(p); const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES, cheioR=m==='rapido'&&rapidosUsados()>=RAPIDO_MES;
+{ const c0=procCard; procCard=function(p){ const h=c0(p); const m=modoJuiz(p), cheio=m==='vivo'&&vivoUsadas()>=VIVO_MES, cheioR=m==='rapido'&&rapidosUsados()>=limRapidos();
     const b=(v,t,tt)=>`<button class="chip ${m===v?'on':''}" data-act="modoAud" data-id="${p.id}" data-v="${v}" title="${tt}">${t}</button>`;
-    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${RAPIDO_MES} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${RAPIDO_MES} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
+    return h.replace('<div class="ctl">',`<div class="modo-aud"><span class="label">Julgamento</span><div class="chips">${vivoJuizOk(p)?b('vivo','Audiência completa',`Você preside a audiência e investiga quem tem razão. Cabem ${VIVO_MES} por mês.`):''}${b('rapido','Julgamento rápido',`Duas decisões rápidas: como instruir e como fundamentar. Cabem ${limRapidos()} por mês.`)}${b('gabinete','Sentença direta','Você sentencia pelos autos, sem audiência. Usa a chance de acerto.')}</div>${cheio?`<small class="lo">Já são ${VIVO_MES} audiências completas neste mês: esta vai em julgamento rápido.</small>`:cheioR?`<small class="lo">Já são ${limRapidos()} julgamentos rápidos neste mês: este vai em sentença direta.</small>`:''}</div><div class="ctl">`); }; }
 async function audienciaJuizSe(p){
   let m=modoJuiz(p);
   if(m==='vivo'&&S.energia<AV_EXAUSTO&&!vip('nervos')){ addLog(`Você está exausto (energia ${Math.round(S.energia)}): “${p.titulo}” foi para julgamento rápido.`,'r'); m='rapido'; }
   if(m==='vivo'&&vivoUsadas()>=VIVO_MES){ addLog(`Agenda cheia de audiências completas: “${p.titulo}” foi para julgamento rápido.`); m='rapido'; }
-  if(m==='rapido'&&rapidosUsados()>=RAPIDO_MES){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
+  if(m==='rapido'&&rapidosUsados()>=limRapidos()){ addLog(`Limite de julgamentos rápidos do mês: “${p.titulo}” teve sentença direta.`); return null; }
   if(m==='gabinete') return null;
   if(MODO_TESTE&&!window.__vivo) return null;
   if(m==='rapido'){ usarRapido(); return julgamentoRapido(p); }
