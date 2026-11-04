@@ -6283,7 +6283,28 @@ const htmlReconstruir=()=>vidasHall.length?`<span class="label">Reconstruir uma 
     buscarEncerradoNuvem(); if(!vidasHall.length) listarVidasHall(); }; }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=recuperarNuvem],[data-act=reconstruir]'); if(!b) return;
   if(b.dataset.act==='recuperarNuvem') return recuperarNuvem();
-  const v=vidasHall[+b.dataset.i]; if(v) reconstruirVida(v); });
+  const v=vidasHall[+b.dataset.i]; if(v) reconstruirComFormacao(v); });
+// pergunta a formação acadêmica que o Hall não guardou (títulos e doutorado em andamento)
+async function reconstruirComFormacao(v){ if(ocupado) return;
+  const op=(val,t,d)=>`<button class="opt" data-mv="${val}"><span>${t}</span><small>${d}</small></button>`;
+  const tit=await modal(`<h2>Formação de ${esc(v.nome.split(' ')[0])}</h2><p>O Hall da Fama não guarda os títulos acadêmicos. Qual era o maior título concluído?</p>
+    <div class="opts">${op('nenhum','Nenhum','sem pós-graduação')}${op('esp','Especialização','libera a 4ª estrela na área')}${op('mestrado','Mestrado','libera a 5ª estrela na área')}${op('doutorado','Doutorado','libera a 5ª estrela e a carreira de professor titular')}</div>`,[]);
+  if(!tit) return;
+  let area=null, dout=0;
+  if(tit!=='nenhum'){ area=await modal(`<h2>Em qual área?</h2><div class="opts">${Object.entries(AREAS).map(([k,a])=>op(k,a.nome,'')).join('')}</div>`,[]); if(!area) return; }
+  if(tit==='mestrado'){ const m=await modal(`<h2>Doutorado em andamento?</h2><p>O doutorado leva no mínimo 48 meses e 240 blocos de pesquisa.</p>
+      <div class="opts">${op('0','Não','')}${[12,24,36,44].map(n=>op(String(n),`Sim, no mês ${n}`,n>=44?'perto da defesa da tese':'')).join('')}</div>`,[]); dout=+m||0; }
+  const prep=await modal(`<h2>Preparatório para a magistratura?</h2><p>O curso libera a 4ª estrela em todas as áreas do direito.</p><div class="opts">${op('sim','Sim, concluído','todas as áreas com teto de 4★')}${op('nao','Não','')}</div>`,[]);
+  reconstruirVida(v);
+  const A=S.ac, T=A.titulos; T.areas=T.areas||{};
+  if(prep==='sim'){ T.prep=true; for(const k in AREAS){ T.areas[k]=Math.max(T.areas[k]||0,1); S.skills[k]=Math.max(S.skills[k],86); } }
+  if(tit==='esp'){ T.esp=1; T.areas[area]=1; }
+  if(tit==='mestrado'||tit==='doutorado'){ T.mestrado=true; T.areas[area]=2; A.indice+=3; A.pubs.push({tipo:'dissertação',titulo:tituloPesquisa(area),pts:3,semana:S.semana}); }
+  if(tit==='doutorado'){ T.doutorado=true; A.indice+=5; A.pubs.push({tipo:'tese',titulo:tituloPesquisa(area),pts:5,semana:S.semana}); }
+  if(area){ S.skills[area]=Math.max(S.skills[area],T.areas[area]>=2?92:86); S.skills.pesquisa=Math.max(S.skills.pesquisa,T.mestrado?68:58); S.skills.escrita=Math.max(S.skills.escrita,85); }
+  if(dout){ const C=CURSOS.doutorado; A.curso={tipo:'doutorado',area,prog:Math.round(C.meta*dout/C.minSem),meta:C.meta,inicio:S.semana-dout,minSem:C.minSem,mensal:C.mensal,bolsa:C.bolsa||0,titulo:tituloPesquisa(area)}; S.agenda.curso=4; }
+  addLog(`Formação restaurada: ${prep==='sim'?'preparatório para a magistratura, ':''}${tit==='nenhum'?'sem pós-graduação':tit==='esp'?'especialização':tit==='mestrado'?'mestrado':'doutorado'}${area?' em '+AREAS[area].nome:''}${dout?`, doutorado em andamento (mês ${dout})`:''}.`,'g');
+  salvar(); render(); }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
