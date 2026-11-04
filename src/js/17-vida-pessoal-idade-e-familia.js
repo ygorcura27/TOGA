@@ -106,7 +106,7 @@ async function fimVida(motivo){
   hallRegistrar(motivo);
   const V=S.vida, pat=patrimonio(), id=idade();
   const herd=V.filhos.filter(f=>idadeFilho(f)>=22&&f.rel>=40);
-  const txt={morte:`${S.nome} morreu aos ${id} anos.`,compulsoria:`Aos ${id} anos, ${S.nome} chegou à aposentadoria compulsória.`,aposentadoria:`${S.nome} se aposentou aos ${id} anos.`}[motivo];
+  const txt={morte:`${S.nome} morreu aos ${id} anos.`,compulsoria:`Aos ${id} anos, ${S.nome} chegou à aposentadoria compulsória.`,aposentadoria:`${S.nome} se aposentou aos ${id} anos.`,prisao:`${S.nome} foi preso por corrupção aos ${id} anos.`}[motivo];
   const reg={nome:S.nome,geracao:V.geracao,carreira:descCarreira(),resumo:resumoCarreira(),idade:id,patrimonio:pat};
   const legado=[...V.legado,reg];
   const v=await modal(`<span class="label">Legado · ${V.geracao}ª geração</span><h2>${esc(txt)}</h2>

@@ -85,7 +85,7 @@ async function audiencia(c){
   if(c.apoios.atalho && Math.random()<.25+(80-S.integ)/200){
     S.prest=clamp(S.prest-12,0,100);
     await modal(`<h2 class="lo">Escândalo</h2><p>A imprensa descobriu o atalho antiético que você usou em “${esc(c.titulo)}”. Seu prestígio caiu 12 pontos.</p>`,[{t:'Continuar',v:1}]);
-    addLog(`Escândalo: o atalho em “${c.titulo}” veio à tona. −12 prestígio.`,'r');
+    addLog(`Escândalo: o atalho em “${c.titulo}” veio à tona. −12 prestígio.`,'r'); c._escandalo=true;
   }
   // recursos
   if(win){

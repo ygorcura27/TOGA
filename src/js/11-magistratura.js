@@ -286,6 +286,7 @@ async function fimSemanaJuiz(){
     else if(S.energia<=0){ S.disp=14; addLog('Exaustão: você só terá 14 blocos no próximo mês.','r'); }
     if(!S.fim && S.prest<=0 && !probatorio()) S.fim='cnj';
     if(!S.fim && promoOk() && !J.avisoPromo){ J.avisoPromo=true; addLog(`Você já pode pedir promoção a ${nomeCargo(J.cargo+1)}.`,'g'); }
+    if(S.fim==='cassado'){ S.fim=null; await demissaoCorrupcao(); } // demissão por corrupção: volta à advocacia
     salvar(); render();
     if(S.fim){
       const txt=S.fim==='cassado'?'A corregedoria descobriu a propina. Você perdeu o cargo e responde a processo criminal.':'Sua reputação chegou a zero e o Conselho Nacional de Justiça afastou você do cargo.';
