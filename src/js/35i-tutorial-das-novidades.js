@@ -7,5 +7,11 @@ const TUT_METAS={txt:'As <b>metas</b> de 24 meses ficam no painel da esquerda e 
 TUT.adv.push(TUT_AUDIENCIA,TUT_AO_VIVO,TUT_JORNAL,TUT_METAS);
 TUT.pub.push(
   {txt:'O <b>expediente</b> (rotina da unidade que não é caso) é coberto primeiro pela equipe; o que sobra sai da sua agenda e aumenta o estresse. Com a equipe cobrindo tudo, você ganha +0,5 de reputação por mês.',alvo:'.rows',man:true},
-  {txt:'Casos raros ou maiores podem ir <b>ao vivo</b>: o promotor e o defensor conduzem a partida; o juiz preside e investiga quem tem razão, e nos tribunais vota em colegiado tentando formar maioria. Cabem 3 por mês; os outros vão pela equipe ou pelo gabinete.',alvo:'.modo-aud',man:true},
+  {txt:'Você é sempre o <b>titular</b>: casos raros ou maiores podem ir <b>ao vivo</b> (o promotor e o defensor conduzem a partida; o juiz preside e investiga quem tem razão, e nos tribunais vota em colegiado). Cabem 3 por mês; os outros são rápidos, ou, no juiz, por julgamento rápido ou sentença direta.',alvo:'.cases',man:true},
   TUT_JORNAL,TUT_METAS);
+// gestão nova: começo manual, gestor e focos, sócios, Recursos e a palavra final nas carreiras públicas
+TUT.adv.push(
+  {txt:'No começo o escritório é <b>manual</b>: chegam poucos casos e você decide tudo. No <b>Escritório local</b> libera o <b>gestor administrativo</b>, que escolhe o <b>foco do mês</b> (Comercial, Jurídico ou Administrativo) e cuida de férias, carga, aumentos e recursos. Cada <b>sócio</b> lidera um foco, ativo todo mês. Tudo isso fica no topo da aba <b>Estrutura e equipe</b>.',alvo:'[data-act=view][data-v=estrutura]',man:true},
+  {txt:'A skill <b>Recursos</b> pesa nos recursos: a apelação pede 1★, o Recurso Especial no STJ 3★ e o Extraordinário no STF 5★ (cada estrela que falta tira 3, no máximo −9). Ela sobe com recursos que você sustenta e com <b>congresso</b>, uma vez por ano, no painel Recursos da aba Estrutura e equipe.',alvo:'[data-act=view][data-v=estrutura]',man:true});
+TUT.pub.push(
+  {txt:'Com um <b>chefe</b> na equipe (de gabinete, de secretaria ou coordenador), ele escolhe o <b>foco do mês</b> (Jurídico, Administrativo ou Mutirão) e cuida de férias, carga e conflitos. A <b>palavra final é sua</b>: decisões sensíveis esperam por você na aba <b>Estrutura e equipe</b>.',alvo:'[data-act=view][data-v=estrutura]',man:true});
