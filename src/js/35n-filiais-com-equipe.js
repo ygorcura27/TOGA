@@ -5,7 +5,7 @@ const IMOVEL_FIL=[{nome:'Sala comercial',mesas:3,aluguel:0,custo:0},{nome:'Conju
 const FUNC_FIL=['estagiario','junior','pleno','senior'];
 function filU(k){ const F=S.filU||(S.filU={}); if(!F[k]) F[k]={imovel:0,equipe:[],desde:S.semana}; return F[k]; }
 const unidades=()=>S.carreira==='adv'?S.filiais.map(k=>[k,filU(k)]):[];
-const blocosFil=U=>Math.floor(U.equipe.reduce((a,f)=>a+FUNCOES.adv[f.funcao].bl*(.6+f.moral/250),0));
+const blocosFil=U=>Math.floor(U.equipe.filter(f=>f.ferias!==S.semana).reduce((a,f)=>a+FUNCOES.adv[f.funcao].bl*(.6+f.moral/250),0)); // de férias não trabalha
 const advsFilAdv=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length,0);
 const advsFil=()=>unidades().reduce((a,[,U])=>a+U.equipe.filter(f=>FUNCOES.adv[f.funcao].bl>=4).length+Math.floor(U.equipe.filter(f=>f.funcao==='estagiario').length/2),0);
 const despFil=()=>unidades().reduce((a,[,U])=>a+IMOVEL_FIL[U.imovel].aluguel+U.equipe.reduce((x,f)=>x+f.sal,0),0);
@@ -35,7 +35,7 @@ function painelFiliais(){ const L=unidades(); if(!L.length) return '';
     <div class="fil-grid">${L.map(([k,U])=>{ const I=IMOVEL_FIL[U.imovel], prox=IMOVEL_FIL[U.imovel+1], casos=S.casos.filter(c=>c.cidade===k);
       return `<div class="fil-card"><div class="panel-head"><h3>${esc(nomeLocal(k))}</h3><span class="label">${LOC[k].nivel==='global'?LOC[k].pais:LOC[k].nivel==='regional'?'bairro':'cidade'}</span></div>
         <small>${I.nome} · ${U.equipe.length}/${I.mesas} mesas · ${blocosFil(U)} blocos por mês · ${casos.length} caso${casos.length===1?'':'s'} ativo${casos.length===1?'':'s'} aqui</small>
-        ${U.equipe.length?`<ul class="fil-eq">${U.equipe.map(f=>`<li>${retrato(f.nome,{size:30})}<span><b>${esc(f.nome)}</b><small>${nomeFuncao(f)}${f.area?` · ${AREAS[f.area].nome} ${Math.round(f.ae)}`:''} · moral ${Math.round(f.moral)}${f.local?' · local':''}</small></span>${f.funcao==='socio'?'':`<button class="lnk" data-fildem="${k}" data-id="${f.id}">Demitir</button>`}</li>`).join('')}</ul>`
+        ${U.equipe.length?`<ul class="fil-eq">${U.equipe.map(f=>`<li>${retrato(f.nome,{size:30})}<span><b>${esc(f.nome)}</b><small>${nomeFuncao(f)}${f.area?` · ${AREAS[f.area].nome} ${Math.round(f.ae)}`:''} · moral ${Math.round(f.moral)}${f.local?' · local':''}</small></span>${f.funcao==='socio'?'':`<button class="lnk" data-act="feriasF" data-id="${f.id}" ${f.feriasEm&&S.semana-f.feriasEm<6?'disabled':''}>${f.ferias===S.semana+1?'Férias no próximo mês':f.ferias===S.semana?'De férias':'Férias'}</button> <button class="lnk" data-fildem="${k}" data-id="${f.id}">Demitir</button>`}</li>`).join('')}</ul>`
           :'<p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Sem equipe: os casos daqui dependem dos seus blocos e da equipe da sede.</p>'}
         <div class="chips">${FUNC_FIL.map(fn=>`<button class="chip" data-filcon="${k}" data-v="${fn}">+ ${FUNCOES.adv[fn].nome}</button>`).join('')}</div>
         ${prox?`<button class="btn ghost" data-filimo="${k}" ${S.caixa<prox.custo?'disabled':''}>Mudar para ${prox.nome.toLowerCase()} · ${brl(prox.custo)} (+${brl(prox.aluguel-I.aluguel)}/mês)</button>`:''}</div>`; }).join('')}</div>

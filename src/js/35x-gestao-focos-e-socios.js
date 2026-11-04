@@ -12,7 +12,7 @@ const FOCOS={
 const SOC_EXTRA=.4, REFORCO=.5, TIER_GESTOR=1; // TIERS[1] = Escritório local
 const gestorLiberado=()=>S.carreira==='adv'&&tierEscritorio()>=TIER_GESTOR;
 const gestorAtivo=()=>gestorLiberado()&&!!S.u&&!!gestorAtual();
-const sociosLideres=()=>S.u?S.u.equipe.filter(f=>f.funcao==='socio'&&!f.local):[];
+const sociosLideres=()=>S.u?todosDaEquipe().map(x=>x[0]).filter(f=>f.funcao==='socio'&&!f.local):[]; // sede e filiais
 const G2=()=>{ const G=gestao(); if(!G.deleg) G.deleg={ferias:'auto',carga:'auto',aumentos:'manual',recursos:'auto'}; if(G.recMin===undefined) G.recMin=.45; if(G.aumMax===undefined) G.aumMax=.1; if(!G.focoMes) G.focoMes='comercial'; return G; };
 function forcasFocos(){ const A={}, n={}; if(S.carreira!=='adv'||!S.u) return A;
   for(const s of sociosLideres()) if(s.lidera&&FOCOS[s.lidera]) n[s.lidera]=(n[s.lidera]||0)+1;
@@ -53,11 +53,13 @@ function semanaGestor2(){ const U=S.u, G=G2(), rel=[];
   U.auto=gestorAtivo()&&G.deleg.carga==='auto'; // distribuição dos blocos da equipe
   if(!gestorAtivo()){ S.relGestor={mes:S.semana,l:[]}; return; }
   const F=forcasFocos(); rel.push(['b',`Focos: ${Object.keys(F).length?Object.entries(F).map(([k,v])=>`${FOCOS[k].nome} ${Math.round(v*100)}%`).join(' · '):'nenhum'}.`]);
-  if(G.deleg.ferias==='auto'){ const L=U.equipe.filter(f=>f.funcao!=='socio'&&f.moral<45&&(!f.feriasEm||S.semana-f.feriasEm>=6)).slice(0,2);
-    for(const f of L){ f.ferias=S.semana+1; f.feriasEm=S.semana; const a=Math.round(f.moral); f.moral=clamp(f.moral+18,0,100); rel.push(['g',`${f.nome} sai de férias no próximo mês (moral ${a} → ${Math.round(f.moral)}).`]); } }
-  if(G.deleg.aumentos==='auto'){ const folha=U.equipe.reduce((a,f)=>a+(f.sal||0),0); let teto=Math.round(folha*G.aumMax);
-    for(const f of U.equipe.filter(f=>f.sal&&f.moral<35).sort((a,b)=>b.q-a.q)){ const x=forca('administrativo')?.135:.15, d=Math.round(f.sal*x/50)*50; if(d>teto) break;
-      teto-=d; f.sal+=d; f.moral=clamp(f.moral+15,0,100); rel.push(['g',`${f.nome} recebeu aumento para ${brl(f.sal)} e desistiu de sair.`]); } }
+  const onde=f=>{ const a=acharMembro(f.id); return a&&a[1]?` (filial ${nomeLocal(a[1])})`:''; };
+  const todos=todosDaEquipe().map(x=>x[0]);
+  if(G.deleg.ferias==='auto'){ const L=todos.filter(f=>f.funcao!=='socio'&&f.moral<45&&(!f.feriasEm||S.semana-f.feriasEm>=6)).sort((a,b)=>a.moral-b.moral).slice(0,3);
+    for(const f of L){ f.ferias=S.semana+1; f.feriasEm=S.semana; const a=Math.round(f.moral); f.moral=clamp(f.moral+18,0,100); rel.push(['g',`${f.nome}${onde(f)} sai de férias no próximo mês (moral ${a} → ${Math.round(f.moral)}).`]); } }
+  if(G.deleg.aumentos==='auto'){ const folha=todos.reduce((a,f)=>a+(f.sal||0),0); let teto=Math.round(folha*G.aumMax);
+    for(const f of todos.filter(f=>f.sal&&f.moral<35).sort((a,b)=>b.q-a.q)){ const x=forca('administrativo')?.135:.15, d=Math.round(f.sal*x/50)*50; if(d>teto) break;
+      teto-=d; f.sal+=d; f.moral=clamp(f.moral+15,0,100); rel.push(['g',`${f.nome}${onde(f)} recebeu aumento para ${brl(f.sal)} e desistiu de sair.`]); } }
   if(G.deleg.carga==='auto') rel.push(['','Blocos da equipe distribuídos pelos casos mais urgentes.']);
   const manuais=Object.entries(G.deleg).filter(([,v])=>v==='manual').map(([k])=>({ferias:'férias',carga:'carga de trabalho',aumentos:'aumentos',recursos:'recursos'}[k]));
   if(manuais.length) rel.push(['',`Com você: ${manuais.join(', ')}.`]);
@@ -66,7 +68,7 @@ function semanaGestor2(){ const U=S.u, G=G2(), rel=[];
 // recursos dos casos delegados: o gestor decide (registro) ou você decide (janela)
 { const l0=addLog; addLog=function(t,c){ l0(t,c); if(S&&S.relGestor&&S.relGestor.mes===S.semana&&/recorreu de|não recorreu de/.test(t)&&/chance de reverter|custas/.test(t)) S.relGestor.l.push([c==='r'?'r':'b',t]); }; }
 // férias na mão: botão no cartão (manual ou quando quiser)
-function darFerias(id){ const f=S.u.equipe.find(x=>x.id===id); if(!f||(f.feriasEm&&S.semana-f.feriasEm<6)) return;
+function darFerias(id){ const a=acharMembro(id), f=a&&a[0]; if(!f||(f.feriasEm&&S.semana-f.feriasEm<6)) return;
   f.ferias=S.semana+1; f.feriasEm=S.semana; f.moral=clamp(f.moral+18,0,100); addLog(`${f.nome} vai tirar férias no próximo mês.`,'g'); salvar(); render(); }
 { const c0=cardFunc; cardFunc=function(f){ let h=c0(f); if(S.carreira!=='adv'||f.funcao==='socio') return h;
     const pode=!f.feriasEm||S.semana-f.feriasEm>=6, em=f.ferias===S.semana;
@@ -85,7 +87,7 @@ function painelGestao(){ if(S.carreira!=='adv') return ''; const G=G2(), g=gesto
     return `<button class="gx-foco ${v?'on':''}" data-gfoco="${k}" ${ativo?'':'aria-disabled="true"'} aria-pressed="${mes}"><span class="gx-ft"><b>${f.nome}</b><span class="num">${v?Math.round(v*100)+'%':''}</span></span>
       <small class="gx-mut">${f.lema}</small><ul>${f.ef(v||1).map(x=>`<li>${x}</li>`).join('')}</ul><small class="gx-mut">Em troca: ${f.custo}</small>${quem?`<small><b>${quem}</b></small>`:''}</button>`; }).join('');
   const lim=TIERS[tierEscritorio()].socios;
-  const socios=soc.length?`<span class="label">Sócios · ${soc.length} de ${lim}</span><div class="gx-rows">${soc.map(s=>`<div class="gx-row"><span><b>${esc(s.nome)}</b> <small class="gx-mut">sócio</small></span>
+  const socios=soc.length?`<span class="label">Sócios · ${soc.length} de ${lim}</span><div class="gx-rows">${soc.map(s=>`<div class="gx-row"><span><b>${esc(s.nome)}</b> <small class="gx-mut">sócio${(acharMembro(s.id)||[])[1]?' · filial '+esc(nomeLocal(acharMembro(s.id)[1])):''}</small></span>
       <select data-glidera="${s.id}" aria-label="Foco de ${esc(s.nome)}"><option value="">Sem foco</option>${Object.entries(FOCOS).map(([k,f])=>`<option value="${k}" ${s.lidera===k?'selected':''}>Lidera ${f.nome}</option>`).join('')}</select></div>`).join('')}</div>
       ${nt('Cada sócio lidera um foco, ativo todo mês. Um segundo sócio no mesmo foco soma +40%.')}`:'';
   const DL=[['ferias','Férias da equipe','marca férias para quem está com moral baixa (até 2 por mês, uma vez a cada 6 meses)'],['carga','Carga de trabalho','distribui os blocos da equipe pelos casos mais urgentes'],['aumentos','Aumentos','dá aumento a quem está prestes a sair, dentro do teto da folha'],['recursos','Recursos','nos casos delegados, recorre quando a chance de reverter passa do mínimo']];
@@ -117,3 +119,15 @@ document.addEventListener('change',e=>{ if(!S||S.carreira!=='adv') return; const
 { const c0=contratar; contratar=async function(funcao){ if(S.carreira==='adv'&&funcao==='gestor'&&!gestorLiberado()&&!ocupado)
       return modal(`<h2>Ainda não dá</h2><p>O gestor administrativo libera no ${TIERS[TIER_GESTOR].nome}. Por enquanto, você administra tudo sozinho.</p>`,[{t:'Ok',v:1}]);
     return c0(funcao); }; }
+// ---------- sênior de filial também pode pedir sociedade (no mesmo limite do nível) ----------
+{ const s0=semanaEstruturaAdv; semanaEstruturaAdv=function(){ s0(); const U=S.u; if(!U||U.pedidoSoc||sociosSede()>=limiteSocios()) return;
+    const cand=unidades().flatMap(([,X])=>X.equipe).find(f=>f.funcao==='senior'&&f.semanas>=12&&f.moral>=65&&!f.pediuSoc);
+    if(cand&&Math.random()<.35){ cand.pediuSoc=true; U.pedidoSoc=cand.id; } }; }
+pedidoSociedade=async function(){ const U=S.u, a=acharMembro(U.pedidoSoc); U.pedidoSoc=null; if(!a) return; const [f,k]=a;
+  if(sociosSede()>=limiteSocios()) return;
+  const v=await modal(`<h2>${esc(f.nome)} quer virar sócio</h2><p>Advogado sênior${k?` da filial ${esc(nomeLocal(k))}`:''} há ${f.semanas} meses, qualidade ${Math.round(f.q)}. Pede 10% do lucro mensal do escritório no lugar do salário de ${brl(f.sal)}.</p>
+    <dl class="meta"><dt>Se aceitar</dt><dd>7 blocos por mês, não pede demissão, recebe 10% do lucro e pode liderar um foco</dd><dt>Se recusar</dt><dd class="lo">−35 de moral; pode sair e levar clientes</dd></dl>`,
+    [{t:'Recusar',v:0,cls:'ghost'},{t:'Aceitar como sócio',v:1,cls:'brass'}]);
+  if(v){ f.funcao='socio'; f.sal=0; f.salBase=0; f.part=.1; f.moral=clamp(f.moral+20,0,100); f.q=clamp(f.q+5,0,95); addLog(`${f.nome}${k?` (filial ${nomeLocal(k)})`:''} virou sócio do escritório. Escolha o foco que ele lidera na Gestão.`,'g'); }
+  else { f.moral=clamp(f.moral-35,0,100); addLog(`Você recusou o pedido de sociedade de ${f.nome}.`,'r'); }
+  salvar(); render(); };

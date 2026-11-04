@@ -1,7 +1,7 @@
 // ===================== RETIRADA DO TITULAR =====================
 // o titular escolhe o valor e saca na hora, uma vez por mês; os sócios levam o percentual deles sobre o total distribuído
 const RET_INTERVALO=1;
-const partSocios=()=>S.u.equipe.filter(f=>f.funcao==='socio').reduce((a,f)=>a+f.part,0);
+const partSocios=()=>[...S.u.equipe,...(S.carreira==='adv'?unidades().flatMap(([,U])=>U.equipe):[])].filter(f=>f.funcao==='socio').reduce((a,f)=>a+(f.part||0),0); // inclui os sócios das filiais
 const retLivreEm=()=>(S.u.ultRet||-99)+RET_INTERVALO;
 function mediaRetirada(){ const H=(S.u.retHist||[]).filter(h=>S.semana-h.w<12); return H.length?Math.round(H.reduce((a,h)=>a+h.voce,0)/12):0; }
 function divisaoRetirada(v){ const p=partSocios(), soc=Math.round(v*p); return {voce:v-soc,soc,p}; }

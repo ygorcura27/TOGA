@@ -15,7 +15,7 @@ const TIERS=[
   {nome:'Escritório High Tier',socios:5,rarMax:4,valor:1.9,partido:2.5,req:{imovel:2,advs:15,estados:3,clientes:6,full:true,prest:80,anos:10}},
 ];
 // sócios da sede (os sócios locais das filiais no exterior não contam)
-const sociosSede=()=>S.u?S.u.equipe.filter(f=>f.funcao==='socio').length:0;
+const sociosSede=()=>S.u?[...S.u.equipe,...(S.carreira==='adv'?unidades().flatMap(([,U])=>U.equipe):[])].filter(f=>f.funcao==='socio'&&!f.local).length:0; // sede e filiais (o sócio local do exterior não conta)
 const limiteSocios=()=>TIERS[tierEscritorio()].socios;
 const anosEscritorio=()=>S.u?Math.floor((S.semana-(S.u.fundado||S.semanaFormatura||1))/ANO):0;
 function checarTier(r){ const U=S.u, est=S.filiais.filter(f=>LOC[f]&&(LOC[f].nivel==='nacional'||LOC[f].nivel==='global')).length;
