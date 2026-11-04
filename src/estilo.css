@@ -458,3 +458,8 @@ select,.field input{border-radius:6px}
 .gx-rel li{display:grid;grid-template-columns:12px minmax(0,1fr);gap:6px}
 .gx-rel i{width:7px;height:7px;border-radius:50%;margin-top:6px;background:var(--muted)}
 .gx-rel i.g{background:var(--win)} .gx-rel i.r{background:var(--loss)} .gx-rel i.b{background:var(--brass)}
+/* habilidade de recursos */
+.rec-inst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.rec-inst{grid-template-columns:minmax(0,1fr)}}
+.rec-inst>div{border:1px solid var(--line);border-radius:8px;padding:10px;display:grid;gap:2px}
+.rec-inst>div.falta{border-color:color-mix(in srgb,var(--loss) 45%,transparent)}
