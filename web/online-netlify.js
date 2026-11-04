@@ -19,7 +19,7 @@ function iniciar() {
   async function req(metodo, url, corpo, d = dono) {
     const h = {}; if (corpo) h['content-type'] = 'application/json';
     let u = url;
-    if (url === '/api/save' && d) { if (d.tipo === 'conta') h.authorization = 'Bearer ' + d.token; else u += '?codigo=' + d.codigo; }
+    if (url.startsWith('/api/save') && d) { if (d.tipo === 'conta') h.authorization = 'Bearer ' + d.token; else u += (u.includes('?') ? '&' : '?') + 'codigo=' + d.codigo; }
     const r = await fetch(u, { method: metodo, headers: h, body: corpo ? JSON.stringify(corpo) : undefined });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { const e = new Error(j.erro || `erro ${r.status}`); e.status = r.status; throw e; }
@@ -73,6 +73,7 @@ function iniciar() {
     async logout() { clearTimeout(timer); const S = window.TOGA_JOGO.estado(); if (S && dono) await enviar(S); dono = null; ultimo = ''; guardar(); avisar(); },
     salvar(S) { if (!dono || !S) return; clearTimeout(timer); timer = setTimeout(() => enviar(S), 1500); },
     async apagar() { if (!dono) return; clearTimeout(timer); ultimo = ''; try { await req('DELETE', '/api/save'); } catch (e) { console.warn(e); } },
+    async ultimoEncerrado() { if (!dono) return null; try { return await req('GET', '/api/save?encerrado=1'); } catch (e) { return null; } },
     async enviarHall(v) { try { await req('POST', '/api/hall', { ...v, jogador: tag() }); cacheHall = null; } catch (e) { console.warn('Falha ao enviar ao Hall da Fama', e); } },
     async topHall() {
       if (cacheHall && Date.now() - cacheHall.t < 30000) return cacheHall.l;

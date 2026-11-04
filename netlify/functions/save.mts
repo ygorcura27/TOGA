@@ -20,6 +20,13 @@ export default async (req: Request, context: Context) => {
     if (!COD.test(codigo)) return Response.json({ erro: "código inválido" }, { status: 400 })
   }
 
+  // partida encerrada: o DELETE guarda uma cópia aqui antes de apagar, e ?encerrado=1 a devolve
+  const encerrados = getStore({ name: "saves-encerrados", consistency: "strong" })
+  if (req.method === "GET" && url.searchParams.get("encerrado") === "1") {
+    const s = await encerrados.get(codigo, { type: "json" })
+    if (!s) return Response.json({ erro: "nenhuma partida encerrada guardada" }, { status: 404 })
+    return Response.json(s)
+  }
   if (req.method === "GET") {
     const s = await store.get(codigo, { type: "json" })
     if (!s) return Response.json({ erro: "nenhum jogo salvo com esse código" }, { status: 404 })
@@ -34,7 +41,11 @@ export default async (req: Request, context: Context) => {
     await store.setJSON(codigo, { data: corpo.data, nome: String(corpo.nome || "").slice(0, 40), semana: Number(corpo.semana) || 0, salvoEm: Number(corpo.salvoEm) || Date.now(), atualizado: Date.now() })
     return Response.json({ ok: true })
   }
-  if (req.method === "DELETE") { await store.delete(codigo); return Response.json({ ok: true }) }
+  if (req.method === "DELETE") {
+    const atual = await store.get(codigo, { type: "json" })
+    if (atual) await encerrados.setJSON(codigo, { ...(atual as any), encerradoEm: Date.now() })
+    await store.delete(codigo); return Response.json({ ok: true })
+  }
   return new Response("Método não permitido", { status: 405 })
 }
 
