@@ -13,6 +13,9 @@ Protótipo jogável de simulação de carreira jurídica. Tudo roda num único a
 - **Finanças pessoais:** casa e carro com financiamento, investimentos e imóveis para alugar.
 - **Amigos e rivais da faculdade** que seguem carreira e cruzam o seu caminho.
 - **Conquistas da dinastia e Hall da Fama.**
+- **Gestão:** começo manual; gestor (a partir do Escritório local) com foco do mês e delegações; sócios que lideram focos; chefe de secretaria nas carreiras públicas, com a palavra final do titular.
+- **Habilidade de Recursos**, vocações das filiais, clientes com personalidade, casos de época, desafios, aba Ajuda.
+- **Cópia de segurança:** partida encerrada pode ser recuperada; vidas antigas podem ser reconstruídas pelo Hall da Fama.
 
 ## Documentos
 - `docs/GDD.md`: documento de design, atualizado com os sistemas e números do protótipo; a seção 14 reúne a visão de produto ainda não implementada.

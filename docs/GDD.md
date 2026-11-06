@@ -685,7 +685,7 @@ Ideias do design original que continuam valendo como direção, mas não estão 
   - Foco +10 na skill escolhida e −4 nas outras. Quem julga valoriza um tipo de lance (sondar revela); o foco nele faz seus lances pesarem 50% mais.
   - Fôlego é a energia do personagem; cansado, as skills caem. Embalo de até +9%. Trunfos vêm dos apoios e do preparo; a outra parte também tem trunfos.
   - Três momentos decisivos, objeção (indeferida custa 2), recesso e, na advocacia, acordo no meio da audiência.
-  - **Enviar advogado** (assessor nas carreiras públicas): a chance usa a skill do substituto no caso, sem o momento decisivo.
+  - **Enviar advogado** (só na advocacia; juiz, promotor e defensor são sempre titulares): a chance usa a skill do substituto no caso, sem o momento decisivo. Caso delegado não abre a balança na tela; o resultado aparece no resumo do mês.
 - **Juiz:** preside em vez de disputar. Um lado tem razão em segredo; as partes jogam sozinhas e o melhor advogado pode convencer sem ter razão.
   - Perguntar às testemunhas revela se um lance é verdadeiro (precisão pela Análise e pelo estudo do processo). Perícia dá pista forte (88%) e envelhece o processo 1 mês.
   - Objeções mal decididas e falso testemunho apurado sem mentira aumentam o risco de nulidade.
@@ -706,8 +706,8 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 - **Habilidades VIP:** desbloqueadas jogando e guardadas no navegador; valem para todas as partidas seguintes. Faro para mentira, Testemunha de ouro (3 testemunhas), Nervos de aço (fôlego 100 ao vivo), Lábia de corredor (+50% ao articular), Pena de ouro (+20% na coluna), Carteira de elite (+1 oferta), Memória institucional (+5 nas áreas no início) e Nome de família (+10 de prestígio para herdeiros). Ficam na aba Conquistas, com o progresso.
 
 ## Equilíbrio atual (simulações rápidas)
-- **Escritório** (`npm run sim`, 12 partidas de 24 meses por nível, robô que aceita casos com 40%+ e manda os comuns com a equipe): iniciante R$ 4,7 mil, local R$ 10,1 mil, regional R$ 23,5 mil, regional com equipe de nacional R$ 39 mil, High Tier R$ 193 mil por mês. Juiz substituto: R$ 25 mil.
-- **Defensoria:** o expediente tem +2 blocos (triagem do balcão). Sem equipe, metade das carreiras termina em 24 meses (reputação média 5); com a equipe inicial, 58; com equipe grande, 80.
+- **Escritório** (`npm run sim -- 24 10`, novembro de 2026, com focos, sócios, Recursos e vocações): iniciante R$ 3,8–4,4 mil/mês, local R$ 9,6–11 mil, regional R$ 21–22 mil, nacional R$ 28–37 mil, High Tier R$ 237–271 mil.
+- **Carreiras públicas** (`node tests/sim-publicas.cjs 24 6`, equipe inicial → +1 servidor): juiz reputação 74 → 99; promotor 54 → 80; defensor 62 → 82. A triagem da Defensoria soma +1 bloco de expediente.
 
 ## Sessão de julgamento (desembargador, STJ, STF)
 - Do cargo de desembargador em diante, os processos raros ou maiores podem ir a **sessão ao vivo** (no lugar da audiência presidida), dentro do limite de 3 por mês.
@@ -723,10 +723,45 @@ Ideias do design original que continuam valendo como direção, mas não estão 
 
 ## Gestão do escritório
 - **Aceitar casos:** manual pelo botão Aceitar, ou automático no painel Gestão do escritório: todo mês aceita os casos novos que passam no filtro e na chance mínima (40% a 70%), do maior para o menor chance, até encher as vagas (recursos não ocupam vaga).
-- **Blocos da equipe:** com um gestor administrativo, a distribuição automática coloca os blocos da equipe nos casos mais urgentes. Os seus blocos continuam manuais.
-- **Audiências:** regra padrão escolhida no painel (você vai às raras ou maiores, só às épicas e lendárias, ou a equipe vai sempre que puder); cada caso ainda pode ser trocado no cartão.
+- **Blocos da equipe:** a delegação "Carga de trabalho" do gestor coloca os blocos da equipe nos casos mais urgentes. Os seus blocos continuam manuais (a agenda aceita digitar o número).
+- **Postura nas audiências:** tabela por raridade (épicos e lendários, raros e incomuns, comuns) × instância (1ª, 2ª, STJ, STF), com sempre ao vivo, rápida ou enviar advogado. Só funciona com o foco Administrativo ativo; sem ele, você vai às raras ou maiores e manda a equipe nas outras quando houver quem possa ir.
 - **Hierarquia de quem pode ir:** épico e lendário só você ou um sócio; raro a partir de sênior; incomum a partir de pleno; comum qualquer advogado ou associado. Estagiário não vai. A chance usa a skill de quem for, por isso o automático costuma render menos que você indo.
 - **Gestão e Idiomas (skills do titular):** estrelas em 40 · 55 · 70 · 82 · 92, sobem estudando. Abrir filial em outro bairro exige 2★ em Gestão; em outra cidade, 3★; em outro país, 4★ em Gestão e 3★ em Idiomas (Portugal dispensa o idioma). Gestão também melhora a organização do escritório; Idiomas dão bônus (ou penalidade abaixo de 3★) nos casos no exterior.
 - **Trabalho nos casos:** a agenda do escritório tem uma linha só, com o total de blocos seus nos casos; cada bloco vai para o caso que mais precisa (manutenção em falta, depois o mais longe do preparo ideal com prazo curto). Na aba Estrutura e equipe, o painel Trabalho nos casos permite ajustar caso a caso.
 - **Filiais com equipe própria:** cada filial tem imóvel (sala, conjunto ou andar: 3, 8 ou 15 mesas) e equipe (estagiário a sênior; no exterior abre com um sócio local e contrata gente local). A equipe da filial trabalha nos casos daquela cidade sem gastar a sua energia, pode ir às audiências de lá (mesma hierarquia) e cada advogado soma 1 vaga de caso ativo. Salários e aluguel extra saem do caixa do escritório. Gestão fica no painel Filiais da aba Estrutura e equipe.
 - **Previsão de energia:** a agenda mostra a energia de hoje e a do fim do mês, com a mesma conta do fechamento.
+
+## Começo, gestor, focos e sócios (advocacia)
+- **Começo manual:** sem gestor e sem sócio chegam 2 casos novos da sede por mês (em vez de 3); caixa inicial R$ 10 mil ao sair da faculdade (R$ 15 mil começando formado). Sem aceitar casos sozinho e sem postura automática.
+- **Gestor administrativo:** libera no Escritório local (nível 2 de 5). Escolhe o foco do mês e cuida de férias, carga de trabalho, aumentos e recursos dos casos delegados (cada item pode ficar em "Eu decido"). Vale para a sede e para as filiais. Relatório do gestor no fim do mês.
+- **Focos** (força em %): Comercial (+2 casos novos, causas +10%, +4 no sorteio de raros; equipe −5%), Jurídico (+2 vagas de caso ativo, +3 de chance, prazos atrasados pesam até 50% menos; −1 caso novo), Administrativo (equipe +20% de blocos, libera a postura automática, aumentos 10% mais baratos).
+- **Sócios:** limite 1/2/3/4/5 do Iniciante ao High Tier, contando sede e filiais (o sócio local do exterior não conta). Cada sócio lidera um foco, ativo todo mês; um segundo sócio no mesmo foco soma +40%; o foco do mês do gestor soma 100% ou +50% de reforço. Sênior com 12 meses e moral 65+ pede sociedade, inclusive na filial.
+- **Recursos dos casos delegados:** com o gestor, recorre sozinho a partir da chance mínima (padrão 45%); em "Eu decido", cada derrota abre uma janela.
+- **Gestão do gestor:** cresce com o tempo no cargo (cerca de 3 pontos no 1º ano) e com curso de gestão (R$ 6 mil, +6, um por ano; teto 95).
+- **Plano de carreira:** júnior 12 meses e skill 30; pleno 12 e 55; sênior 18 e 68. Cada audiência vencida adianta 1 mês. Pronto e sem promoção: −moral após 3 meses; após 6, proposta de rival.
+
+## Habilidade de Recursos
+- Apelação (2ª instância) pede 1★, Recurso Especial (STJ/TST) 3★, Recurso Extraordinário (STF) 5★ (estrelas em 40 · 55 · 70 · 82 · 92). Cada estrela que falta tira 3 de chance (máximo −9); com as estrelas, +3. Conta quem sustenta: você ou o advogado enviado.
+- Sobe com a experiência em recursos e com congresso (R$ 8 mil, +8, uma vez por ano por pessoa). Advogados nascem com Recursos conforme o cargo; 1 em 5 tem foco em recursos (+15).
+- Juiz: cada estrela reduz em 3% a chance de recurso contra as sentenças (até −15%). Promotor e defensor: vale para os recursos do próprio órgão.
+
+## Chefe de secretaria (carreiras públicas)
+- O chefe (de gabinete, de secretaria ou coordenador) escolhe o foco do mês: Jurídico (+4 nas decisões; equipe −5%), Administrativo (equipe +20% e +1 bloco), Mutirão (juiz +3 julgamentos rápidos; promotor e defensor +2 blocos; atrasos pesam metade; moral −3 por mês).
+- Cuida de férias, carga de trabalho e conflitos. A palavra final é do titular: férias em mutirão, conflitos graves e itens em "Eu decido" vão para a fila "Sua palavra final"; sem resposta, segue a recomendação do chefe (sem chefe, a opção que protege a equipe).
+- Juiz: audiência completa (raros+, 3 por mês, até −15 de energia), julgamento rápido (duas decisões, 6 por mês, até −3) ou sentença direta. Lotação de servidores 2 + cargo; orçamento base R$ 5 mil a R$ 18 mil com piso de 80%; cada atraso tira 1,5 da efetividade.
+
+## Filiais: vocações
+- Cada bairro, capital e país tem uma vocação (ex.: Faria Lima causas empresariais e tributárias +25%; Barra Funda +4 Penal e +3 Trabalho; Brasília +6 nos tribunais superiores; Nova York causas empresariais +30% e +0,2 de prestígio por mês). Bônus de área somam até +8 por área na rede; valor até ×1,5. Filial de bairro dá +4 nos casos do bairro.
+
+## Clientes, épocas e desafios
+- **Clientes fixos com personalidade:** bom pagador, paga atrasado, exigente, bem relacionado, fiel, impaciente, pechincheiro, midiático.
+- **Casos de época:** durante crises, ciclos e ondas de leis novas, 15% dos casos novos viram temáticos (raros+, valor +30%, +50% de prestígio e manchete ao vencer).
+- **Desafios:** objetivos grandes escolhidos pelo jogador (no máximo 2), com prazo e insígnia.
+- **Parte contrária recorre** (advocacia): 10/20/30/40/55% por raridade; juiz e promotor usam a tabela antiga (15/30/45/60/80%).
+
+## Energia
+- Blocos livres +3, lazer +1,5 (−6 de estresse), trabalho próprio −3,2 (Workaholic −30%). Audiência ao vivo desconta metade do fôlego gasto (até −25; juiz até −15); o fôlego começa em pelo menos 30; abaixo de 15 de energia a audiência não vai ao vivo. A agenda mostra a previsão, com o custo das audiências do mês.
+
+## Corrupção, fim de carreira e cópias
+- Juiz pego com propina é demitido e volta a advogar: prestígio ×0,5, integridade −20, quarentena de 24 meses, ficha suja. Advogado pego em escândalo de atalho pode ser preso (12%, +25% com ficha suja, +15% com integridade abaixo de 30): fim de carreira, com dinastia.
+- Partida encerrada fica guardada no navegador e no servidor (saves-encerrados); a tela inicial oferece "Recuperar a última partida". Vidas mais antigas podem ser reconstruídas a partir do Hall da Fama (nome, idade, prestígio, patrimônio) informando a formação acadêmica.
