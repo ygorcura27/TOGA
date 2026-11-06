@@ -468,3 +468,16 @@ select,.field input{border-radius:6px}
 .pf-it{display:grid;gap:4px;padding-top:8px;border-top:1px solid color-mix(in srgb,var(--brass) 35%,transparent)}
 .pf-it:first-of-type{border-top:0;padding-top:0}
 .pf-it small{font-size:12.5px}
+/* estatísticas da carreira */
+.est-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.est-grid2{grid-template-columns:minmax(0,1fr)}}
+.est-g{border:1px solid var(--line);border-radius:8px;padding:10px;display:grid;gap:4px;min-width:0}
+.est-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.est-g svg{width:100%;height:auto;display:block}
+.est-grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 3}
+.est-t{font-size:7.5px;fill:var(--muted);font-family:var(--f-mono,monospace)}
+.est-bars{display:grid;gap:6px}
+.est-bar{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}
+.est-trk{display:flex;height:10px;border-radius:5px;overflow:hidden;background:color-mix(in srgb,var(--line) 60%,transparent)}
+.est-trk i{display:block;height:100%}
+.est-trk i.v{background:var(--win)} .est-trk i.d{background:var(--loss)}
