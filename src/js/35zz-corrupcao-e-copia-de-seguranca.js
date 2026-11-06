@@ -83,7 +83,19 @@ async function reconstruirComFormacao(v){ if(ocupado) return;
   if(tit==='mestrado'){ const m=await modal(`<h2>Doutorado em andamento?</h2><p>O doutorado leva no mínimo 48 meses e 240 blocos de pesquisa.</p>
       <div class="opts">${op('0','Não','')}${[12,24,36,44].map(n=>op(String(n),`Sim, no mês ${n}`,n>=44?'perto da defesa da tese':'')).join('')}</div>`,[]); dout=+m||0; }
   const prep=await modal(`<h2>Preparatório para a magistratura?</h2><p>O curso libera a 4ª estrela em todas as áreas do direito.</p><div class="opts">${op('sim','Sim, concluído','todas as áreas com teto de 4★')}${op('nao','Não','')}</div>`,[]);
+  // família: o Hall também não guarda
+  const est=await modal(`<h2>Família de ${esc(v.nome.split(' ')[0])}</h2><div class="opts">${op('solteiro','Solteiro','')}${op('namoro','Namorando','')}${op('casado','Casado','')}</div>`,[]);
+  let anosCas=0, nFil=0, velho=0, novo=0;
+  if(est==='casado'){ anosCas=+(await modal(`<h2>Casados há quantos anos?</h2><div class="opts">${[1,3,5,8,10,15,20].map(n=>op(String(n),`${n} ano${n>1?'s':''}`,'')).join('')}</div>`,[]))||5; }
+  nFil=+(await modal(`<h2>Quantos filhos?</h2><div class="opts">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>op(String(n),String(n),'')).join('')}</div>`,[]))||0;
+  if(nFil){ velho=+(await modal(`<h2>Idade do filho mais velho</h2><div class="opts">${[1,2,3,4,5,6,7,8,10,12,15,18,22,25].map(n=>op(String(n),`${n} ano${n>1?'s':''}`,'')).join('')}</div>`,[]))||1;
+    novo=nFil>1?+(await modal(`<h2>Idade do filho mais novo</h2><div class="opts">${[0,1,2,3,4,5,6,8,10,12,15,18,22].filter(n=>n<=velho).map(n=>op(String(n),n?`${n} ano${n>1?'s':''}`:'recém-nascido','')).join('')}</div>`,[]))||0:velho; }
   reconstruirVida(v);
+  { const V=S.vida;
+    if(est==='casado'||est==='namoro'){ const pg=S.genero==='m'?'f':'m', pers=pick(Object.keys(PERS_PARC));
+      V.parceiro={nome:nomeGenero(pg),prof:pick(AREAS_PROF),pers,genero:pg,rel:est==='casado'?75:55,desde:S.semana-Math.max(1,anosCas+1)*ANO,status:est==='casado'?'casado':'namoro'}; }
+    for(let i=0;i<nFil;i++){ const idade=nFil>1?Math.round(velho-(velho-novo)*i/(nFil-1)):velho, gf=Math.random()<.5?'m':'f';
+      V.filhos.push({id:++uid,genero:gf,nome:pick(gf==='m'?PRIM_M:PRIM_F)+' '+sobrenome(),nasc:S.semana-idade*ANO-rint(0,ANO-1),rel:70,direito:false,decidiu:false}); } }
   const A=S.ac, T=A.titulos; T.areas=T.areas||{};
   if(prep==='sim'){ T.prep=true; for(const k in AREAS){ T.areas[k]=Math.max(T.areas[k]||0,1); S.skills[k]=Math.max(S.skills[k],86); } }
   if(tit==='esp'){ T.esp=1; T.areas[area]=1; }
@@ -91,5 +103,6 @@ async function reconstruirComFormacao(v){ if(ocupado) return;
   if(tit==='doutorado'){ T.doutorado=true; A.indice+=5; A.pubs.push({tipo:'tese',titulo:tituloPesquisa(area),pts:5,semana:S.semana}); }
   if(area){ S.skills[area]=Math.max(S.skills[area],T.areas[area]>=2?92:86); S.skills.pesquisa=Math.max(S.skills.pesquisa,T.mestrado?68:58); S.skills.escrita=Math.max(S.skills.escrita,85); }
   if(dout){ const C=CURSOS.doutorado; A.curso={tipo:'doutorado',area,prog:Math.round(C.meta*dout/C.minSem),meta:C.meta,inicio:S.semana-dout,minSem:C.minSem,mensal:C.mensal,bolsa:C.bolsa||0,titulo:tituloPesquisa(area)}; S.agenda.curso=4; }
+  addLog(`Família restaurada: ${est==='casado'?`casado há ${anosCas} anos`:est==='namoro'?'namorando':'solteiro'}${nFil?`, ${nFil} filho(s) de ${novo} a ${velho} anos`:''}.`,'g');
   addLog(`Formação restaurada: ${prep==='sim'?'preparatório para a magistratura, ':''}${tit==='nenhum'?'sem pós-graduação':tit==='esp'?'especialização':tit==='mestrado'?'mestrado':'doutorado'}${area?' em '+AREAS[area].nome:''}${dout?`, doutorado em andamento (mês ${dout})`:''}.`,'g');
   salvar(); render(); }
