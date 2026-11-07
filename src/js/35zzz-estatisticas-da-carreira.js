@@ -42,3 +42,26 @@ function painelTrajetoria(){ if(!S) return ''; estFoto(); const E=S.est, F=E.fot
     <span class="label">Resultados por área <small class="gx-mut">· vitórias em verde, derrotas em vermelho</small></span>${barras}
     <p class="gx-nt">O registro começa no primeiro mês jogado depois desta versão; o que aconteceu antes não aparece nos gráficos.</p></section>`; }
 { const r0=renderVida; renderVida=function(){ r0(); app.insertAdjacentHTML('beforeend',painelTrajetoria()); }; }
+// ---------- casos de época também no juiz ----------
+// sentença em caso de época: +50% do ganho em reputação e manchete (uma vez por processo)
+{ const x0=xpJuiz; xpJuiz=function(p,mult){ x0(p,mult); if(!p||!p.epocaTag||p.epocaPago||mult!==1||S.carreira!=='juiz') return; p.epocaPago=true;
+    const g=Math.round(RAR[p.rar].ganho*.5*10)/10; S.prest=clamp(S.prest+g,0,100);
+    noticia('caso',`Sentença em caso símbolo da época: ${p.titulo}`,`O juízo de ${S.nome} decidiu um dos processos mais comentados de ${p.epocaTag.toLowerCase()}.`,3);
+    addLog(`Sentença em caso de época: “${p.titulo}”. ${sgn(g)} reputação.`,'g'); }; }
+// ---------- fim de carreira: resumo da trajetória e placar ----------
+function resumoTrajetoria(){ const E=S.est||{fotos:[],areas:{}}, F=E.fotos, pat=patrimonio(), pts=legadoPontos(pat), H=hallLer();
+  const rank=1+H.vidas.filter(v=>v.pontos>pts).length, picoP=F.length?Math.max(...F.map(f=>f.p)):S.prest, picoPat=F.length?Math.max(...F.map(f=>f.pat)):pat;
+  const ar=Object.entries(E.areas).map(([k,a])=>[k,a.v,a.d]).sort((a,b)=>b[1]-a[1]), melhor=ar[0];
+  const vit=S.carreira==='juiz'?(S.j?`${S.j.sentencas} sentenças · ${S.j.mantidas||0} mantidas`:''):S.carreira==='promotor'?(S.p?`${S.p.condenacoes} condenações`:''):S.carreira==='defensor'?(S.d?`${S.d.vitorias} vitórias`:''):`${S.vitorias} vitórias · ${S.derrotas} derrotas`;
+  const cq=CONQUISTAS.filter(c=>S.cq&&S.cq.ids[c.id]&&S.cq.ids[c.id].ger===S.vida.geracao).length;
+  return `<span class="label">Placar da partida</span>
+    <div class="fim-kpis"><div><span class="label">Pontos de legado</span><b class="num">${pts}</b></div><div><span class="label">No seu Hall</span><b class="num">${rank}º de ${H.vidas.length+1}</b></div>
+      <div><span class="label">Meses de carreira</span><b class="num">${S.semana-1}</b></div><div><span class="label">Conquistas</span><b class="num">${cq}</b></div></div>
+    <dl class="meta"><dt>Resultados</dt><dd>${vit}</dd><dt>Pico de ${S.carreira==='adv'?'prestígio':'reputação'}</dt><dd class="num">${Math.round(picoP)}</dd><dt>Maior patrimônio</dt><dd class="num">${brl(picoPat)}</dd>
+      ${melhor?`<dt>Área mais forte</dt><dd>${AREAS[melhor[0]].nome} · ${melhor[1]}V ${melhor[2]}D</dd>`:''}</dl>
+    ${F.length>=2?`<div class="est-grid2">${graficoLinha(F,'p',{titulo:S.carreira==='adv'?'Prestígio':'Reputação',dominio:[0,100]})}${graficoLinha(F,'pat',{titulo:'Patrimônio',fmt:brlCurto,cor:'var(--win)'})}</div>`:''}`; }
+MOTIVO_HALL.prisao='preso';
+{ const m0=fimVida; fimVida=async function(motivo){ if(S&&!S.resumoFim){ S.resumoFim=true;
+      const tit={morte:'Uma vida no Direito',compulsoria:'Aposentadoria compulsória',aposentadoria:'Fim de carreira',prisao:'Fim de carreira'}[motivo]||'Fim de carreira';
+      await modal(`<span class="label">${esc(S.nome)} · ${idade()} anos</span><h2>${tit}</h2><p>${esc(descCarreira())}. ${esc(resumoCarreira())}.</p>${resumoTrajetoria()}`,[{t:'Ver o legado',v:1,cls:'brass'}]); }
+    return m0(motivo); }; }

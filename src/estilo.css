@@ -481,3 +481,7 @@ select,.field input{border-radius:6px}
 .est-trk{display:flex;height:10px;border-radius:5px;overflow:hidden;background:color-mix(in srgb,var(--line) 60%,transparent)}
 .est-trk i{display:block;height:100%}
 .est-trk i.v{background:var(--win)} .est-trk i.d{background:var(--loss)}
+.fim-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.fim-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fim-kpis>div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid}
+.fim-kpis b{font-size:20px}
