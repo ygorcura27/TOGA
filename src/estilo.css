@@ -485,3 +485,5 @@ select,.field input{border-radius:6px}
 @media (max-width:560px){.fim-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .fim-kpis>div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid}
 .fim-kpis b{font-size:20px}
+.musica-btn{margin-left:6px}
+.musica-btn span[aria-hidden]{font-size:15px;line-height:1}
