@@ -493,6 +493,30 @@ select,.field input{border-radius:6px}
 .fim-kpis b{font-size:20px}
 .musica-btn{margin-left:6px}
 .musica-btn span[aria-hidden]{font-size:15px;line-height:1}
+
+/* ===== Direção A · Tribunal Noturno refinado ===== */
+/* cabeçalho: medidores em grupos */
+.top .grupos{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.top .grupo{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;padding:8px 12px 8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);min-width:0}
+.grupo-t{writing-mode:vertical-rl;transform:rotate(180deg);align-self:center;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat.alerta b{color:var(--loss)}
+.stat.alerta .meter i{background:var(--loss)}
+.stat.alerta .label::after{content:" ●";color:var(--loss)}
+/* cartão do caso: faixa da raridade e linha de selos */
+.folder{border-top:3px solid var(--rc,var(--folder-edge))}
+.folder .selos{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.prazo{font-size:11.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.prazo.urg{border-color:var(--loss);color:var(--loss);font-weight:600}
+.folder .selos .tag{font-size:11px;padding:2px 8px;border-radius:999px}
+.chance strong{font-family:var(--f-mono);font-size:30px;font-weight:600;letter-spacing:-.02em}
+/* títulos de painel com o traço de latão */
+.panel-head h2::after{content:"";display:block;width:32px;height:2px;background:var(--gold);margin-top:4px;border-radius:1px}
+@media (max-width:640px){
+  .top .grupos{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+  .top .grupo{display:grid;grid-template-columns:auto repeat(2,minmax(0,1fr));gap:10px 14px;align-items:end}
+  .grupo-t{grid-row:1/span 3}
+  .tabs .tab,.chip{min-height:40px}
+}
 </style>
 
 <div id="app"></div>
@@ -6452,6 +6476,30 @@ document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=music
   try{ localStorage.setItem(MUS_KEY,musicaLigada()?'off':'on'); }catch(e){}
   if(musicaLigada()) musIniciar(); else musParar();
   for(const x of document.querySelectorAll('.musica-btn')){ x.setAttribute('aria-pressed',musicaLigada()); x.querySelector('.tema-t').textContent=musicaLigada()?'Música':'Sem música'; } });
+// ===================== DIREÇÃO VISUAL A · TRIBUNAL NOTURNO REFINADO =====================
+// Reorganiza a tela depois de desenhada, sem mudar a marcação que os outros módulos usam:
+//  · cabeçalho: medidores agrupados por tema (dinheiro, carreira, corpo), com alerta no que pede atenção;
+//  · cartão do caso: faixa na cor da raridade e uma linha de selos com o prazo da audiência.
+const GRUPO_STAT=[['corpo',/energia|estresse|sa[uú]de|felicidade/i],['dinheiro',/caixa|pessoal|receber|custo|sal[aá]rio|or[cç]amento|bolsa|mesada|patrim/i]];
+const NOME_GRUPO={dinheiro:'Dinheiro',carreira:'Carreira',corpo:'Corpo'};
+function agruparCabecalho(){ const top=app.querySelector('header.top'); if(!top||top.querySelector('.grupos')) return;
+  const stats=[...top.children].filter(el=>el.classList.contains('stat')); if(stats.length<3) return;
+  const G={dinheiro:[],carreira:[],corpo:[]};
+  for(const st of stats){ const lb=(st.querySelector('.label')||{}).textContent||'', g=(GRUPO_STAT.find(([,re])=>re.test(lb))||['carreira'])[0]; G[g].push(st);
+    const v=parseFloat(((st.querySelector('b')||{}).textContent||'').replace(/[^\d,-]/g,'').replace(',','.'));
+    if((/energia/i.test(lb)&&v<30)||(/estresse/i.test(lb)&&v>=80)||(/sa[uú]de/i.test(lb)&&v<40)) st.classList.add('alerta'); }
+  const box=document.createElement('div'); box.className='grupos'; top.insertBefore(box,stats[0]);
+  for(const k of ['dinheiro','carreira','corpo']){ if(!G[k].length) continue; const d=document.createElement('div'); d.className='grupo g-'+k; d.setAttribute('role','group'); d.setAttribute('aria-label',NOME_GRUPO[k]);
+    d.innerHTML=`<span class="grupo-t" aria-hidden="true">${NOME_GRUPO[k]}</span>`; for(const st of G[k]) d.appendChild(st); box.appendChild(d); } }
+function refinarCartoes(){ for(const f of app.querySelectorAll('.folder:not([data-ref])')){ f.dataset.ref='1';
+    const st=f.querySelector(':scope > .stamp'); if(st&&st.style.color) f.style.setProperty('--rc',st.style.color);
+    const h=f.querySelector(':scope > h3'); if(!h) continue;
+    const row=document.createElement('div'); row.className='selos';
+    let prazo=''; for(const dt of f.querySelectorAll(':scope > .meta dt')) if(/^Audi[eê]ncia$|^Prazo$|^Idade$/i.test(dt.textContent.trim())){ const dd=dt.nextElementSibling; if(dd){ prazo=dd.textContent.split('·')[0].trim(); if(/pr[oó]ximo m[eê]s|neste m[eê]s|atrasad/i.test(dd.textContent)) row.dataset.urg='1'; } break; }
+    if(prazo){ const p=document.createElement('span'); p.className='prazo'+(row.dataset.urg?' urg':''); p.textContent=/^em |^no |^neste/i.test(prazo)?'audiência '+prazo:prazo; row.appendChild(p); }
+    for(const t of [...f.children].filter(el=>el.tagName==='SPAN'&&el.classList.contains('tag'))) row.appendChild(t);
+    if(row.children.length) h.insertAdjacentElement('afterend',row); } }
+{ const r0=render; render=function(){ r0(); try{ agruparCabecalho(); refinarCartoes(); }catch(e){ console.warn('direção A',e); } }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;
