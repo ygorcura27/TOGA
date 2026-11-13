@@ -539,3 +539,42 @@ select,.field input{border-radius:6px}
 .pf-it .chip{min-height:36px;padding:6px 14px;font-size:12.5px;background:var(--surface)}
 .pf-it .chip.on{background:var(--brass);border-color:var(--brass);color:var(--surface);font-weight:600}
 @media (prefers-reduced-motion:reduce){.gx-foco{transition:none}.gx-foco:hover{transform:none}}
+
+/* ===== Direção A · audiência ao vivo ===== */
+/* placar como tribuna: filete dourado, relógio em destaque e cabo de convicção mais alto, com as pontas nomeadas */
+.av-placar{border-top:3px solid var(--gold);position:relative}
+.av-relogio{font-size:34px;letter-spacing:.02em}
+.av-fase{font-weight:700;letter-spacing:.14em}
+.av-cabo{height:16px;border-radius:8px;box-shadow:inset 0 1px 2px rgba(0,0,0,.18)}
+.av-cabo i{border-radius:8px 0 0 8px;background:linear-gradient(90deg,color-mix(in srgb,var(--win) 78%,#000),var(--win))}
+.av-cabo::after{width:3px;background:var(--surface);box-shadow:0 0 0 1px var(--ink)}
+/* lance a lance: o lance mais novo em destaque, cor na lateral de quem pontuou */
+.av-ev{border-left:3px solid transparent}
+.av-ev.nos{border-left-color:var(--win)} .av-ev.eles{border-left-color:var(--loss)}
+.av-ev:first-child{font-weight:600;box-shadow:var(--shadow)}
+.av-feed{max-height:min(70vh,560px);overflow:auto}
+/* momento decisivo: a decisão que para a sala */
+.av-momento{border-width:2px;padding:14px;box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 22%,transparent)}
+.av-momento b{font-family:var(--f-display);font-size:18px}
+/* trunfos: a carta da fase certa chama a atenção */
+.av-carta{transition:transform .15s,border-color .15s}
+.av-carta:hover:not(:disabled){transform:translateY(-2px);border-color:var(--gold)}
+.av-carta.agora{background:var(--brass-soft)}
+.av-chance strong{font-family:var(--f-mono);font-size:48px;font-weight:600;letter-spacing:-.02em}
+.av-acoes .btn,.av-ctl .btn,.av-pills .tab,.av-focos .tab{min-height:40px}
+/* celular: placar compacto e fixo no topo; os controles vêm logo depois, antes do feed */
+@media (max-width:720px){
+  .av-ov{padding-top:0}
+  .av{gap:10px}
+  .av-placar{position:sticky;top:0;z-index:3;border-radius:0 0 14px 14px;margin:0 -16px;padding:max(8px,env(safe-area-inset-top,0px)) 16px 10px;gap:6px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-top-width:0;border-bottom:2px solid var(--gold)}
+  .av-placar .av-centro{grid-column:1/-1;order:-1}
+  .av-lado b{font-size:15px} .av-lado small,.av-lado .retrato{display:none}
+  .av-lado.dir{text-align:right;align-items:flex-end}
+  .av-relogio{font-size:22px}
+  .av-corpo{display:flex;flex-direction:column}
+  .av-instr{order:-1}
+  .av-feed{max-height:260px}
+  .av-chance{display:none}
+  .av-faixa{gap:8px}
+}
+@media (prefers-reduced-motion:reduce){.av-carta{transition:none}.av-carta:hover{transform:none}}
