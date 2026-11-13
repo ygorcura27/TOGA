@@ -39,18 +39,18 @@ function acordosAutomaticos(){ if(!pubAtual()||!gestao().acordo) return; let ok=
 const NOME_ACORDO={juiz:'Tentar conciliação sozinho nos processos que admitem acordo',promotor:'Propor acordo de não persecução sozinho quando couber',defensor:'Fechar acordo sozinho quando couber'};
 function painelGestaoPub(){ if(!pubAtual()) return ''; const G=gestao(), U=S.u, g=gestorAtual(), J=S.carreira==='juiz';
   const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
-  const nt=t=>`<p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">${t}</p>`;
+  const nt=t=>`<p class="label label-plain">${t}</p>`;
   const cand=candidatosAcordo().length;
   return `<section class="panel gestao" style="margin-bottom:16px"><div class="panel-head"><h2>Gestão ${J?'do gabinete':S.carreira==='promotor'?'da promotoria':'da defensoria'}</h2><span class="label">${G.acordo||(U.auto&&g)?'automática':'manual'}</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 24px;align-items:start">
-    <div style="display:grid;gap:8px"><span class="label">Acordos</span>
+    <div class="pilha"><span class="label">Acordos</span>
       <label class="row"><input type="checkbox" data-gestao="acordo" ${G.acordo?'checked':''}> <span>${NOME_ACORDO[S.carreira]}</span></label>
       <div class="row"><span class="name">Chance mínima</span><select data-gestao="minAc" ${G.acordo?'':'disabled'}>${opt({'0.4':'40%','0.5':'50%','0.6':'60%','0.7':'70%'},G.minAc)}</select></div>
       ${nt(`Tenta no fechamento do mês, sem abrir janela. Hoje ${cand} ${cand===1?'caso passa':'casos passam'} na regra. Se não der acordo, o caso segue normal.`)}</div>
-    <div style="display:grid;gap:8px"><span class="label">Audiências</span>
+    <div class="pilha"><span class="label">Audiências</span>
       ${tabelaModos()}
       ${nt(J?`Você é sempre o titular. Audiência completa: você preside e investiga quem tem razão (só raros ou maiores, até ${VIVO_MES} por mês). Julgamento rápido: duas decisões, instrução e fundamentação (até ${limRapidos()} por mês). Sentença direta: pelos autos, sem audiência.`:`Você é sempre o titular: ninguém vai no seu lugar. Ao vivo cabem ${VIVO_MES} por mês; as outras são rápidas${S.carreira==='defensor'?'; na Defensoria, comuns e incomuns vão em lote, sem audiência ao vivo':''}.`)}</div>
-    <div style="display:grid;gap:8px"><span class="label">Equipe</span>
+    <div class="pilha"><span class="label">Equipe</span>
       <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:`Distribuir os blocos da equipe: nomeie um ${nomeGestor().toLowerCase()}`}</span></label></div>
     </div></section>`; }
 { const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelGestaoPub(); if(!h) return;

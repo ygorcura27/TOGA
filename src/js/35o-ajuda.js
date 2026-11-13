@@ -14,13 +14,13 @@ const pularAjuda=k=>!(k in S.skills);
 function tabelaEstrelas(){ const faixas=k=>ehArea(k)||SK5.includes(k)?NIV_AREA:NIV;
   const prox=(v,k)=>{ const F=faixas(k), n=F.find(x=>v<x); return n?`faltam ${Math.ceil(n-v)} para ${F.indexOf(n)+1}★`:'máximo'; };
   const linhas=Object.entries(SKILLS).filter(([k])=>!pularAjuda(k)).map(([k,nome])=>{ const v=S.skills[k]||0, teto=ehArea(k)?tetoArea(k):100;
-    return `<tr><td>${esc(nome)}</td><td class="num">${Math.floor(v)}${teto<100?`<small style="color:var(--muted)"> /${teto}</small>`:''}</td><td style="color:var(--brass)">${estrelasHtml(k)}</td><td style="color:var(--muted);font-size:12px">${v>=teto&&teto<100?'no teto: precisa de título':prox(v,k)}</td></tr>`; }).join('');
+    return `<tr><td>${esc(nome)}</td><td class="num">${Math.floor(v)}${teto<100?`<small class="mut"> /${teto}</small>`:''}</td><td class="cor-brass">${estrelasHtml(k)}</td><td style="color:var(--muted);font-size:12px">${v>=teto&&teto<100?'no teto: precisa de título':prox(v,k)}</td></tr>`; }).join('');
   return `<table class="aj-tab"><thead><tr><th>Skill</th><th>Valor</th><th>Estrelas</th><th>Próxima</th></tr></thead><tbody>${linhas}</tbody></table>`; }
 function tabelaTiers(){ const R=t=>{ const r=t.req; if(!r) return 'ponto de partida'; const it=[];
     if(r.imovel!=null) it.push(IMOVEIS.adv[r.imovel].nome.toLowerCase()); if(r.advs) it.push(`${r.advs} advogados`); if(r.filiais) it.push(`${r.filiais} filial`);
     if(r.estados) it.push(`filiais em ${r.estados} estado${r.estados>1?'s':''}`); if(r.clientes) it.push(`${r.clientes} clientes fixos`); if(r.areas) it.push(`${r.areas} áreas`);
     if(r.full) it.push('full service'); if(r.prest) it.push(`prestígio ${r.prest}`); if(r.anos) it.push(`${r.anos} anos`); return it.join(' · '); };
-  return `<table class="aj-tab"><thead><tr><th>Nível</th><th>Requisitos</th><th>Casos até</th><th>Sócios</th></tr></thead><tbody>${TIERS.map((t,i)=>`<tr${S.carreira==='adv'&&tierEscritorio()===i?' style="font-weight:700"':''}><td>${t.nome.replace('Escritório ','')}</td><td style="font-size:12.5px">${R(t)}</td><td>${RAR[RORD[t.rarMax]].nome}</td><td class="num">até ${t.socios}</td></tr>`).join('')}</tbody></table>`; }
+  return `<table class="aj-tab"><thead><tr><th>Nível</th><th>Requisitos</th><th>Casos até</th><th>Sócios</th></tr></thead><tbody>${TIERS.map((t,i)=>`<tr${S.carreira==='adv'&&tierEscritorio()===i?' style="font-weight:700"':''}><td>${t.nome.replace('Escritório ','')}</td><td class="f-s">${R(t)}</td><td>${RAR[RORD[t.rarMax]].nome}</td><td class="num">até ${t.socios}</td></tr>`).join('')}</tbody></table>`; }
 function faq(){ const P=PERKS, A=PERK_AREA5;
   return [
   ['Habilidades','Quanto de skill preciso para cada estrela?',`
@@ -33,7 +33,7 @@ function faq(){ const P=PERKS, A=PERK_AREA5;
   ['Habilidades','Para que serve cada habilidade?',`
     <p><b>Áreas do direito</b> (${Object.values(AREAS).map(a=>a.nome).join(', ')}): são a base da chance nos casos daquela área. Cada estrela dá bônus nos casos da área e traz mais casos dela. A chance de um caso mistura a área com skills gerais: ${Object.values(AREAS).map(a=>`${a.nome} = ${Object.entries(a.skills).map(([k,w])=>`${Math.round(w*100)}% ${SKILLS[k]}`).join(' + ')}`).join('; ')}.</p>
     <table class="aj-tab"><thead><tr><th>Skill</th><th>Para que serve</th><th>Efeitos em ${NIV.join(' · ')}</th></tr></thead><tbody>
-    ${Object.entries(USO_SKILL).map(([k,u])=>`<tr><td><b>${SKILLS[k]}</b></td><td style="font-size:12.5px">${u}</td><td style="font-size:12px;color:var(--muted)">${PERKS[k]?PERKS[k].map((t,i)=>`${NIV[i]}: ${t}`).join('<br>'):'—'}</td></tr>`).join('')}
+    ${Object.entries(USO_SKILL).map(([k,u])=>`<tr><td><b>${SKILLS[k]}</b></td><td class="f-s">${u}</td><td class="mut-s">${PERKS[k]?PERKS[k].map((t,i)=>`${NIV[i]}: ${t}`).join('<br>'):'—'}</td></tr>`).join('')}
     </tbody></table>`],
   ['Habilidades','Como subo as skills?',`<p>Com blocos de <b>Estudo</b> na agenda (escolha a skill), trabalhando nos casos da área, fazendo audiências e com cursos e títulos na Academia. Quanto mais alta a skill, mais devagar ela sobe.</p>`],
   ['Escritório de advocacia','Quais os requisitos para o escritório subir de nível?',`<p>O escritório sobe sozinho quando você cumpre <b>todos</b> os itens do próximo nível, um nível por vez. O painel <b>Nível do escritório</b>, na aba Estrutura e equipe, mostra o que falta.</p>${tabelaTiers()}

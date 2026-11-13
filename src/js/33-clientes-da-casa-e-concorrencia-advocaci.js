@@ -32,7 +32,7 @@ async function semanaClientes(){ if(S.carreira!=='adv') return; const U=S.u, L=S
 function painelClientes(){ const L=S.clientes||[], R=rivaisPraca(), ranking=[{nome:'Seu escritório',prest:S.prest,eu:true},...R.map(r=>({nome:nomeRival(r),prest:r.prest}))].sort((a,b)=>b.prest-a.prest);
   return `<section class="panel"><div class="panel-head"><h2>Clientes e concorrência</h2><span class="label">${L.length} cliente${L.length===1?'':'s'} fixo${L.length===1?'':'s'}</span></div>
     ${L.length?`<ul class="break">${L.map(f=>`<li><span><b>${esc(f.nome)}</b> · ${AREAS[f.area].nome} · ${f.casos} caso${f.casos>1?'s':''}</span><span class="num ${f.satisf>=60?'hi':f.satisf<40?'lo':''}">${brl(f.partido)}/mês · satisfação ${Math.round(f.satisf)}</span></li>`).join('')}</ul>`
-      :'<p style="margin:0;font-size:12.5px;color:var(--muted)">Ganhe casos raros ou maiores para conquistar clientes fixos: eles pagam partido mensal e mandam casos novos. Derrotas derrubam a satisfação; abaixo de 50, a concorrência pode levá-los.</p>'}
+      :'<p class="nota">Ganhe casos raros ou maiores para conquistar clientes fixos: eles pagam partido mensal e mandam casos novos. Derrotas derrubam a satisfação; abaixo de 50, a concorrência pode levá-los.</p>'}
     <span class="label">Prestígio na praça</span>
     <ol class="hall">${ranking.map((r,i)=>`<li class="${r.eu?'top':''}"><span class="num pos">${i+1}</span><div><b>${esc(r.nome)}</b></div><b class="num pts">${Math.round(r.prest)}</b></li>`).join('')}</ol></section>`; }
 

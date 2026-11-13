@@ -79,9 +79,9 @@ function painelCarreiraDP(){ const D=S.d, C=CARGOS_DP[D.cargo], req=promoReqDP()
     </dl>
     ${req?`<span class="label">Para ${fem(CARGOS_DP[D.cargo+1].nome)}</span>
       <ul class="break">${req.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
-      ${D.cargo===2?'<p style="margin:0;font-size:12px;color:var(--muted)">O Defensor Público-Geral sai de uma lista tríplice votada pela classe e é escolhido pelo governador.</p>':''}
+      ${D.cargo===2?'<p class="nota">O Defensor Público-Geral sai de uma lista tríplice votada pela classe e é escolhido pelo governador.</p>':''}
       <button class="btn brass" data-act="promocao" ${promoOkDP()?'':'disabled'}>${(D.dpgEm||0)>S.semana?`Nova lista tríplice no mês ${D.dpgEm}`:'Pedir promoção a '+fem(CARGOS_DP[D.cargo+1].nome)}</button>`
-      :'<p class="hi" style="margin:0">Você chefia a Defensoria Pública do estado.</p>'}
+      :'<p class="hi m0">Você chefia a Defensoria Pública do estado.</p>'}
     ${btnExonerar}
   </section>`; }
 
@@ -142,15 +142,15 @@ function renderDefensoria(){
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Todo caso vai à audiência na data marcada, com ou sem preparo. Audiência sem o atendimento mínimo custa reputação (como processo atrasado), e assistido preso sem atendimento custa ainda mais se perder.</p>
+        <p class="label m0">Todo caso vai à audiência na data marcada, com ou sem preparo. Audiência sem o atendimento mínimo custa reputação (como processo atrasado), e assistido preso sem atendimento custa ainda mais se perder.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraDP()}${painelSkills()}${painelDiario()}
     </div>
     <div class="col">
-      <section class="panel" style="background:transparent;border:0;padding:0">
+      <section class="panel sem-caixa">
         <div class="panel-head"><h2>Assistidos</h2><span class="num">${D.casos.length} · ${estaSemana} neste mês · <span class="${presosSem?'lo':''}">${presosSem} presos sem atendimento</span></span></div>
-        <p class="label" style="margin:0">Chegam ${novosDP(D.comarca)} por mês. Você não dá conta de todos: escolha onde cada bloco faz mais diferença.</p>
+        <p class="label m0">Chegam ${novosDP(D.comarca)} por mês. Você não dá conta de todos: escolha onde cada bloco faz mais diferença.</p>
         ${filtroPubHtml(D.casos.length,ordem.length)}<div class="cases">${ordem.length?ordem.map(dpCard).join(''):D.casos.length?vazioFiltro():''}</div>
       </section>
       ${D.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${D.recursos.length}</span></div>
@@ -183,7 +183,7 @@ async function julgamentoDP(c){
   if(!ok && c.inst<3){
     const prox={...c,inst:c.inst+1,prep:0,semana:0,mod:0}, chP=calcDefesa(prox).ch;
     const v=await modal(`<span class="label">${esc(c.titulo)}</span><h2>Recorrer?</h2><dl class="meta"><dt>Chance de reverter no ${INST[c.inst+1]}</dt><dd class="num ${cls(chP)}">${pct(chP)}</dd>
-      <dt>Se reverter</dt><dd class="hi">${sgn(R.ganho)} reputação</dd><dt>Se perder de novo</dt><dd class="lo">${sgn(-R.perda/4)} reputação</dd></dl><p style="font-size:12px;color:var(--muted)">A Defensoria não paga custas.</p>`,
+      <dt>Se reverter</dt><dd class="hi">${sgn(R.ganho)} reputação</dd><dt>Se perder de novo</dt><dd class="lo">${sgn(-R.perda/4)} reputação</dd></dl><p class="mut-s">A Defensoria não paga custas.</p>`,
       [{t:'Não recorrer',v:0,cls:'ghost'},{t:'Recorrer',v:1}]);
     if(v){ D.recursos.push({titulo:c.titulo,rar:c.rar,ch:chP,semanas:rint(3,6)}); addLog(`Você recorreu em “${c.titulo}”.`); }
   }

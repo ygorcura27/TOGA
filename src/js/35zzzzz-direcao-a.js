@@ -17,8 +17,19 @@ function refinarCartoes(){ for(const f of app.querySelectorAll('.folder:not([dat
     const st=f.querySelector(':scope > .stamp'); if(st&&st.style.color) f.style.setProperty('--rc',st.style.color);
     const h=f.querySelector(':scope > h3'); if(!h) continue;
     const row=document.createElement('div'); row.className='selos';
-    let prazo=''; for(const dt of f.querySelectorAll(':scope > .meta dt')) if(/^Audi[eê]ncia$|^Prazo$|^Idade$/i.test(dt.textContent.trim())){ const dd=dt.nextElementSibling; if(dd){ prazo=dd.textContent.split('·')[0].trim(); if(/pr[oó]ximo m[eê]s|neste m[eê]s|atrasad/i.test(dd.textContent)) row.dataset.urg='1'; } break; }
-    if(prazo){ const p=document.createElement('span'); p.className='prazo'+(row.dataset.urg?' urg':''); p.textContent=/^em |^no |^neste/i.test(prazo)?'audiência '+prazo:prazo; row.appendChild(p); }
+    let prazo=''; for(const dt of f.querySelectorAll(':scope > .meta dt')){ const t=dt.textContent.trim(), dd=dt.nextElementSibling; if(!dd) continue;
+      if(/^Audi[eê]ncia$/i.test(t)){ prazo=dd.textContent.split('·')[0].trim(); if(/pr[oó]ximo m[eê]s|neste m[eê]s/i.test(dd.textContent)) row.dataset.urg='1'; break; }
+      if(/^No acervo há$|^Na promotoria há$/i.test(t)){ const m=dd.textContent.match(/(\d+)\s*meses?\s*·\s*meta\s*(\d+)/); if(m){ prazo=`${m[1]} de ${m[2]} meses`; if(dd.classList.contains('lo')||+m[1]>+m[2]){ row.dataset.urg='1'; prazo+=' · atrasado'; } } break; } }
+    if(prazo){ const p=document.createElement('span'); p.className='prazo'+(row.dataset.urg?' urg':''); p.textContent=/^em |^no |^neste/i.test(prazo)?'audiência '+prazo:/^\d+ de/.test(prazo)?prazo:'audiência '+prazo; row.appendChild(p); }
     for(const t of [...f.children].filter(el=>el.tagName==='SPAN'&&el.classList.contains('tag'))) row.appendChild(t);
     if(row.children.length) h.insertAdjacentElement('afterend',row); } }
 { const r0=render; render=function(){ r0(); try{ agruparCabecalho(); refinarCartoes(); }catch(e){ console.warn('direção A',e); } }; }
+// aba Estrutura e equipe: navegação por seções no topo (rola até o painel)
+function navEstrutura(){ if(view!=='estrutura'||app.querySelector('.sec-nav')) return; const itens=[];
+  for(const el of [...app.children]){ if(el.matches('header.top,.ticker,.tut')) continue; const h=el.querySelector('h2'); if(!h) continue;
+    const nome=el.classList.contains('mapgrid')?'Planta e nível':h.textContent.trim().replace(/^Gestão d[oa] .*/,'Gestão'); el.dataset.sec=String(itens.length); itens.push(nome); }
+  if(itens.length<3) return; const alvo=[...app.children].find(el=>el.dataset.sec==='0');
+  alvo.insertAdjacentHTML('beforebegin',`<nav class="sec-nav" aria-label="Seções desta aba">${itens.map((n,i)=>`<button class="chip" data-sec-ir="${i}">${esc(n)}</button>`).join('')}</nav>`); }
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-sec-ir]'); if(!b) return; const el=app.querySelector(`[data-sec="${b.dataset.secIr}"]`); if(!el) return;
+  const red=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches; el.scrollIntoView({behavior:red?'auto':'smooth',block:'start'}); });
+{ const r1=render; render=function(){ r1(); try{ navEstrutura(); }catch(e){ console.warn('nav estrutura',e); } }; }

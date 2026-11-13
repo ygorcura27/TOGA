@@ -17,7 +17,7 @@ function comprarEstilo(cat,i){ const E=estiloAtual(), it=ESTILO[cat].itens[i], a
 function painelEstilo(){ const E=estiloAtual();
   return `<section class="panel"><div class="panel-head"><h2>Estilo</h2><span class="label">imagem pessoal ${imagem()} de 7</span></div>
     ${Object.entries(ESTILO).map(([k,C])=>`<span class="label">${C.nome}</span><div class="chips">${C.itens.map((it,i)=>`<button class="chip ${i===(E[k]||0)?'on':''}" data-act="estilo" data-v="${k}:${i}" ${i===(E[k]||0)||dinheiroPessoal()<it.p?'disabled':''}>${it.n}${it.p?' · '+brl(it.p):''}</button>`).join('')}</div>`).join('')}
-    <p style="margin:0;font-size:12px;color:var(--muted)">Cada ponto de imagem dá +0,5 de chance em casos contra empresas e com júri, e um pouco de felicidade por mês. Itens melhores dão prestígio na compra.</p></section>`; }
+    <p class="nota">Cada ponto de imagem dá +0,5 de chance em casos contra empresas e com júri, e um pouco de felicidade por mês. Itens melhores dão prestígio na compra.</p></section>`; }
 
 // eventos novos: namoro e casamento, filhos por idade e amigos
 async function eventoParceiroExtra(P){ const V=S.vida, pn=esc(P.nome.split(' ')[0]), evs=['jantar','fds','pet'];

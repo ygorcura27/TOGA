@@ -53,8 +53,8 @@ async function fimSemana(){
 
 function painelSkills(){ return `<section class="panel">
         <div class="panel-head"><h2>Skills</h2><span class="label">${S.traits.map(t=>TRAITS[t].nome).join(' · ')}</span></div>
-        <div class="skills">${Object.entries(SKILLS).map(([k,v])=>`<div><span>${v} <span style="color:var(--brass)">${estrelasHtml(k)}</span></span><span class="num">${Math.floor(S.skills[k])}${ehArea(k)&&tetoArea(k)<100?`<span style="color:var(--muted);font-size:10px">/${tetoArea(k)}</span>`:''}</span><div class="bar"><i style="width:${S.skills[k]}%"></i></div></div>`).join('')}</div>
-        ${S.teses.length?`<div class="chips">${S.teses.map(t=>`<span class="tag" title="+${t.bonus} em ${AREAS[t.area].nome}">${esc(t.nome)} +${t.bonus}</span>`).join('')}</div>`:'<p class="label" style="margin:0">Teses: vença casos Raros ou acima para colecionar.</p>'}
+        <div class="skills">${Object.entries(SKILLS).map(([k,v])=>`<div><span>${v} <span class="cor-brass">${estrelasHtml(k)}</span></span><span class="num">${Math.floor(S.skills[k])}${ehArea(k)&&tetoArea(k)<100?`<span style="color:var(--muted);font-size:10px">/${tetoArea(k)}</span>`:''}</span><div class="bar"><i style="width:${S.skills[k]}%"></i></div></div>`).join('')}</div>
+        ${S.teses.length?`<div class="chips">${S.teses.map(t=>`<span class="tag" title="+${t.bonus} em ${AREAS[t.area].nome}">${esc(t.nome)} +${t.bonus}</span>`).join('')}</div>`:'<p class="label m0">Teses: vença casos Raros ou acima para colecionar.</p>'}
       <details><summary>Efeitos das skills nos níveis 40 · 60 · 80 (áreas: 40 · 55 · 70 · 82 · 92)</summary>${listaPerks()}</details>
       </section>`; }
 function painelDiario(){ return `<section class="panel">

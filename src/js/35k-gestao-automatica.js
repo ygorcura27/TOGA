@@ -33,14 +33,14 @@ function aceitarAutomatico(){ if(S.carreira!=='adv'||!gestao().aceitar) return 0
 { const g0=gerarOfertas; gerarOfertas=function(){ g0(); aceitarAutomatico(); }; }
 function painelGestao(){ if(S.carreira!=='adv') return ''; const G=gestao(), U=S.u, g=gestorAtual();
   const opt=(o,v)=>Object.entries(o).map(([k,t])=>`<option value="${k}" ${String(v)===k?'selected':''}>${t}</option>`).join('');
-  const nt=t=>`<p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">${t}</p>`;
+  const nt=t=>`<p class="label label-plain">${t}</p>`;
   return `<section class="panel gestao" style="margin-bottom:16px"><div class="panel-head"><h2>Gestão do escritório</h2><span class="label">${G.aceitar||(U.auto&&g)?'automática':'manual'}</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px 24px;align-items:start">
-    <div style="display:grid;gap:8px"><span class="label">Casos novos</span>
+    <div class="pilha"><span class="label">Casos novos</span>
       <label class="row"><input type="checkbox" data-gestao="aceitar" ${G.aceitar?'checked':''}> <span>Aceitar casos sozinho, do maior para o menor chance</span></label>
       <div class="row"><span class="name">Chance mínima</span><select data-gestao="minCh" ${G.aceitar?'':'disabled'}>${opt({'0.4':'40%','0.5':'50%','0.6':'60%','0.7':'70%'},G.minCh)}</select></div>
       ${nt('Respeita o filtro dos casos novos e as vagas livres (recursos não ocupam vaga).')}</div>
-    <div style="display:grid;gap:8px"><span class="label">Equipe</span>
+    <div class="pilha"><span class="label">Equipe</span>
       <label class="row"><input type="checkbox" data-gestao="dist" ${U.auto&&g?'checked':''} ${g?'':'disabled'}> <span>${g?`${esc(g.nome)} distribui os blocos da equipe pelos casos mais urgentes`:'Distribuir os blocos da equipe: contrate um gestor administrativo'}</span></label></div>
     </div>
     <span class="label" style="margin-top:4px">Audiências · sua postura padrão</span>

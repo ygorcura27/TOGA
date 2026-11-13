@@ -159,7 +159,7 @@ async function contratar(funcao){
   const saldoMes=pubCar()?receitaPub()-despesasPub():0;
   const origem=funcao==='associado'?'Sem salário fixo: fica com 10% dos honorários que o escritório recebe (até 30% somando todos os associados)':funcao==='servidor'?'Servidores disponíveis para requisição (pagos pelo tribunal)':pubCar()?'Salário pago pelo orçamento da unidade':'Salário pago pelo caixa do escritório';
   const v=await modal(`<h2>${funcao==='servidor'?'Requisitar':'Contratar'}: ${funcao==='gestor'?nomeGestor():F.nome}</h2><p>${origem}. ${F.bl?`Rende cerca de ${F.bl} blocos por mês, conforme a moral.`:'Não atende casos, mas melhora a organização.'}</p>
-    ${pubCar()&&F.sal?`<p class="${saldoMes-F.sal<0?'lo':''}" style="font-size:12.5px">Hoje o orçamento da unidade fecha o mês em ${brl(saldoMes)} (repasse de ${brl(receitaPub())} menos ${brl(despesasPub())} de despesas). ${saldoMes-F.sal<0?`Com mais este salário fica negativo: quando o saldo acabar, o cargo em comissão mais caro é exonerado.`:'Cabe no orçamento.'}</p>`:''}
+    ${pubCar()&&F.sal?`<p class="${saldoMes-F.sal<0?'lo':''} f-s">Hoje o orçamento da unidade fecha o mês em ${brl(saldoMes)} (repasse de ${brl(receitaPub())} menos ${brl(despesasPub())} de despesas). ${saldoMes-F.sal<0?`Com mais este salário fica negativo: quando o saldo acabar, o cargo em comissão mais caro é exonerado.`:'Cabe no orçamento.'}</p>`:''}
     <div class="opts">${cands.map((c,i)=>`<button class="opt" data-mv="${i}"><span>${esc(c.nome)}</span><b class="num">${F.sal?brl(c.sal)+'/mês':'sem custo'}</b><small>Qualidade ${c.q}${F.g?` · gestão ${c.g}`:''} · moral ${c.moral}${c.area?` · ${AREAS[c.area].nome} ${'★'.repeat(estrelasF(c))} (${c.ae})${estrelasF(c)>=3&&RESP_FUNCS.includes(funcao)?' · pode chefiar a área':''}`:''}</small></button>`).join('')}</div>`,[{t:'Cancelar',v:'',cls:'ghost'}]);
   if(v===''||v===undefined) return;
   const c=cands[+v]; U.equipe.push(c); if(funcao==='gestor'&&!U.gestorId) U.gestorId=c.id;
@@ -255,10 +255,10 @@ function plantaSVG(){ const U=S.u, im=imovelAtual(), w=im.cols*CW, h=im.rows*CH,
 // ----- tela -----
 function painelSala(){ const U=S.u, i=U.sel, pub=pubCar(), saldo=pub?U.orc:S.caixa, lista=pub?IMOVEIS.pub:IMOVEIS.adv, prox=lista[U.imovel+1];
   let corpo;
-  if(i===null||i===undefined) corpo='<p style="margin:0;font-size:12.5px;color:var(--muted)">Clique num espaço da planta para construir ou ver um cômodo.</p>';
+  if(i===null||i===undefined) corpo='<p class="nota">Clique num espaço da planta para construir ou ver um cômodo.</p>';
   else if(!U.salas[i]) corpo=`<span class="label">Construir neste espaço · pago pelo ${pub?'orçamento da unidade':'caixa do escritório'}</span>
     <div class="opts">${Object.entries(COMODOS).filter(([k])=>k!=='titular').map(([k,C])=>`<button class="opt" data-act="construir" data-v="${k}" ${saldo<C.custo?'disabled':''}><span>${C.nome}</span><b class="num">${brl(C.custo)}</b><small>${C.desc} Manutenção ${brl(C.mant)}/mês.</small></button>`).join('')}</div>`;
-  else { const C=COMODOS[U.salas[i]]; corpo=`<p style="margin:0">${C.desc}</p><dl class="meta"><dt>Manutenção</dt><dd class="num">${brl(C.mant)}/mês</dd></dl>${U.salas[i]!=='titular'?'<button class="btn ghost" data-act="demolir">Desmontar cômodo</button>':''}`; }
+  else { const C=COMODOS[U.salas[i]]; corpo=`<p class="m0">${C.desc}</p><dl class="meta"><dt>Manutenção</dt><dd class="num">${brl(C.mant)}/mês</dd></dl>${U.salas[i]!=='titular'?'<button class="btn ghost" data-act="demolir">Desmontar cômodo</button>':''}`; }
   return `<section class="panel"><div class="panel-head"><h2>${i===null||i===undefined?'Planta':U.salas[i]?COMODOS[U.salas[i]].nome:'Espaço vazio'}</h2></div>${corpo}
     ${prox?`<button class="btn ghost" data-act="mudarImovel" ${saldo<prox.mudar||(prox.cargoMin&&cargoAtual()<prox.cargoMin)?'disabled':''}>${pub?'Reformar para':'Mudar para'} ${prox.nome} · ${brl(prox.mudar)}${prox.cargoMin&&cargoAtual()<prox.cargoMin?' (exige cargo mais alto)':''}${pub?'':` · aluguel ${brl(prox.aluguel)}/mês`}</button>`:''}
   </section>`; }
@@ -280,7 +280,7 @@ function painelFinancas(){ const U=S.u;
       <dt>Repasse do tribunal por mês</dt><dd class="num hi">${brl(rec)}</dd><dt>Equipe e manutenção por mês</dt><dd class="num lo">${brl(desp)}</dd>
       <dt>Índice de efetividade</dt><dd class="num ${cls(U.efet/100)}">${U.efet.toLocaleString('pt-BR')}</dd></dl>
     <div class="bar"><i style="width:${U.efet}%;background:var(--brass)"></i></div>
-    <p style="margin:0;font-size:12px;color:var(--muted)">O tribunal repassa entre 80% e 150% de ${brl(ORC_BASE[cargoAtual()])} por mês conforme a efetividade: concluir mais casos do que chegam, sem atrasos (cada processo atrasado tira 1,5 ponto) e com boa organização. Com 80 ou mais, você ganha gratificação de 10% do salário. O salário em si é fixo.</p>
+    <p class="nota">O tribunal repassa entre 80% e 150% de ${brl(ORC_BASE[cargoAtual()])} por mês conforme a efetividade: concluir mais casos do que chegam, sem atrasos (cada processo atrasado tira 1,5 ponto) e com boa organização. Com 80 ou mais, você ganha gratificação de 10% do salário. O salário em si é fixo.</p>
   </section>`; }
 function painelOrganizacao(){ const U=S.u, o=organizacao(), g=gestorAtual(), q=qualEquipe();
   return `<section class="panel"><div class="panel-head"><h2>Organização</h2><span class="num ${cls(o/100)}">${o}</span></div>
@@ -290,13 +290,13 @@ function painelOrganizacao(){ const U=S.u, o=organizacao(), g=gestorAtual(), q=q
       <dt>Casos por pessoa</dt><dd class="num">${(pendentes()/(trabalhadores().length+1)).toLocaleString('pt-BR',{maximumFractionDigits:1})}</dd>
       <dt>Efeito na chance</dt><dd class="num">${sgn(Math.round((o-50)/12*10)/10)}</dd>
       ${pubCar()?`<dt>Peso dos atrasos</dt><dd class="num">×${fatorAtraso().toLocaleString('pt-BR',{maximumFractionDigits:2})}</dd>`:''}</dl>
-    <label class="row" style="font-size:12.5px"><input type="checkbox" id="auto-dist" data-act="autoDist" ${U.auto?'checked':''} ${g?'':'disabled'}> <span class="name">O ${nomeGestor().toLowerCase()} distribui os blocos livres da equipe</span></label>
-    <p style="margin:0;font-size:12px;color:var(--muted)">Organização sobe com um bom gestor, arquivo e TI, recepção e servidores. Cai quando há casos demais por pessoa.</p>
+    <label class="row f-s"><input type="checkbox" id="auto-dist" data-act="autoDist" ${U.auto?'checked':''} ${g?'':'disabled'}> <span class="name">O ${nomeGestor().toLowerCase()} distribui os blocos livres da equipe</span></label>
+    <p class="nota">Organização sobe com um bom gestor, arquivo e TI, recepção e servidores. Cai quando há casos demais por pessoa.</p>
   </section>`; }
 function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gestorId, prox=!pub&&PROMO_ADV[f.funcao];
   return `<article class="panel" style="gap:8px">
     <div class="panel-head"><h3 style="font-size:15px;display:flex;align-items:center;gap:8px">${retrato(f.nome,{size:36})}${esc(f.nome)}</h3>${gest?'<span class="tag">Gestor</span>':''}</div>
-    <span class="label" style="text-transform:none;letter-spacing:0">${nomeFuncao(f)} · ${f.semanas} meses na equipe${f.area?` · ${AREAS[f.area].nome} <span style="color:var(--brass)">${'★'.repeat(estrelasF(f))}</span> (${Math.floor(f.ae)})`:''}</span>
+    <span class="label" style="text-transform:none;letter-spacing:0">${nomeFuncao(f)} · ${f.semanas} meses na equipe${f.area?` · ${AREAS[f.area].nome} <span class="cor-brass">${'★'.repeat(estrelasF(f))}</span> (${Math.floor(f.ae)})`:''}</span>
     <div class="vs"><span>Qualidade</span><div class="bar"><i style="width:${f.q}%;background:var(--win)"></i></div><span class="num">${Math.round(f.q)}</span>
       <span>Gestão</span><div class="bar"><i style="width:${f.g}%;background:var(--b-estudo)"></i></div><span class="num">${f.g}</span>
       <span>Moral</span><div class="bar"><i style="width:${f.moral}%;background:${f.moral<35?'var(--loss)':'var(--brass)'}"></i></div><span class="num">${Math.round(f.moral)}</span></div>
@@ -310,8 +310,8 @@ function cardFunc(f){ const F=FX()[f.funcao], pub=pubCar(), gest=f.id===S.u.gest
 function painelTier(){ const t=tierEscritorio(), T=TIERS[t], prox=TIERS[t+1];
   return `<section class="panel"><div class="panel-head"><h2>Nível do escritório</h2><span class="label">${t+1} de ${TIERS.length}</span></div>
     <dl class="meta"><dt>Nível atual</dt><dd><b>${T.nome}</b></dd><dt>Casos até</dt><dd>${RAR[RORD[T.rarMax]].nome}</dd><dt>Valor das causas</dt><dd class="num">×${T.valor.toLocaleString('pt-BR')}</dd><dt>Partido dos clientes</dt><dd class="num">×${T.partido.toLocaleString('pt-BR')}</dd><dt>Sócios</dt><dd class="num">${sociosSede()} de ${T.socios}</dd><dt>Tempo de escritório</dt><dd class="num">${anosEscritorio()} ano${anosEscritorio()===1?'':'s'}</dd></dl>
-    ${prox?`<span class="label">Para virar ${prox.nome}</span><ul class="break">${checarTier(prox.req).map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>`:'<p class="hi" style="margin:0">Topo do mercado: o escritório disputa os maiores casos do país.</p>'}
-    <p style="margin:0;font-size:12px;color:var(--muted)">Só o High Tier rende mais que a magistratura, e chegar lá leva anos: carteira de clientes fixos, filiais pelos bairros e estados, equipe grande e todas as áreas.</p></section>`; }
+    ${prox?`<span class="label">Para virar ${prox.nome}</span><ul class="break">${checarTier(prox.req).map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>`:'<p class="hi m0">Topo do mercado: o escritório disputa os maiores casos do país.</p>'}
+    <p class="nota">Só o High Tier rende mais que a magistratura, e chegar lá leva anos: carteira de clientes fixos, filiais pelos bairros e estados, equipe grande e todas as áreas.</p></section>`; }
 function renderEstrutura(){ const U=S.u, P=plantaSVG(), funcs=Object.entries(FX()).filter(([k])=>k!=='socio');
   app.innerHTML=`${header()}
   <div class="mapgrid">

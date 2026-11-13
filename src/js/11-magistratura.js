@@ -99,9 +99,9 @@ function painelCarreiraAdv(){
     const txt=faltam?`${rot} · faltam ${faltam} requisito${faltam>1?'s':''}`:espera?`${rot} · nova tentativa no mês ${S.concursoEm}`:semDin?`${rot} · inscrição de ${brl(3000)}: falta dinheiro pessoal (faça uma retirada)`:rot;
     return `<button class="btn ghost" data-act="concurso" data-v="${tipo}" ${faltam||espera||semDin?'disabled':''}>${txt}</button>
       <details><summary class="label">Requisitos · ${R.nome}</summary><ul class="break">${rm.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
-        <p style="margin:0;font-size:12px;color:var(--muted)">Estudando sozinho, cada área para em 3★: ${R.dica}</p></details>`; };
+        <p class="nota">Estudando sozinho, cada área para em 3★: ${R.dica}</p></details>`; };
   return `<section class="panel"><div class="panel-head"><h2>Carreira</h2><span class="label">Advocacia</span></div>
-    <p style="margin:0;font-size:12.5px">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria exigem estrelas nas skills, anos de prática jurídica e inscrição de ${brl(3000)}. Depois vêm três fases eliminatórias: objetiva, discursiva e oral. Blocos de estudo acumulados dão bônus nas provas.</p>
+    <p class="txt-s">Quer mudar de lado? Os concursos da magistratura, do Ministério Público e da Defensoria exigem estrelas nas skills, anos de prática jurídica e inscrição de ${brl(3000)}. Depois vêm três fases eliminatórias: objetiva, discursiva e oral. Blocos de estudo acumulados dão bônus nas provas.</p>
     ${bloco('juiz','Concurso para juiz')}${bloco('promotor','Concurso para promotor')}${bloco('defensor','Concurso para defensor')}
     <button class="btn ghost" data-act="virarAcademico">Largar a advocacia pela carreira acadêmica</button>
   </section>`;
@@ -120,17 +120,17 @@ function painelCarreiraJuiz(){ const J=S.j, C=CARGOS[J.cargo], req=promoReq();
     ${req?`<span class="label">Para ${nomeCargo(J.cargo+1)}</span>
       <ul class="break">${req.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
       <button class="btn brass" data-act="promocao" ${promoOk()?'':'disabled'}>Pedir promoção a ${nomeCargo(J.cargo+1)}</button>`
-      :'<p class="hi" style="margin:0">Você chegou ao topo da carreira.</p>'}
+      :'<p class="hi m0">Você chegou ao topo da carreira.</p>'}
     ${btnExonerar}
   </section>`; }
 function painelComarca(k){ const C=CIDADES[k], atual=k===comarcaAtual(), MP=S.carreira==='promotor', DP=S.carreira==='defensor';
   return `<section class="panel"><div class="panel-head"><h2>${C.nome}</h2><span class="label">${C.uf}</span></div>
     <div><span class="tag">${atual?'Sua comarca':'Outra comarca'}</span></div>
-    ${k==='df'?'<p style="margin:0;font-size:12.5px">Sede do Superior Tribunal de Justiça, o topo da carreira.</p>':''}
+    ${k==='df'?'<p class="txt-s">Sede do Superior Tribunal de Justiça, o topo da carreira.</p>':''}
     <dl class="meta"><dt>Tamanho</dt><dd>${'●'.repeat(C.pop)}${'○'.repeat(5-C.pop)}</dd><dt>${MP?'Inquéritos':DP?'Assistidos':'Processos'} novos por mês</dt><dd class="num">${MP?novosInq(k):DP?novosDP(k):novosPorSemana(k)}</dd></dl>
     <span class="label">Demanda por área</span>
     <div class="dem">${Object.entries(C.areas).sort((a,b)=>b[1]-a[1]).map(([a,w])=>`<span>${AREAS[a].nome}</span><div class="bar"><i style="width:${w/3*100}%;background:var(--b-case)"></i></div>`).join('')}</div>
-    <p style="margin:0;font-size:12px;color:var(--muted)">${MP?'Promotores':DP?'Defensores':'Juízes'} só mudam de comarca nas promoções. Comarcas maiores trazem mais ${MP?'inquéritos':DP?'assistidos':'processos'} e casos mais difíceis.</p>
+    <p class="nota">${MP?'Promotores':DP?'Defensores':'Juízes'} só mudam de comarca nas promoções. Comarcas maiores trazem mais ${MP?'inquéritos':DP?'assistidos':'processos'} e casos mais difíceis.</p>
     <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
   </section>`; }
 
@@ -191,15 +191,15 @@ function renderGabinete(){
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Todo processo com pelo menos 1 bloco é sentenciado no fim do mês. A equipe cuida primeiro do expediente e depois dos processos, sem gastar sua energia; o expediente que ela não cobre sai da sua agenda.</p>
+        <p class="label m0">Todo processo com pelo menos 1 bloco é sentenciado no fim do mês. A equipe cuida primeiro do expediente e depois dos processos, sem gastar sua energia; o expediente que ela não cobre sai da sua agenda.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraJuiz()}${painelSkills()}${painelDiario()}
     </div>
     <div class="col">
-      <section class="panel" style="background:transparent;border:0;padding:0">
+      <section class="panel sem-caixa">
         <div class="panel-head"><h2>Acervo da vara</h2><span class="num">${J.acervo.length} processos · <span class="${atrasados?'lo':''}">${atrasados} atrasados</span></span></div>
-        <p class="label" style="margin:0">Chegam ${novosPorSemana(J.comarca)} processos por mês. Cada processo atrasado custa 0,3 de reputação por mês (no máximo 4 por mês).</p>
+        <p class="label m0">Chegam ${novosPorSemana(J.comarca)} processos por mês. Cada processo atrasado custa 0,3 de reputação por mês (no máximo 4 por mês).</p>
         ${filtroPubHtml(J.acervo.length,ordem.length)}<div class="cases">${ordem.length?ordem.map(procCard).join(''):J.acervo.length?vazioFiltro():'<p class="empty">Acervo zerado. Novos processos chegam no próximo mês.</p>'}</div>
       </section>
       ${J.recursos.length?`<section class="panel"><div class="panel-head"><h2>Suas sentenças em recurso</h2><span class="num">${J.recursos.length}</span></div>

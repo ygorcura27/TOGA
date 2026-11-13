@@ -19,7 +19,7 @@ function cursoGestao(id){ const f=S.u.equipe.find(x=>x.id===id); if(!f||f.id!==S
     const falta=f.cursoGEm?CURSO_GESTAO.intervalo-(S.semana-f.cursoGEm):0, sem=pagaEstrutura()<CURSO_GESTAO.custo, max=f.g>=CURSO_GESTAO.teto;
     const tt=max?'Gestão no máximo.':falta>0?`Próximo curso em ${falta} ${falta===1?'mês':'meses'}.`:sem?`Falta ${pubCar()?'orçamento':'caixa'}.`:`+${CURSO_GESTAO.ganho} de gestão na hora. Um curso a cada ${CURSO_GESTAO.intervalo} meses.`;
     const bt=`<button class="chip" data-act="cursoGestao" data-id="${f.id}" ${max||falta>0||sem?'disabled':''} title="${tt}">Curso de gestão · ${brl(CURSO_GESTAO.custo)}</button>`;
-    return h.replace('<div class="chips">',`<p style="margin:0;font-size:12px;color:var(--muted)">Gestão cresce com o tempo no cargo (mais devagar quanto mais alta) e com cursos. ${tt}</p><div class="chips">${bt}`); }; }
+    return h.replace('<div class="chips">',`<p class="nota">Gestão cresce com o tempo no cargo (mais devagar quanto mais alta) e com cursos. ${tt}</p><div class="chips">${bt}`); }; }
 // arredonda também no resumo de organização
 { const r0=renderEstrutura; renderEstrutura=function(){ r0(); const g=S.u&&gestorAtual(); if(!g) return;
     app.querySelectorAll('dd').forEach(dd=>{ if(dd.textContent.includes(' · gestão ')) dd.textContent=dd.textContent.replace(/ · gestão [\d.]+/,` · gestão ${Math.floor(g.g)}`); }); }; }

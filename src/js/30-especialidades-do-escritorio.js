@@ -25,7 +25,7 @@ function painelAreas(){ const U=S.u, L=areasEsc(), falta=Object.keys(AREAS).filt
   return `<section class="panel"><div class="panel-head"><h2>Áreas de atuação</h2><span class="label">${U.full?'Full service':`${areasAtivas().length} de ${Object.keys(AREAS).length}`}</span></div>
     <ul class="break">${Object.keys(AREAS).map(linha).join('')}</ul>
     ${U.full?'':`<button class="btn ghost" data-act="virarFull" ${!falta.length&&S.caixa>=CUSTO_FULL?'':'disabled'}>Tornar full service · ${brl(CUSTO_FULL)}${falta.length?` (faltam responsáveis em ${falta.length} área${falta.length>1?'s':''})`:''}</button>`}
-    <p style="margin:0;font-size:12px;color:var(--muted)">Só chegam casos das áreas que o escritório atende. Para abrir uma área nova, contrate ou forme um advogado pleno, sênior ou sócio daquela área com pelo menos 3★ nela. Se o responsável sair, a área fica suspensa até você repor.</p></section>`; }
+    <p class="nota">Só chegam casos das áreas que o escritório atende. Para abrir uma área nova, contrate ou forme um advogado pleno, sênior ou sócio daquela área com pelo menos 3★ nela. Se o responsável sair, a área fica suspensa até você repor.</p></section>`; }
 function migrarEquipeAdv(){ if(S.carreira!=='adv'||!S.u) return; if(!S.u.areas) S.u.areas=[S.espec];
   for(const f of S.u.equipe) if(ADV_FUNCS.includes(f.funcao)&&!f.area){ f.area=S.espec; const [a,b]=AE_FAIXA[f.funcao]; f.ae=Math.round(a+(b-a)*clamp((f.q-40)/50,0,1)); } }
 // advogados da equipe evoluem na própria área com o tempo (e mais rápido se a área é atendida)

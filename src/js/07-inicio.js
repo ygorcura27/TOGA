@@ -16,7 +16,7 @@ function renderInicio(){
     <div class="field"><label class="label" for="sede">Cidade da sede ou comarca</label>
       <select id="sede">${Object.entries(CIDADES).map(([k,c])=>`<option value="${k}" ${escolha.sede===k?'selected':''}>${c.nome} (${c.uf}) · causas ×${c.fator.toLocaleString('pt-BR')}</option>`).join('')}</select></div>
     <div class="field"><span class="label">Traços</span>
-      <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">${(()=>{ const n=escolha.traits.filter(tracoNeg).length, p=escolha.traits.length-n; return `Positivos ${p} de ${2+n}${n?` · negativos ${n} de 2`:' · cada traço negativo libera +1 positivo'}`; })()}</p>
+      <p class="label label-plain">${(()=>{ const n=escolha.traits.filter(tracoNeg).length, p=escolha.traits.length-n; return `Positivos ${p} de ${2+n}${n?` · negativos ${n} de 2`:' · cada traço negativo libera +1 positivo'}`; })()}</p>
       <div class="start-traits">${Object.entries(TRAITS).map(([k,t])=>`<button class="chip ${escolha.traits.includes(k)?'on':''} ${t.neg?'neg':''}" data-act="trait" data-v="${k}"><b>${t.nome}</b><br><span style="font-size:11px">${t.desc}</span></button>`).join('')}</div></div>
     <button class="btn brass" data-act="comecar" ${tracosOk(escolha.traits)?'':'disabled'}>Começar</button>
   </section>

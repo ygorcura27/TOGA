@@ -31,7 +31,7 @@ async function momentoDecisivo(c){
   ];
   const v=await modal(`<span class="label">Momento decisivo · ${esc(c.titulo)}</span><h2>A testemunha hesita</h2>
     <p>A testemunha da outra parte hesita ao responder sobre um detalhe importante. O que você faz?</p>
-    <p class="num" style="font-size:12px;color:var(--muted)">${c.fase?'Chance de condenação':c.assistido?'Chance de êxito':'Chance de vitória'} agora: ${pct((c.fase?calcCondenacao(c):c.assistido?calcDefesa(c):calcChance(c)).ch)}</p>
+    <p class="num mut-s">${c.fase?'Chance de condenação':c.assistido?'Chance de êxito':'Chance de vitória'} agora: ${pct((c.fase?calcCondenacao(c):c.assistido?calcDefesa(c):calcChance(c)).ch)}</p>
     <div class="opts">${o.map((x,i)=>`<button class="opt" data-mv="${i}"><span>${x.t}</span><b class="num">${x.fixo!==undefined?'±0':pct(x.ch)}</b><small>${x.sk}${x.fixo===undefined?` · sucesso ${sgn(x.ok)} · falha ${sgn(x.fail)}`:''}</small></button>`).join('')}</div>`,[]);
   const x=o[+v]; if(x.fixo!==undefined) return;
   const ok=await rolar(x.t,'A sala inteira espera a resposta.',x.ch,'Ponto para você','Saiu pela culatra');
@@ -117,7 +117,7 @@ async function audiencia(c){
           <dt>Duração</dt><dd>4 a 8 meses</dd>
           <dt>Se reverter</dt><dd class="hi">${brl(c.hon)} · ${sgn(RAR[c.rar].ganho+perdaOrig/2)} prestígio</dd>
           <dt>Se perder de novo</dt><dd class="lo">${sgn(-RAR[c.rar].perda/2)} prestígio</dd>
-        </dl><p style="font-size:12px;color:var(--muted)">Você poderá preparar o recurso com blocos e apoios, como um caso novo.</p>`,
+        </dl><p class="mut-s">Você poderá preparar o recurso com blocos e apoios, como um caso novo.</p>`,
         [{t:'Aceitar a derrota',v:'nao',cls:'ghost'},{t:S.caixa<custas?'Caixa insuficiente':'Recorrer',v:'sim',dis:S.caixa<custas}]);
       if(v==='sim'){ S.caixa-=custas; criarRecurso(c,'recorrente',false,perdaOrig); addLog(deleg?`${quem||'O advogado'} recorreu de “${c.titulo}” ao ${INST[c.inst+1]} (chance ${pct(chP)}, custas ${brl(custas)}).`:`Você recorreu de “${c.titulo}” (custas ${brl(custas)}).`); }
       else if(deleg&&recursoAutomatico()) addLog(`${quem||'O advogado'} não recorreu de “${c.titulo}”: chance de reverter de ${pct(chP)}, abaixo de ${pct(recMinimo())}${chP>=recMinimo()?' (faltou caixa para as custas)':''}.`);

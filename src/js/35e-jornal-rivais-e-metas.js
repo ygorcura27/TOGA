@@ -137,7 +137,7 @@ function renderJornal(){ const J=JN(), ult=S.semana; if(edJornal===null||edJorna
       ${U?`<p style="margin:0;font-size:13px">Coluna deste mês: <b>“${esc(U.t)}”</b> · <span class="${U.ok?'hi':'lo'}">${U.ok?`bem recebida, +2 de prestígio${S.carreira!=='adv'?' e +2 de capital político':''}`:'gerou polêmica, −1 de prestígio'}</span>. Está na edição deste mês; a próxima coluna pode ser escrita no mês que vem.</p>
         <button class="btn ghost" data-act="jornalVer" data-v="${S.semana}">Ver na edição deste mês</button>`
       :`<p style="margin:0;font-size:13px">Escreva um artigo de opinião para a edição deste mês. Usa a sua Escrita (${Math.round(S.skills.escrita)}): bem escrito, rende prestígio${S.carreira!=='adv'?' e capital político':''}; mal escrito, vira polêmica. <b>Chance de ser bem recebida: ${pct(chanceColuna())}</b>${chanceColuna()<.4?' (estude Escrita para melhorar)':''}.</p>
-        ${S.energia<8?`<p class="lo" style="margin:0;font-size:12.5px">Você está sem energia para escrever (tem ${Math.round(S.energia)}, precisa de 8). Descanse ou tire lazer neste mês.</p>`:''}
+        ${S.energia<8?`<p class="lo txt-s">Você está sem energia para escrever (tem ${Math.round(S.energia)}, precisa de 8). Descanse ou tire lazer neste mês.</p>`:''}
         <button class="btn brass" data-act="coluna" ${S.energia>=8?'':'disabled'}>Escrever coluna</button>`}</section>`;
   app.innerHTML=`${header()}
   <div class="jornal">${coluna}

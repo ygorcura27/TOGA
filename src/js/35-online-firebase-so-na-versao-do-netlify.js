@@ -8,7 +8,7 @@ function contaInner(){ const o=ON(); if(!o) return '';
 const contaHtml=()=>`<div class="conta-box">${contaInner()}</div>`;
 async function preencherHallOnline(){ const els=document.querySelectorAll('.hall-online'), o=ON(); if(!els.length) return;
   if(!o){ els.forEach(el=>el.innerHTML=''); return; }
-  let L; try{ L=await o.topHall(20); }catch(e){ els.forEach(el=>el.innerHTML='<p class="label" style="margin:0">Ranking online indisponível agora.</p>'); return; }
+  let L; try{ L=await o.topHall(20); }catch(e){ els.forEach(el=>el.innerHTML='<p class="label m0">Ranking online indisponível agora.</p>'); return; }
   els.forEach(el=>{ const lim=+el.dataset.lim||10;
     el.innerHTML=`<span class="label">Ranking online · todos os jogadores</span>${L.length?`<ol class="hall">${L.slice(0,lim).map((v,i)=>`<li class="${i===0?'top':''}"><span class="num pos">${i+1}</span>
       <div><b>${esc(v.nome)}</b>${v.meu?' <span class="label hi">você</span>':''} <span class="label">${v.geracao}ª geração · ${v.idade} anos · ${MOTIVO_HALL[v.motivo]||esc(v.motivo)}</span><small>${esc(v.carreira)} · ${esc(v.resumo)} · prestígio ${v.prest} · ${brl(v.patrimonio)} · ${v.conq} conquista${v.conq===1?'':'s'}</small></div>

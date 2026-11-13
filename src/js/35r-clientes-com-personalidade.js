@@ -58,5 +58,5 @@ const foiVoce=c=>c._modo!=='enviar';
 // mostrar o perfil no painel de clientes e no cartão do caso
 { const p0=painelClientes; painelClientes=function(){ let h=p0(); for(const f of S.clientes||[]) h=h.replace(`<b>${esc(f.nome)}</b> · `,`<b>${esc(f.nome)}</b> ${tagPerfil(f)} · `); return h; }; }
 { const p0=pasta; pasta=function(c,ativo){ let h=p0(c,ativo); const f=clienteDoCaso(c);
-    const extra=f?`<p style="margin:0;font-size:12.5px"><b>Cliente fixo</b> ${tagPerfil(f)} · satisfação ${Math.round(f.satisf)}<br><span style="color:var(--muted)">${esc(PERFIS[f.perfil].desc)}</span></p>`:c.indicadoPor?`<p style="margin:0;font-size:12.5px">🤝 Indicação de <b>${esc(c.indicadoPor)}</b>.</p>`:'';
+    const extra=f?`<p class="txt-s"><b>Cliente fixo</b> ${tagPerfil(f)} · satisfação ${Math.round(f.satisf)}<br><span class="mut">${esc(PERFIS[f.perfil].desc)}</span></p>`:c.indicadoPor?`<p class="txt-s">🤝 Indicação de <b>${esc(c.indicadoPor)}</b>.</p>`:'';
     return extra?h.replace('</h3>','</h3>'+extra):h; }; }

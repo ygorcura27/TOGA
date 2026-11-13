@@ -63,6 +63,6 @@ function painelAmigos(){ const N=S.npcs||[]; if(!N.length) return '';
       return `<div class="panel" style="gap:6px"><b>${esc(n.nome)}</b><span class="label" style="text-transform:none;letter-spacing:0">${npcCargo(n)} · ${CIDADES[n.cidade].nome} · <span class="${t==='rival'?'lo':t==='amigo'?'hi':''}">${npcTipoTxt(n)}</span></span>
         <div class="vs"><span>Relação</span><div class="bar"><i style="width:${w}%;background:${t==='rival'?'var(--loss)':'var(--win)'}"></i></div><span class="num">${Math.round(n.rel)}</span></div>
         <div class="chips">${t==='rival'?`<button class="chip" data-act="npc" data-id="${n.id}" data-v="pazes" ${n.acao===S.semana?'disabled':''}>Tentar fazer as pazes</button>`:`<button class="chip" data-act="npc" data-id="${n.id}" data-v="almoco" ${n.acao===S.semana||dinheiroPessoal()<200?'disabled':''}>Almoçar · ${brl(200)}</button>`}</div></div>`; }).join('')}</div>
-    <p style="margin:0;font-size:12px;color:var(--muted)">Colegas seguem carreiras próprias e reaparecem: como juízes e adversários nos seus casos, indicando clientes, pedindo favores ou provocando você na imprensa.</p>
+    <p class="nota">Colegas seguem carreiras próprias e reaparecem: como juízes e adversários nos seus casos, indicando clientes, pedindo favores ou provocando você na imprensa.</p>
   </section>`; }
 

@@ -26,11 +26,11 @@ const blocoEscrita=()=>tem('escrita',2)?1:0;
 const custoApoio=(a,c)=>Math.round(a.custo(c)*(tem('negociacao',2)?.7:1)/100)*100;
 const fracAcordo=()=>tem('negociacao',3)?.8:.5+.3*S.skills.negociacao/100;
 function listaPerks(){
-  const linha=(nome,arr,k)=>`<li style="flex-direction:column;align-items:stretch;gap:2px"><b>${nome} <span class="num" style="color:var(--brass)">${'★'.repeat(nivel(k))}${'☆'.repeat(3-nivel(k))}</span></b>
+  const linha=(nome,arr,k)=>`<li style="flex-direction:column;align-items:stretch;gap:2px"><b>${nome} <span class="num cor-brass">${'★'.repeat(nivel(k))}${'☆'.repeat(3-nivel(k))}</span></b>
     ${arr.map((t,i)=>`<span class="${tem(k,i+1)?'hi':''}" style="${tem(k,i+1)?'':'color:var(--muted)'}">${NIV[i]} · ${t}</span>`).join('')}</li>`;
   return `<ul class="break" style="gap:8px">${Object.entries(PERKS).map(([k,arr])=>linha(SKILLS[k],arr,k)).join('')}
-    <li style="flex-direction:column;align-items:stretch;gap:2px"><b>Áreas do direito (cada uma) <span class="num" style="color:var(--brass)">${estrelasHtml(S.espec)}</span></b>
+    <li style="flex-direction:column;align-items:stretch;gap:2px"><b>Áreas do direito (cada uma) <span class="num cor-brass">${estrelasHtml(S.espec)}</span></b>
     ${PERK_AREA5.map((t,i)=>`<span class="${estrelas(S.espec)>i?'hi':''}" style="${estrelas(S.espec)>i?'':'color:var(--muted)'}">${NIV_AREA[i]} · ${i+1}★ · ${t}${i===3?' · exige especialização na área':i===4?' · exige mestrado ou doutorado na área':''}</span>`).join('')}
-    <span style="color:var(--muted)">Estudando sozinho, cada área para em 81 (3★). Leis novas aprovadas no Congresso derrubam parte da skill da área.</span></li></ul>`;
+    <span class="mut">Estudando sozinho, cada área para em 81 (3★). Leis novas aprovadas no Congresso derrubam parte da skill da área.</span></li></ul>`;
 }
 

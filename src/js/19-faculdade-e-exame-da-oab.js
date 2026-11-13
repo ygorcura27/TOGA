@@ -55,18 +55,18 @@ function renderFaculdade(){ const F=S.fac, A=S.agenda, free=livres(), fase=F.fas
           <dt>Notas dos semestres</dt><dd class="num">${F.notas.map(n=>n==='R'?'R':n.toLocaleString('pt-BR',{maximumFractionDigits:1})).join(' · ')||'—'}</dd>
           <dt>Mensalidade</dt><dd class="num">${FACS[F.tier].mensal?brl(FACS[F.tier].mensal)+'/mês':'gratuita'}</dd>
           <dt>Mesada da família</dt><dd class="num">${brl(MESADA)}/mês</dd><dt>Dinheiro</dt><dd class="num ${S.caixa<0?'lo':''}">${brl(S.caixa)}</dd></dl>
-        <p style="margin:0;font-size:12px;color:var(--muted)">A nota do mês depende dos blocos de aula, da sua Análise e Escrita e da exigência da faculdade. O CR alto abre portas no mestrado e dá prestígio inicial na advocacia.</p>
+        <p class="nota">A nota do mês depende dos blocos de aula, da sua Análise e Escrita e da exigência da faculdade. O CR alto abre portas no mestrado e dá prestígio inicial na advocacia.</p>
       </section>
       <section class="panel"><div class="panel-head"><h2>Estágio</h2></div>
         ${F.estagio?`<dl class="meta"><dt>Onde</dt><dd>${F.estagio.nome}</dd><dt>Bolsa</dt><dd class="num">${brl(F.estagio.bolsa)} por bloco</dd><dt>Contatos feitos</dt><dd class="num">${Math.round(F.contatos[F.estagio.tipo])}</dd></dl>
-          <p style="margin:0;font-size:12px;color:var(--muted)">Contatos no escritório dão prestígio quando você abrir o seu. Contatos em tribunal, MP ou Defensoria dão bônus no concurso dessa carreira.</p>
+          <p class="nota">Contatos no escritório dão prestígio quando você abrir o seu. Contatos em tribunal, MP ou Defensoria dão bônus no concurso dessa carreira.</p>
           <button class="btn ghost" data-act="facEstagioSair">Sair do estágio</button>`
-          :`<p style="margin:0;font-size:12.5px">${F.semestre>=3||fase==='oab'?'Você pode procurar um estágio.':'Estágios abrem a partir do 3º semestre.'}</p><button class="btn ghost" data-act="facEstagio" ${F.semestre>=3||fase==='oab'?'':'disabled'}>Procurar estágio</button>`}
+          :`<p class="txt-s">${F.semestre>=3||fase==='oab'?'Você pode procurar um estágio.':'Estágios abrem a partir do 3º semestre.'}</p><button class="btn ghost" data-act="facEstagio" ${F.semestre>=3||fase==='oab'?'':'disabled'}>Procurar estágio</button>`}
       </section>
-      ${fase==='curso'&&F.semestre>=3?`<section class="panel"><div class="panel-head"><h2>Iniciação científica</h2></div><div class="vs"><span>Artigo</span><div class="bar"><i style="width:${Math.min(100,F.icProg/25*100)}%;background:var(--b-estudo)"></i></div><span class="num">${Math.round(F.icProg)}/25</span></div><p style="margin:0;font-size:12px;color:var(--muted)">A cada 25 blocos de pesquisa sai um artigo. Publicações ajudam na seleção do mestrado.</p></section>`:''}
+      ${fase==='curso'&&F.semestre>=3?`<section class="panel"><div class="panel-head"><h2>Iniciação científica</h2></div><div class="vs"><span>Artigo</span><div class="bar"><i style="width:${Math.min(100,F.icProg/25*100)}%;background:var(--b-estudo)"></i></div><span class="num">${Math.round(F.icProg)}/25</span></div><p class="nota">A cada 25 blocos de pesquisa sai um artigo. Publicações ajudam na seleção do mestrado.</p></section>`:''}
       ${fase==='oab'?`<section class="panel"><div class="panel-head"><h2>Exame da OAB</h2></div>
         <dl class="meta">${oabF.map(x=>`<dt>${x.n} · skill ${x.sk} vs ${x.d}</dt><dd class="num ${cls(x.ch)}">${pct(x.ch)}</dd>`).join('')}<dt>Bônus de estudo</dt><dd class="num">+${oabB.toLocaleString('pt-BR',{maximumFractionDigits:1})}</dd></dl>
-        <p style="margin:0;font-size:12px;color:var(--muted)">Blocos de "Estudar para a OAB" aumentam o bônus (máximo +15). Sem aprovação na OAB não dá para advogar.</p>
+        <p class="nota">Blocos de "Estudar para a OAB" aumentam o bônus (máximo +15). Sem aprovação na OAB não dá para advogar.</p>
         <button class="btn brass" data-act="facOAB" ${F.oabEm>S.semana?'disabled':''}>${F.oabEm>S.semana?`Próximo exame no mês ${F.oabEm}`:'Fazer o Exame da OAB'}</button></section>`:''}
     </div>
   </div>`;

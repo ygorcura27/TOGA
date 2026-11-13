@@ -70,7 +70,7 @@ async function semanaVida(){
     }
   } else if(fam>0&&Math.random()<Math.min(.45,fam*.1)){
     const pg=S.genero==='m'?'f':'m', nome=nomeGenero(pg), prof=pick(AREAS_PROF), pers=pick(Object.keys(PERS_PARC));
-    const v=await modal(`<h2>Você conheceu alguém</h2><p>${esc(nome)}, que trabalha com ${prof}, gostou da conversa e quer sair de novo.</p><p style="font-size:12.5px"><b>Personalidade: ${PERS_PARC[pers].nome}.</b> ${PERS_PARC[pers].desc}</p>`,[{t:'Não é o momento',v:0,cls:'ghost'},{t:'Começar a namorar',v:1,cls:'brass'}]);
+    const v=await modal(`<h2>Você conheceu alguém</h2><p>${esc(nome)}, que trabalha com ${prof}, gostou da conversa e quer sair de novo.</p><p class="f-s"><b>Personalidade: ${PERS_PARC[pers].nome}.</b> ${PERS_PARC[pers].desc}</p>`,[{t:'Não é o momento',v:0,cls:'ghost'},{t:'Começar a namorar',v:1,cls:'brass'}]);
     if(v){ V.parceiro={nome,prof,pers,genero:pg,rel:45,desde:S.semana,status:'namoro'}; V.felicidade=clamp(V.felicidade+10,0,100); addLog(`Você começou a namorar ${nome}.`,'g'); }
   }
   if(V.parceiro&&Math.random()<.12) await eventoParceiro(V.parceiro);
@@ -114,7 +114,7 @@ async function fimVida(motivo){
       <dt>Patrimônio</dt><dd class="num">${brl(pat)}</dd><dt>Família</dt><dd>${V.parceiro?(V.parceiro.status==='casado'?'casamento com ':'namoro com ')+esc(V.parceiro.nome):'sem parceiro'} · ${V.filhos.length} filho(s)</dd></dl>
     ${herd.length?`<p>Quem continua a história da família? O herdeiro recebe metade do patrimônio, o sobrenome famoso e parte das skills.</p>
       <div class="opts">${herd.map(f=>`<button class="opt" data-mv="${f.id}"><span>${esc(f.nome)}</span><b class="num">${idadeFilho(f)} anos</b><small>Relação ${Math.round(f.rel)}${f.direito?' · estudou Direito: começa com skills melhores':''}</small></button>`).join('')}</div>`
-      :'<p style="color:var(--muted)">Nenhum filho adulto com boa relação para continuar a dinastia.</p>'}`,[{t:'Encerrar a dinastia',v:'fim',cls:'ghost'}]);
+      :'<p class="mut">Nenhum filho adulto com boa relação para continuar a dinastia.</p>'}`,[{t:'Encerrar a dinastia',v:'fim',cls:'ghost'}]);
   if(!herd.length||v==='fim'||!v){ S=null; apagarSave(); return; }
   const f=herd.find(x=>String(x.id)===v);
   const car=await modal(`<h2>Que carreira ${esc(f.nome.split(' ')[0])} vai seguir?</h2>`,
@@ -185,8 +185,8 @@ function painelDividas(){ const V=S.vida, D=V.dividas||[]; if(!D.length) return 
   return `<section class="panel"><div class="panel-head"><h2>Financiamentos</h2><span class="num">${brl(comprometido())}/mês</span></div>
     ${D.map(d=>`<div class="row" style="flex-wrap:wrap"><span class="name">${d.nome} · ${Math.ceil(d.restantes/ANO)} ano(s) restantes</span><span class="num">saldo ${brl(d.saldo)}</span>
       <button class="chip" data-act="quitar" data-id="${d.id}" ${dinheiroPessoal()<d.saldo?'disabled':''}>Quitar</button></div>`).join('')}
-    ${V.atraso?`<p class="lo" style="margin:0;font-size:12.5px">Parcelas atrasadas há ${V.atraso} semana(s). Na terceira, o banco retoma o bem.</p>`:''}
-    <p style="margin:0;font-size:12px;color:var(--muted)">As parcelas saem do dinheiro pessoal todo mês. Quitar antes evita os juros restantes.</p></section>`; }
+    ${V.atraso?`<p class="lo txt-s">Parcelas atrasadas há ${V.atraso} semana(s). Na terceira, o banco retoma o bem.</p>`:''}
+    <p class="nota">As parcelas saem do dinheiro pessoal todo mês. Quitar antes evita os juros restantes.</p></section>`; }
 function painelBens(){ const V=S.vida;
   const item=(tipo,i)=>{ const F=FIN[tipo], L=F.lista(), it=L[i], at=V[F.campo]||0, meu=i===at, c=Math.round(it.preco-creditoTroca(tipo));
     const extra=tipo==='moradia'?`${it.preco?'Valor '+brl(it.preco)+' · ':''}felicidade +${it.fel} por mês${it.preco?' · financiável em até 30 anos':''}`
@@ -214,7 +214,7 @@ function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro;
           ${V.doente>0?`<dt>Saúde</dt><dd class="lo">em tratamento (${V.doente} meses)</dd>`:''}
           <dt>Aposentadoria</dt><dd>${['juiz','promotor','defensor'].includes(S.carreira)?`compulsória aos 75 · faltam ${Math.max(0,75-id)} anos`:'quando quiser, a partir dos 60'}</dd></dl>
         <button class="btn ghost" data-act="aposentar" ${id<60?'disabled':''}>${id<60?`Aposentadoria a partir dos 60 (faltam ${60-id} anos)`:'Aposentar-se'}</button>
-        <p style="margin:0;font-size:12px;color:var(--muted)">A vida corre mais rápido que a agenda: cada ${ANO} meses jogados são 1 ano de idade. Saúde cai com a idade e o estresse; academia recupera. Felicidade acima de 80 dá +3 nos casos; saúde abaixo de 40 tira 4.</p>
+        <p class="nota">A vida corre mais rápido que a agenda: cada ${ANO} meses jogados são 1 ano de idade. Saúde cai com a idade e o estresse; academia recupera. Felicidade acima de 80 dá +3 nos casos; saúde abaixo de 40 tira 4.</p>
       </section>
       ${painelBens()}${painelEstilo()}${painelDividas()}
       <section class="panel"><div class="panel-head"><h2>Rotina</h2></div>
@@ -222,22 +222,22 @@ function renderVida(){ const V=S.vida, id=idade(), P=V.parceiro;
           <li><span>${temFamilia()?'Família':'Vida social'}</span><span class="num">${S.agenda.familia||0} bloco(s)/mês</span></li>
           <li><span>Academia e saúde</span><span class="num">${S.agenda.saude||0} bloco(s)/mês</span></li>
           <li><span>Lazer</span><span class="num">${S.agenda.lazer} bloco(s) neste mês</span></li></ul>
-        <p style="margin:0;font-size:12px;color:var(--muted)">Família e academia ficam na agenda todo mês até você mudar. Ajuste na tela principal da carreira.</p>
+        <p class="nota">Família e academia ficam na agenda todo mês até você mudar. Ajuste na tela principal da carreira.</p>
       </section>
     </div>
     <div class="col">
       <section class="panel"><div class="panel-head"><h2>Relacionamento</h2></div>
         ${P?`<dl class="meta"><dt>${P.status==='casado'?'Casamento com':'Namoro com'}</dt><dd>${esc(P.nome)}</dd><dt>Trabalha com</dt><dd>${P.prof}</dd><dt>Personalidade</dt><dd>${(PERS_PARC[P.pers]||{nome:'—'}).nome}</dd><dt>Juntos há</dt><dd>${Math.max(0,Math.round((S.semana-P.desde)/ANO*12))} meses</dd></dl>
           <div class="vs">${barra('Relação',P.rel,P.rel<30?'var(--loss)':'var(--brass)')}</div>
-          <p style="margin:0;font-size:12.5px">${(PERS_PARC[P.pers]||{desc:''}).desc}</p>${acoesParceiroHtml()}
-          <p style="margin:0;font-size:12px;color:var(--muted)">A relação cai 3,5 pontos por mês e sobe 2,5 por bloco de família. Abaixo de 12, termina. Promoções que mudam de cidade testam a relação.</p>`
-          :`<p style="margin:0;font-size:12.5px">Sem relacionamento. Coloque blocos de <b>Vida social</b> na agenda para conhecer alguém.</p>`}
-        ${V.gravidez?`<p class="hi" style="margin:0">Bebê a caminho: nasce em ${V.gravidez-S.semana} meses.</p>`:''}
+          <p class="txt-s">${(PERS_PARC[P.pers]||{desc:''}).desc}</p>${acoesParceiroHtml()}
+          <p class="nota">A relação cai 3,5 pontos por mês e sobe 2,5 por bloco de família. Abaixo de 12, termina. Promoções que mudam de cidade testam a relação.</p>`
+          :`<p class="txt-s">Sem relacionamento. Coloque blocos de <b>Vida social</b> na agenda para conhecer alguém.</p>`}
+        ${V.gravidez?`<p class="hi m0">Bebê a caminho: nasce em ${V.gravidez-S.semana} meses.</p>`:''}
       </section>
       <section class="panel"><div class="panel-head"><h2>Filhos</h2><span class="num">${V.filhos.length}</span></div>
         ${V.filhos.length?`<div class="cases">${V.filhos.map(f=>{const a=idadeFilho(f); return `<div class="panel" style="gap:6px"><b>${esc(f.nome)}</b><span class="label" style="text-transform:none;letter-spacing:0">${a} anos${a>=18?(f.direito?' · Direito':' · outra profissão'):a>=5?' · na escola':''}${a>=22&&f.rel>=40?' · pode herdar':''}</span><div class="vs">${barra('Relação',f.rel,f.rel<40?'var(--loss)':'var(--win)')}</div></div>`;}).join('')}</div>`
-          :'<p style="margin:0;font-size:12.5px;color:var(--muted)">Ainda sem filhos. Casais com boa relação podem decidir aumentar a família.</p>'}
-        <p style="margin:0;font-size:12px;color:var(--muted)">Filhos adultos (22+) com relação de pelo menos 40 podem continuar a sua história quando você se aposentar ou morrer.</p>
+          :'<p class="nota">Ainda sem filhos. Casais com boa relação podem decidir aumentar a família.</p>'}
+        <p class="nota">Filhos adultos (22+) com relação de pelo menos 40 podem continuar a sua história quando você se aposentar ou morrer.</p>
       </section>
       ${painelAmigos()}${painelInvest()}
       ${V.legado.length?`<section class="panel"><div class="panel-head"><h2>Árvore da família</h2></div><ul class="break">${V.legado.map(l=>`<li><span>${l.geracao}ª · ${esc(l.nome)} · ${l.carreira}</span><span class="num">${l.idade} anos</span></li>`).join('')}<li><span>${V.geracao}ª · ${esc(S.nome)} · ${descCarreira()}</span><span class="num">hoje</span></li></ul></section>`:''}

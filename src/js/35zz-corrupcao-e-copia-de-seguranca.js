@@ -67,7 +67,7 @@ const htmlReconstruir=()=>vidasHall.length?`<span class="label">Reconstruir uma 
 { const r0=renderInicio; renderInicio=function(){ r0(); const sec=app.querySelector('section.panel'); if(!sec) return;
     if(!backupLer()&&encerradoNuvem){ let nome='',mes=''; try{ const s=JSON.parse(encerradoNuvem.data); nome=s.nome; mes=s.semana; }catch(e){}
       sec.insertAdjacentHTML('afterbegin',`<div class="gx-lock" style="margin-bottom:4px"><b>Última partida encerrada (na nuvem)</b><p class="gx-nt">${esc(nome)} · mês ${mes}. Guardada na sua conta quando acabou.</p><div class="chips"><button class="btn brass" data-act="recuperarNuvem">Recuperar a última partida</button></div></div>`); }
-    sec.insertAdjacentHTML('beforeend',`<div id="reconstruir" style="display:grid;gap:8px">${htmlReconstruir()}</div>`);
+    sec.insertAdjacentHTML('beforeend',`<div id="reconstruir" class="pilha">${htmlReconstruir()}</div>`);
     buscarEncerradoNuvem(); if(!vidasHall.length) listarVidasHall(); }; }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=recuperarNuvem],[data-act=reconstruir]'); if(!b) return;
   if(b.dataset.act==='recuperarNuvem') return recuperarNuvem();

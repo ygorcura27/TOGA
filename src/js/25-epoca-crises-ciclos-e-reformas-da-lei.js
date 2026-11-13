@@ -39,7 +39,7 @@ async function semanaEpoca(){ const E=EP();
     if(E.ev.some(e=>EPOCAS[e.tipo].grupo===X.grupo)||Math.random()>=X.p) continue;
     const dur=rint(X.dur[0],X.dur[1]); E.ev.push({tipo:t,ate:S.semana+dur,ini:S.semana}); if(X.ini) X.ini();
     E.hist.unshift({t:`Início: ${X.nome}`,s:S.semana}); addLog(`${X.nome}: ${X.desc}`,'r');
-    await modal(`<span class="label">Notícia · mês ${S.semana}</span><h2>${X.nome}</h2><p>${X.desc}</p><p class="label" style="margin:0">Dura cerca de ${Math.round(dur/ANO*12)} meses (${dur} meses).</p>`,[{t:'Continuar',v:1}]); }
+    await modal(`<span class="label">Notícia · mês ${S.semana}</span><h2>${X.nome}</h2><p>${X.desc}</p><p class="label m0">Dura cerca de ${Math.round(dur/ANO*12)} meses (${dur} meses).</p>`,[{t:'Continuar',v:1}]); }
   if(epocaAtiva('pandemia')) S.vida.saude=clamp(S.vida.saude-.4,0,100);
   // janelas legislativas: a cada 4 ou 8 anos, um projeto pode entrar em pauta (não é certo)
   for(const r of REFORMAS){

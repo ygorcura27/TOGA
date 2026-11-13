@@ -42,7 +42,7 @@ function congresso(id){ const eu=id==='eu', f=eu?null:(acharMembro(+id)||[])[0];
   salvar(); render(); }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-act=congresso]'); if(!b||b.disabled||!S) return; congresso(b.dataset.id); });
 // ---------- painel na aba Estrutura e equipe ----------
-const starsRec=v=>{ const e=estRec(v); return `<span style="color:var(--brass)">${'★'.repeat(e)}<span style="opacity:.3">${'★'.repeat(5-e)}</span></span>`; };
+const starsRec=v=>{ const e=estRec(v); return `<span class="cor-brass">${'★'.repeat(e)}<span style="opacity:.3">${'★'.repeat(5-e)}</span></span>`; };
 function painelRecursos(){ if(!S||!['adv','juiz','promotor','defensor'].includes(S.carreira)) return ''; const eu=S.skills.recursos||0, adv=S.carreira==='adv', ano=anoJogo();
   const bt=(id,ja)=>`<button class="chip" data-act="congresso" data-id="${id}" ${ja||pagaCongresso()<CONGRESSO.custo?'disabled':''} title="+${CONGRESSO.ganho} em Recursos · uma vez por ano por pessoa">${ja?'já foi este ano':`Congresso · ${brl(CONGRESSO.custo)}`}</button>`;
   const inst=S.carreira==='juiz'?`<p class="gx-nt">No juiz, Recursos fortalece a sentença: cada estrela reduz em 3% a chance de as partes recorrerem (até −15%). Hoje: −${3*estRec(eu)}%.</p>`

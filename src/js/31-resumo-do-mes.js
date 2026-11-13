@@ -12,7 +12,7 @@ async function resumoMes(a){ const b=fotoMes(), adv=S.carreira==='adv';
     b.atend-a.atend?`${b.atend-a.atend} atendimento${b.atend-a.atend>1?'s':''} adequado${b.atend-a.atend>1?'s':''}`:'',b.pubs-a.pubs?`${b.pubs-a.pubs} publicaç${b.pubs-a.pubs>1?'ões':'ão'}`:''].filter(Boolean);
   const dest=S.log.filter(l=>l.w===a.semana&&(l.k==='g'||l.k==='r')).slice(0,8);
   const v=await modal(`<span class="label">Mês ${a.semana} encerrado</span><h2>Resumo do mês</h2>
-    ${b.carreira!==a.carreira||b.cargo!==a.cargo?`<p class="hi" style="margin:0"><b>${esc(descCarreira())}</b></p>`:''}
+    ${b.carreira!==a.carreira||b.cargo!==a.cargo?`<p class="hi m0"><b>${esc(descCarreira())}</b></p>`:''}
     <dl class="meta">
       ${adv?linha('Caixa do escritório',b.caixa-a.caixa,din)+linha('Dinheiro pessoal',b.bolso-a.bolso,din):linha('Dinheiro',b.caixa-a.caixa,din)}
       ${linha('Prestígio',b.prest-a.prest)}${linha('Saúde',(b.saude||0)-(a.saude||0))}${linha('Felicidade',(b.fel||0)-(a.fel||0))}

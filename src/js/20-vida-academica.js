@@ -94,7 +94,7 @@ function painelFormacao(){ const A=S.ac, T=A.titulos, c=A.curso;
     ${c?`<span class="label">Cursando: ${CURSOS[c.tipo].nome}${c.area?' em '+AREAS[c.area].nome:''}</span>
       <div class="vs"><span>Trabalho</span><div class="bar"><i style="width:${Math.min(100,c.prog/c.meta*100)}%;background:var(--b-estudo)"></i></div><span class="num">${Math.round(c.prog/c.meta*100)}%</span>
         <span>Tempo</span><div class="bar"><i style="width:${Math.min(100,(S.semana-c.inicio)/c.minSem*100)}%;background:var(--brass)"></i></div><span class="num">${S.semana-c.inicio}/${c.minSem}</span></div>
-      <p style="margin:0;font-size:12px;color:var(--muted)">${c.prog}/${c.meta} blocos e ${c.minSem} meses no mínimo${c.mensal?` · mensalidade ${brl(c.mensal)}/mês`:''}${c.bolsa?` · bolsa de ${brl(c.bolsa)}/mês só em dedicação exclusiva`:''}.</p>`
+      <p class="nota">${c.prog}/${c.meta} blocos e ${c.minSem} meses no mínimo${c.mensal?` · mensalidade ${brl(c.mensal)}/mês`:''}${c.bolsa?` · bolsa de ${brl(c.bolsa)}/mês só em dedicação exclusiva`:''}.</p>`
     :`<div class="opts">${Object.entries(CURSOS).map(([k,C])=>{ const bloq=k==='doutorado'&&!T.mestrado, espera=C.selecao&&A.selEm>S.semana;
         const sem3=C.req3&&!base3();
         return `<button class="opt" data-act="acMatricular" data-v="${k}" ${bloq||espera||sem3?'disabled':''}><span>${C.nome}</span><b class="num">${C.selecao?pct(chanceSelecao(k)):brl(C.mensal)+'/mês'}</b><small>${C.meta} blocos e pelo menos ${C.minSem} meses (${tempoTxt(C.minSem)})${C.selecao?' · chance na seleção':''}${bloq?' · exige mestrado':''}${C.req3?(sem3?` · exige 3★ em todas as áreas (faltam ${Object.keys(AREAS).filter(a=>estrelas(a)<3).map(a=>AREAS[a].nome).join(', ')})`:' · libera a 4ª estrela em todas as áreas'):''}${espera?` · nova seleção no mês ${A.selEm}`:''}</small></button>`; }).join('')}</div>`}
@@ -105,11 +105,11 @@ function painelPesquisa(){ const A=S.ac, pj=A.proj;
       <div class="vs"><span>Progresso</span><div class="bar"><i style="width:${Math.min(100,pj.prog/pj.meta*100)}%;background:var(--b-estudo)"></i></div><span class="num">${pj.prog}/${pj.meta}</span>
         <span>Qualidade</span><div class="bar"><i style="width:${Math.min(100,qualidade(pj.area))}%;background:var(--win)"></i></div><span class="num">${Math.round(qualidade(pj.area))}</span></div>
       <div class="row"><span class="name">Blocos de escrita neste mês</span>${stepper('pesquisa',0,S.agenda.pesquisa||0,livres())}</div>
-      <p style="margin:0;font-size:12px;color:var(--muted)">Cada bloco avança 1 no progresso, no fim do mês. ${(S.agenda.pesquisa||0)?`Faltam cerca de ${Math.ceil((pj.meta-pj.prog)/(S.agenda.pesquisa||1))} meses nesse ritmo.`:'<b class="lo">Sem blocos, o texto não avança.</b>'} Os mesmos blocos aparecem na agenda como “Escrever”.</p>`
+      <p class="nota">Cada bloco avança 1 no progresso, no fim do mês. ${(S.agenda.pesquisa||0)?`Faltam cerca de ${Math.ceil((pj.meta-pj.prog)/(S.agenda.pesquisa||1))} meses nesse ritmo.`:'<b class="lo">Sem blocos, o texto não avança.</b>'} Os mesmos blocos aparecem na agenda como “Escrever”.</p>`
     :`<div class="opts">${Object.entries(PROJ).map(([k,P])=>`<button class="opt" data-act="acProjeto" data-v="${k}"><span>${P.nome}</span><b class="num">${P.meta} blocos</b><small>${k==='artigo'?'Revista com Qualis A1 a B2 conforme a qualidade. Rende prestígio e índice, não dinheiro.':k==='livro'?'Vende por anos (R$ 10 por exemplar) e dá muito prestígio acadêmico.':'Vende 2,5 vezes mais (R$ 6 por exemplar), com pouco prestígio.'}</small></button>`).join('')}</div>`}
     ${A.pubs.length?`<ul class="break">${A.pubs.slice().reverse().slice(0,8).map(p=>{ const v=p.v0?Math.round(p.v0*Math.pow(.97,S.semana-p.semana)):0;
       return `<li><span>${p.tipo==='artigo'?'Artigo':p.tipo==='livro'?'Livro':p.tipo==='manual'?'Manual':p.tipo==='tese'?'Tese':'Dissertação'} · ${esc(p.titulo)}</span><span class="num">${p.qualis||(p.v0?v+' ex/mês':'+'+p.pts)}</span></li>`; }).join('')}</ul>`:''}
-    ${A.roySemana?`<p class="hi" style="margin:0;font-size:12.5px">Direitos autorais no último mês: ${brl(A.roySemana)}</p>`:''}
+    ${A.roySemana?`<p class="hi txt-s">Direitos autorais no último mês: ${brl(A.roySemana)}</p>`:''}
   </section>`; }
 function painelDocencia(){ const A=S.ac, D=A.doc, T=A.titulos;
   return `<section class="panel"><div class="panel-head"><h2>Docência</h2><span class="label">Didática ${Math.floor(S.skills.didatica)}</span></div>
@@ -117,7 +117,7 @@ function painelDocencia(){ const A=S.ac, D=A.doc, T=A.titulos;
       <button class="btn ghost" data-act="acDocSair">Deixar a docência</button>`
     :`<div class="opts"><button class="opt" data-act="acDocencia" data-v="particular" ${T.esp||T.mestrado?'':'disabled'}><span>Faculdade particular</span><b class="num">~${brl(110)}/bloco</b><small>Exige especialização ou mestrado.</small></button>
       <button class="opt" data-act="acDocencia" data-v="publica" ${T.doutorado?'':'disabled'}><span>Concurso para universidade pública</span><b class="num">~${brl(220)}/bloco</b><small>Exige doutorado. Progressão por produção: Adjunto, Associado e Titular.</small></button></div>`}
-    <p style="margin:0;font-size:12px;color:var(--muted)">Dar aulas treina Didática e Oratória. Didática melhora a remuneração, abre convites para palestras pagas e melhora os estagiários que você contrata.</p>
+    <p class="nota">Dar aulas treina Didática e Oratória. Didática melhora a remuneração, abre convites para palestras pagas e melhora os estagiários que você contrata.</p>
   </section>`; }
 function renderAcademia(principal){ const A=S.ac, G=S.agenda, free=livres();
   let agenda='';
@@ -129,13 +129,13 @@ function renderAcademia(principal){ const A=S.ac, G=S.agenda, free=livres();
       <div class="rows">${rowsAcad(free)||'<p class="empty" style="padding:0">Matricule-se num curso, comece uma pesquisa ou consiga uma vaga de professor.</p>'}
         <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${G.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,G.estudo,free)}</div>
         <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,G.lazer,free)}</div>${rowsVida(free)}</div>
-      <p class="label" style="margin:0">Custo de vida de R$ 650 por mês. Em dedicação exclusiva, mestrado e doutorado pagam bolsa; a renda vem de bolsa, aulas, livros e palestras.</p>
+      <p class="label m0">Custo de vida de R$ 650 por mês. Em dedicação exclusiva, mestrado e doutorado pagam bolsa; a renda vem de bolsa, aulas, livros e palestras.</p>
       <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button></section>`; }
   app.innerHTML=`${header()}
   <div class="grid">
     <div class="col">${agenda}${painelFormacao()}${principal?painelSkills()+painelDiario():''}</div>
     <div class="col">${painelPesquisa()}${painelDocencia()}
-      ${principal?'':'<p class="label" style="margin:0">Os blocos de pós, pesquisa e aulas aparecem na agenda da tela principal da sua carreira.</p>'}</div>
+      ${principal?'':'<p class="label m0">Os blocos de pós, pesquisa e aulas aparecem na agenda da tela principal da sua carreira.</p>'}</div>
   </div>`; }
 async function fimSemanaAcademico(){
   if(ocupado) return; ocupado=true;

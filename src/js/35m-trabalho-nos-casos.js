@@ -7,8 +7,8 @@ const casoQueSobra=()=>[...S.casos].filter(c=>(c.semana||0)>0).sort((a,b)=>falta
 function painelTrabalhoCasos(){ if(S.carreira!=='adv'||!S.casos.length) return ''; const free=livres();
   return `<section class="panel trab-casos"><div class="panel-head"><h2>Trabalho nos casos</h2><span class="label">${S.casos.reduce((a,c)=>a+(c.semana||0),0)} blocos seus neste mês · ${livres()} livres</span></div>
     <div class="rows">${[...S.casos].sort((a,b)=>a.prazo-b.prazo).map(c=>{ const m=manut(c), s=c.semana||0;
-      return `<div class="row"><span class="name" title="${esc(c.titulo)}">${icoArea(c.area)}${esc(c.titulo)} <small style="color:var(--muted)">· ${(c.inst||1)>1?INST[c.inst]:`audiência em ${c.prazo} ${c.prazo>1?'meses':'mês'}`} · manutenção ${m}${s<m?' <b class="lo">em falta</b>':''} · chance ${pct(calcChance(c).ch)}</small></span>${stepper('case',c.id,s,free)}</div>`; }).join('')}</div>
-    <p class="label" style="margin:0;text-transform:none;letter-spacing:0;font-weight:400">Os blocos da equipe entram por cima destes${gestorAtual()&&S.u.auto?', distribuídos pelo gestor':''}. Na agenda do escritório você vê só o total.</p></section>`; }
+      return `<div class="row"><span class="name" title="${esc(c.titulo)}">${icoArea(c.area)}${esc(c.titulo)} <small class="mut">· ${(c.inst||1)>1?INST[c.inst]:`audiência em ${c.prazo} ${c.prazo>1?'meses':'mês'}`} · manutenção ${m}${s<m?' <b class="lo">em falta</b>':''} · chance ${pct(calcChance(c).ch)}</small></span>${stepper('case',c.id,s,free)}</div>`; }).join('')}</div>
+    <p class="label label-plain">Os blocos da equipe entram por cima destes${gestorAtual()&&S.u.auto?', distribuídos pelo gestor':''}. Na agenda do escritório você vê só o total.</p></section>`; }
 { const r0=renderEstrutura; renderEstrutura=function(){ r0(); const h=painelGestao()+painelTrabalhoCasos(); if(!h) return;
     const alvo=[...app.children].find(el=>!el.matches('header.top,.ticker,.tut')); if(alvo) alvo.insertAdjacentHTML('beforebegin',h); else app.insertAdjacentHTML('beforeend',h); }; }
 // tutorial: o passo de preparar o caso aponta para a linha nova

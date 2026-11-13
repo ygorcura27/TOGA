@@ -75,7 +75,7 @@ function blocoChefe(){ const G=GP(), chefe=chefeAtivo(), nome=nomeGestor();
     <span class="label">Foco do mês · ${chefe?'clique para escolher':'precisa de um '+nome.toLowerCase()}</span><div class="gx-focos">${cards}</div>
     <div class="gx-cols"><div class="gx-col"><span class="label">O que o chefe cuida</span><div class="gx-rows">${deleg}</div></div><div class="gx-col">${R}</div></div>`; }
 { const p0=painelGestaoPub; painelGestaoPub=function(){ let h=p0(); if(!h) return h;
-    h=h.replace(/<div style="display:grid;gap:8px"><span class="label">Equipe<\/span>[\s\S]*?<\/label><\/div>/,''); // a distribuição agora é a delegação "Carga de trabalho"
+    h=h.replace(/<div class="pilha"><span class="label">Equipe<\/span>[\s\S]*?<\/label><\/div>/,''); // a distribuição agora é a delegação "Carga de trabalho"
     return h.replace(/<\/section>\s*$/,blocoChefe()+'</section>'); }; }
 document.addEventListener('click',e=>{ if(!pubCarreira()) return; const b=e.target.closest('[data-pfoco],[data-pdeleg]'); if(!b||b.disabled||b.getAttribute('aria-disabled')==='true') return; const G=GP();
   if(b.dataset.pfoco){ G.focoMes=b.dataset.pfoco; addLog(`Foco do mês do cartório: ${FOCOS_PUB[G.focoMes].nome}.`); } else G.deleg[b.dataset.pdeleg]=b.dataset.v; salvar(); render(); });

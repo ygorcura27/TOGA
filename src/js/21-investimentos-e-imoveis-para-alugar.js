@@ -28,7 +28,7 @@ function semanaInvest(){ const V=S.vida; if(!V.inv) V.inv=invInicial(); if(!V.al
 async function investir(c){ if(ocupado) return; const I=S.vida.inv, din=dinheiroPessoal(), it=INV[c];
   const vals=[1000,10000,50000,200000];
   const v=await modal(`<h2>${it.nome}</h2><p>${it.desc}</p><dl class="meta"><dt>Aplicado hoje</dt><dd class="num">${brl(I[c].v)}</dd><dt>Total já aportado</dt><dd class="num">${brl(I[c].ap)}</dd><dt>Dinheiro pessoal</dt><dd class="num">${brl(din)}</dd></dl>
-    ${S.carreira==='adv'?`<p style="margin:0;font-size:12.5px;color:var(--muted)">Investir usa o seu dinheiro <b>pessoal</b>, não o caixa do escritório (${brl(S.caixa)}). Para trazer dinheiro do escritório, faça uma retirada na aba Estrutura e equipe.</p>`:''}
+    ${S.carreira==='adv'?`<p class="nota">Investir usa o seu dinheiro <b>pessoal</b>, não o caixa do escritório (${brl(S.caixa)}). Para trazer dinheiro do escritório, faça uma retirada na aba Estrutura e equipe.</p>`:''}
     <span class="label">Aplicar</span><div class="chips">${vals.map(x=>`<button class="chip" data-mv="a${x}" ${din<x?'disabled':''}>${brl(x)}</button>`).join('')}</div>
     <span class="label">Resgatar</span><div class="chips">${vals.map(x=>`<button class="chip" data-mv="r${x}" ${I[c].v<x?'disabled':''}>${brl(x)}</button>`).join('')}<button class="chip" data-mv="rall" ${I[c].v<1?'disabled':''}>Tudo</button></div>`,[{t:'Fechar',v:'',cls:'ghost'}]);
   if(!v) return;
@@ -52,6 +52,6 @@ function painelInvest(){ const V=S.vida, I=V.inv||invInicial(), A=V.alugueis||[]
     ${A.length?`<ul class="break">${A.map(m=>`<li style="flex-wrap:wrap;gap:6px"><span>${m.nome} · ${m.ocupado?`<span class="hi">alugado, ${brl(m.aluguel)}/mês</span>`:'<span class="lo">vago</span>'} · conservação ${Math.round(m.estado)}</span>
       <span class="chips"><button class="chip" data-act="reformarAlug" data-id="${m.id}" ${din<m.preco*.05?'disabled':''}>Reformar · ${brl(Math.round(m.preco*.05))}</button><button class="chip" data-act="venderAlug" data-id="${m.id}">Vender · ${brl(valorImovel(m))}</button></span></li>`).join('')}</ul>`:''}
     <div class="opts">${ALUG.map((t,i)=>`<button class="opt" data-act="comprarAlug" data-v="${i}" ${din<t.preco?'disabled':''}><span>Comprar ${t.nome.toLowerCase()}</span><b class="num">${brl(t.preco)}</b><small>Aluguel de cerca de ${brl(aluguelDe(t.preco))} por mês</small></button>`).join('')}</div>
-    <p style="margin:0;font-size:12px;color:var(--muted)">Renda passiva no último mês: ${brl(V.rendaPassivaSemana||0)}. Aluguéis e rendimentos de fundos entram no dinheiro pessoal e contam como renda para o banco aprovar financiamentos.</p>
+    <p class="nota">Renda passiva no último mês: ${brl(V.rendaPassivaSemana||0)}. Aluguéis e rendimentos de fundos entram no dinheiro pessoal e contam como renda para o banco aprovar financiamentos.</p>
   </section>`; }
 

@@ -35,13 +35,13 @@ function render(){
         ${gabA?`<span class="label">Equipe do escritório · ${gabA} blocos por mês</span><div class="blocks">${gabCellsA}</div>`:'<span class="label">Sem equipe: contrate gente na aba Estrutura e equipe</span>'}
         <div class="legend"><span><i style="background:var(--b-case)"></i>Casos</span><span><i style="background:var(--b-apoio)"></i>Apoios</span><span><i style="background:var(--b-estudo)"></i>Estudo</span><span><i style="background:var(--b-lazer)"></i>Lazer</span><span><i style="background:var(--b-familia)"></i>Família</span><span><i style="background:var(--b-saude)"></i>Saúde</span><span><i style="background:var(--b-descanso)"></i>Descanso (${free})</span></div>
         <div class="rows">
-          ${S.casos.length?`<div class="row"><span class="name" title="Os blocos vão primeiro para a manutenção e para os prazos mais curtos. Para escolher caso a caso, use a aba Estrutura e equipe.">Trabalho nos casos <small style="color:var(--muted)">· ${S.casos.length} caso${S.casos.length>1?'s':''}</small></span>${stepper('trabalho',0,S.casos.reduce((a,c)=>a+(c.semana||0),0),free)}</div>
+          ${S.casos.length?`<div class="row"><span class="name" title="Os blocos vão primeiro para a manutenção e para os prazos mais curtos. Para escolher caso a caso, use a aba Estrutura e equipe.">Trabalho nos casos <small class="mut">· ${S.casos.length} caso${S.casos.length>1?'s':''}</small></span>${stepper('trabalho',0,S.casos.reduce((a,c)=>a+(c.semana||0),0),free)}</div>
           <button class="lnk" data-act="view" data-v="estrutura" style="align-self:flex-start;font-size:12px">Ajustar os blocos caso a caso</button>`:''}
           <div class="row"><span class="name">Estudo</span><select id="estudo-skill" data-act="estudoSkill">${Object.entries(SKILLS).map(([k,v])=>`<option value="${k}" ${S.agenda.estudoSkill===k?'selected':''}>${v}</option>`).join('')}</select>${stepper('estudo',0,S.agenda.estudo,free)}</div>
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">Blocos livres viram descanso e recuperam energia.</p>
+        <p class="label m0">Blocos livres viram descanso e recuperam energia.</p>
         ${previsaoEnergia()}
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
@@ -49,7 +49,7 @@ function render(){
     </div>
     <div class="col">
       ${painelCasosAtivos()}
-      <section class="panel" style="background:transparent;border:0;padding:0">
+      <section class="panel sem-caixa">
         <div class="panel-head"><h2>Novos casos deste mês</h2><span class="label">Renovam todo mês</span></div>
         ${filtroOfertasHtml()}
         <div class="cases">${S.ofertas.length?(ofertasFiltradas().map(c=>pasta(c,false)).join('')||'<p class="empty">Nenhum caso passa nesse filtro. Mude o filtro para ver os outros.</p>'):'<p class="empty">Sem ofertas restantes neste mês.</p>'}</div>
@@ -236,8 +236,8 @@ function painel(k){
   return `<section class="panel">
     <div class="panel-head"><h2>${C.nome}</h2><span class="label">${sub}</span></div>
     <div><span class="tag">${status}</span></div>
-    ${C.nota?`<p style="margin:0;font-size:12.5px">${C.nota}</p>`:''}
-    ${C.sistema==='common'?'<p style="margin:0;font-size:12.5px">Common law: a Oratória entra com 20% de peso em todos os casos daqui.</p>':''}
+    ${C.nota?`<p class="txt-s">${C.nota}</p>`:''}
+    ${C.sistema==='common'?'<p class="txt-s">Common law: a Oratória entra com 20% de peso em todos os casos daqui.</p>':''}
     <dl class="meta">
       <dt>Tamanho do mercado</dt><dd>${'●'.repeat(C.pop)}${'○'.repeat(5-C.pop)}</dd>
       <dt>Valor das causas</dt><dd class="num">×${C.fator.toLocaleString('pt-BR')}</dd>
@@ -247,7 +247,7 @@ function painel(k){
     </dl>
     <span class="label">Demanda por área</span>
     <div class="dem">${Object.entries(C.areas).sort((a,b)=>b[1]-a[1]).map(([a,w])=>`<span>${AREAS[a].nome}</span><div class="bar"><i style="width:${w/3*100}%;background:var(--b-case)"></i></div>`).join('')}</div>
-    ${of?'':`<p style="margin:0;font-size:12px;color:var(--muted)">${semTxt}${C.nivel==='global'?' O custo inclui contratar um sócio local habilitado no país.':''}</p>
+    ${of?'':`<p class="nota">${semTxt}${C.nivel==='global'?' O custo inclui contratar um sócio local habilitado no país.':''}</p>
       <button class="btn brass" data-act="abrirFilial" data-v="${k}" ${motivo?'disabled':''}>${motivo||`Abrir ${TIPO[C.nivel]} · ${brl(custo)}`}</button>`}
   </section>`;
 }
@@ -381,4 +381,4 @@ function pasta(c,ativo){
 // previsão da energia no fim do mês, com a mesma conta do fechamento (trabalho gasta, descanso e lazer recuperam)
 function previsaoEnergia(){ const gabA=gabinete(), trab=Math.max(0,trabalhoSemana()-gabA), lazer=S.agenda.lazer, desc=Math.max(0,S.disp+blocoEscrita()-trab-lazer-vidaBlocos());
   const fim=clamp(Math.round(S.energia-3.2*trab*(S.traits.includes('workaholic')?.7:1)+3*desc+1.5*lazer),0,traco('insone')?85:100), d=fim-Math.round(S.energia);
-  return `<p class="num" style="margin:0;font-size:12.5px">Energia: ${Math.round(S.energia)} hoje → <b class="${fim<30?'lo':d>=0?'hi':''}">${fim}</b> no fim do mês (${trab} bloco${trab===1?'':'s'} seu${trab===1?'':'s'} de trabalho, ${desc} de descanso, ${lazer} de lazer)${fim<30?' · abaixo de 30 você perde 10 de chance nos casos':''}</p>`; }
+  return `<p class="num txt-s">Energia: ${Math.round(S.energia)} hoje → <b class="${fim<30?'lo':d>=0?'hi':''}">${fim}</b> no fim do mês (${trab} bloco${trab===1?'':'s'} seu${trab===1?'':'s'} de trabalho, ${desc} de descanso, ${lazer} de lazer)${fim<30?' · abaixo de 30 você perde 10 de chance nos casos':''}</p>`; }

@@ -11,8 +11,8 @@ function painelRetirada(){ const U=S.u, livre=S.semana>=retLivreEm(), cx=Math.ma
       <button class="btn brass" data-act="ret">Retirar agora</button></div>
       <div class="chips">${[[.25,'25%'],[.5,'50%'],[1,'Tudo']].map(([f,l])=>`<button class="chip" data-act="retPreset" data-v="${cx*f}">${l} · ${brl(cx*f)}</button>`).join('')}</div>
       <p class="num" id="ret-prev" style="margin:0;font-size:12.5px"></p>`
-    :`<p style="margin:0;font-size:12.5px;color:var(--muted)">${cx<=0?'O caixa está sem saldo para retirada.':`Próxima retirada no mês ${retLivreEm()}.`}</p>`}
-    <p style="margin:0;font-size:12px;color:var(--muted)">Honorários entram no caixa do escritório, que paga as contas. Todo mês você pode sacar o valor que quiser do caixa para o seu dinheiro pessoal${p?'; do total sacado, a parte dos sócios é distribuída a eles na hora':''}. O custo de vida sai do dinheiro pessoal todo mês.${ult?` Última retirada: mês ${ult.w}, ${brl(ult.voce)} para você${ult.soc?` e ${brl(ult.soc)} aos sócios`:''}.`:''}</p></div>`; }
+    :`<p class="nota">${cx<=0?'O caixa está sem saldo para retirada.':`Próxima retirada no mês ${retLivreEm()}.`}</p>`}
+    <p class="nota">Honorários entram no caixa do escritório, que paga as contas. Todo mês você pode sacar o valor que quiser do caixa para o seu dinheiro pessoal${p?'; do total sacado, a parte dos sócios é distribuída a eles na hora':''}. O custo de vida sai do dinheiro pessoal todo mês.${ult?` Última retirada: mês ${ult.w}, ${brl(ult.voce)} para você${ult.soc?` e ${brl(ult.soc)} aos sócios`:''}.`:''}</p></div>`; }
 function atualizarRetirada(){ const el=document.getElementById('ret-valor'), out=document.getElementById('ret-prev'); if(!el||!out) return;
   const v=clamp(Math.floor(+el.value||0),0,Math.max(0,S.caixa)), d=divisaoRetirada(v);
   out.innerHTML=`Sai do caixa ${brl(v)} → <b class="hi">${brl(d.voce)}</b> para você${d.soc?` · ${brl(d.soc)} aos sócios`:''} · caixa fica com ${brl(S.caixa-v)}`; }

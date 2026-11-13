@@ -89,7 +89,7 @@ function painelHall(lim=10){ const H=hallLer();
     ${H.vidas.length?`<ol class="hall">${H.vidas.slice(0,lim).map((v,i)=>`<li class="${i===0?'top':''}"><span class="num pos">${i+1}</span>
       <div><b>${esc(v.nome)}</b> <span class="label">${v.geracao}ª geração · ${v.idade} anos · ${MOTIVO_HALL[v.motivo]||v.motivo}</span><small>${v.carreira} · ${v.resumo} · prestígio ${v.prest} · ${brl(v.patrimonio)} · ${v.conq} conquista${v.conq===1?'':'s'}</small></div>
       <b class="num pts">${v.pontos}</b></li>`).join('')}</ol>
-      <p style="margin:0;font-size:12px;color:var(--muted)">Pontos de legado: prestígio final + pontos das conquistas obtidas na vida + 1 ponto por R$ 100 mil de patrimônio (até 200).</p>`
+      <p class="nota">Pontos de legado: prestígio final + pontos das conquistas obtidas na vida + 1 ponto por R$ 100 mil de patrimônio (até 200).</p>`
     :'<p style="margin:0;color:var(--muted)">Nenhuma vida encerrada ainda. Quando uma carreira terminar, por morte, aposentadoria ou falência, ela entra aqui, mesmo depois de apagar o save.</p>'}
     <div class="hall-online" data-lim="${lim}"></div></section>`; }
 
@@ -115,7 +115,7 @@ function renderConquistas(){ cqCheck(); const Q=S.cq, H=hallLer(), feitas=CONQUI
     <div class="col">
       <section class="panel"><div class="panel-head"><h2>Conquistas</h2><span class="label">${feitas} de ${CONQUISTAS.length} · ${cqPontos()} pontos da dinastia</span></div>
         <div class="bar"><i style="width:${feitas/CONQUISTAS.length*100}%;background:var(--brass)"></i></div>
-        <p style="margin:0;font-size:12px;color:var(--muted)">As conquistas são da família: o herdeiro continua de onde a geração anterior parou. As que você já obteve em partidas antigas aparecem marcadas.</p></section>
+        <p class="nota">As conquistas são da família: o herdeiro continua de onde a geração anterior parou. As que você já obteve em partidas antigas aparecem marcadas.</p></section>
       ${Object.entries(CQ_CAT).map(([k,n])=>{ const L=CONQUISTAS.filter(c=>c.cat===k);
         return `<section class="panel"><div class="panel-head"><h2>${n}</h2><span class="label">${L.filter(c=>Q.ids[c.id]).length} de ${L.length}</span></div><div class="cqs">${L.map(card).join('')}</div></section>`; }).join('')}
     </div>

@@ -89,9 +89,9 @@ function painelCarreiraMP(){ const P=S.p, C=CARGOS_MP[P.cargo], req=promoReqMP()
     </dl>
     ${req?`<span class="label">Para ${fem(CARGOS_MP[P.cargo+1].nome)}</span>
       <ul class="break">${req.map(x=>`<li><span>${x.l}</span><span class="num ${x.ok?'hi':'lo'}">${x.ok?'✓ ':''}${x.v}</span></li>`).join('')}</ul>
-      ${P.cargo===2?'<p style="margin:0;font-size:12px;color:var(--muted)">O Procurador-Geral sai de uma lista tríplice votada pela classe e é escolhido pelo governador.</p>':''}
+      ${P.cargo===2?'<p class="nota">O Procurador-Geral sai de uma lista tríplice votada pela classe e é escolhido pelo governador.</p>':''}
       <button class="btn brass" data-act="promocao" ${promoOkMP()?'':'disabled'}>${(P.pgjEm||0)>S.semana?`Nova lista tríplice no mês ${P.pgjEm}`:'Pedir promoção a '+fem(CARGOS_MP[P.cargo+1].nome)}</button>`
-      :'<p class="hi" style="margin:0">Você chefia o Ministério Público do estado.</p>'}
+      :'<p class="hi m0">Você chefia o Ministério Público do estado.</p>'}
     ${btnExonerar}
   </section>`; }
 
@@ -159,19 +159,19 @@ function renderPromotoria(){
           <div class="row"><span class="name">Lazer (reduz estresse)</span>${stepper('lazer',0,S.agenda.lazer,free)}</div>
           ${rowsVida(free)}${rowsAcad(free)}
         </div>
-        <p class="label" style="margin:0">A equipe cuida primeiro do expediente e depois dos casos, sem gastar sua energia. O expediente que ela não cobre sai da sua agenda.</p>
+        <p class="label m0">A equipe cuida primeiro do expediente e depois dos casos, sem gastar sua energia. O expediente que ela não cobre sai da sua agenda.</p>
         <button class="btn brass wide" data-act="fimSemana">Encerrar mês ▶</button>
       </section>
       ${painelCarreiraMP()}${painelSkills()}${painelDiario()}
     </div>
     <div class="col">
-      <section class="panel" style="background:transparent;border:0;padding:0">
+      <section class="panel sem-caixa">
         <div class="panel-head"><h2>Ações penais em andamento</h2><span class="num">${juizo.length}</span></div>
         <div class="cases">${juizo.length?juizo.map(mpCard).join(''):'<p class="empty">Nenhuma denúncia em julgamento. Denuncie um inquérito para levá-lo ao juiz.</p>'}</div>
       </section>
-      <section class="panel" style="background:transparent;border:0;padding:0">
+      <section class="panel sem-caixa">
         <div class="panel-head"><h2>Inquéritos</h2><span class="num">${inqAll.length} · <span class="${atras?'lo':''}">${atras} atrasados</span></span></div>
-        <p class="label" style="margin:0">Chegam ${novosInq(P.comarca)} por mês. Atrasado custa 0,3 de reputação por mês (no máximo 4) e prescreve 6 meses depois da meta.</p>
+        <p class="label m0">Chegam ${novosInq(P.comarca)} por mês. Atrasado custa 0,3 de reputação por mês (no máximo 4) e prescreve 6 meses depois da meta.</p>
         ${filtroPubHtml(inqAll.length,inqs.length)}<div class="cases">${inqs.length?inqs.map(mpCard).join(''):inqAll.length?vazioFiltro():'<p class="empty">Nenhum inquérito na mesa.</p>'}</div>
       </section>
       ${P.recursos.length?`<section class="panel"><div class="panel-head"><h2>Recursos no tribunal</h2><span class="num">${P.recursos.length}</span></div>

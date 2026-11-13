@@ -25,7 +25,7 @@ async function audienciaJuizSe(p){
 // ---------- julgamento rápido: duas decisões ----------
 async function julgamentoRapido(p){ const base=calcAcerto(p).ch, rec=chanceRecursoJ(p); let d=0, recMais=0; const notas=[];
   const op=(v,t,b,s)=>`<button class="opt" data-mv="${v}"><span>${t}</span><b class="num">${b}</b><small>${s}</small></button>`;
-  const cab=`<span class="label">Julgamento rápido · ${RAR[p.rar].nome} · ${AREAS[p.area].nome}</span><h2>${esc(p.titulo)}</h2><p class="num" style="margin:0">Chance de acertar a decisão: <b>${pct(base)}</b>${rec?` · chance de recurso ${pct(rec)}`:''}</p>`;
+  const cab=`<span class="label">Julgamento rápido · ${RAR[p.rar].nome} · ${AREAS[p.area].nome}</span><h2>${esc(p.titulo)}</h2><p class="num m0">Chance de acertar a decisão: <b>${pct(base)}</b>${rec?` · chance de recurso ${pct(rec)}`:''}</p>`;
   const anal=Math.round(S.skills.analise), area=Math.round(S.skills[p.area]||0);
   const v1=await modal(`${cab}<p>Como você instrui o processo?</p><div class="opts">
     ${op('autos','Examinar os autos a fundo',`+${Math.round((2+anal/12))} acerto · −2 energia`,`Usa Análise (${anal}).`)}
@@ -142,7 +142,7 @@ function audienciaJuiz(p){ return new Promise(fim=>{
         <section class="panel av-feed"><div class="panel-head"><h2>Na sala</h2></div>${dh?`<div class="av-momento">${dh}</div>`:''}
           ${s.feed.map(x=>`<div class="av-ev ${x.l==='a'?'pa':x.l==='b'?'pb':''}"><span class="num">${x.m}'</span><span>${x.t}${x.chk?` <b class="${x.parece?'hi':'lo'}">· ${x.parece?'confirmado':'contradição'}</b>`:x.verd!==undefined?' <small class="label">· não verificado</small>':''}</span></div>`).join('')}</section>
         <section class="av-meio">
-          <div class="panel"><div class="panel-head"><h2>Pistas</h2><span class="label">o que você apurou</span></div>${s.pistas.length?s.pistas.map(x=>`<div class="av-pista" style="border-left-color:var(--${x.l==='a'?'b-case':'b-familia'})">${x.t}</div>`).join(''):'<small style="color:var(--muted)">Nenhuma ainda. Pergunte sobre os lances decisivos ou determine uma perícia.</small>'}</div>
+          <div class="panel"><div class="panel-head"><h2>Pistas</h2><span class="label">o que você apurou</span></div>${s.pistas.length?s.pistas.map(x=>`<div class="av-pista" style="border-left-color:var(--${x.l==='a'?'b-case':'b-familia'})">${x.t}</div>`).join(''):'<small class="mut">Nenhuma ainda. Pergunte sobre os lances decisivos ou determine uma perícia.</small>'}</div>
           <div class="panel"><div class="panel-head"><h2>Força das partes</h2><span class="label">acima: ${lado('a')} · abaixo: ${lado('b')}</span></div><div class="av-pressao">${barras}</div></div>
           <div class="panel av-instr"><h2>Sentença</h2>${sent}</div>
         </section>
