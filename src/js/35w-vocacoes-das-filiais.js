@@ -84,11 +84,11 @@ const vocHtml=(k,ativa)=>{ const v=VOCACOES[k]; if(!v) return '';
 // no painel "Sua rede": o que a rede está dando
 { const r0=painelRede; painelRede=function(){ const h=r0(); if(S.carreira!=='adv') return h; const A=vocacoesAtivas(); if(!A.length) return h;
     const areas=Object.keys(AREAS).map(a=>[a,vocArea(a),vocValor(a)]).filter(([,n,m])=>n||m>1);
-    const lin=`<dt>Vocações ativas</dt><dd>${A.map(([k,v])=>`${esc(v.t)} <small class="mut">(${esc(nomeLocal(k))})</small>`).join('<br>')}</dd>
-      ${areas.length?`<dt>Efeito na rede</dt><dd>${areas.map(([a,n,m])=>`${AREAS[a].nome}: ${n?'+'+n:''}${n&&m>1?' · ':''}${m>1?'causas ×'+m.toLocaleString('pt-BR',{maximumFractionDigits:2}):''}`).join('<br>')}</dd>`:''}
-      ${vocSoma('recSup')?`<dt>Tribunais superiores</dt><dd>+${vocSoma('recSup')} em recursos no STJ/STF</dd>`:''}
-      ${vocSoma('prest')?`<dt>Prestígio internacional</dt><dd>+${vocSoma('prest').toLocaleString('pt-BR',{maximumFractionDigits:1})} por mês</dd>`:''}`;
-    return h.replace('</dl><button class="btn brass wide" data-act="fimSemana">',lin+'</dl><button class="btn brass wide" data-act="fimSemana">'); }; }
+    const efeitos=[...areas.map(([a,n,m])=>`${AREAS[a].nome} ${[n?'+'+n:'',m>1?'causas ×'+m.toLocaleString('pt-BR',{maximumFractionDigits:2}):''].filter(Boolean).join(' · ')}`),
+      vocSoma('recSup')?`STJ/STF +${vocSoma('recSup')}`:'',vocSoma('exterior')?`Exterior +${vocSoma('exterior')}`:'',vocSoma('prest')?`Prestígio +${vocSoma('prest').toLocaleString('pt-BR',{maximumFractionDigits:1})}/mês`:''].filter(Boolean);
+    const bloco=`<span class="label">Vocações ativas</span><ul class="rede-voc">${A.map(([k,v])=>`<li><b>${esc(v.t)}</b><small>${esc(nomeLocal(k))} · ${descVocacao(v)}</small></li>`).join('')}</ul>
+      ${efeitos.length?`<span class="label">O que a rede soma</span><div class="chips rede-ef">${efeitos.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}`;
+    return h.replace('</dl><button class="btn brass wide" data-act="fimSemana">','</dl>'+bloco+'<button class="btn brass wide" data-act="fimSemana">'); }; }
 // no cartão de cada filial (aba Estrutura e equipe)
 { const p0=painelFiliais; painelFiliais=function(){ let h=p0(); if(!h) return h;
     for(const k of S.filiais){ const v=VOCACOES[k]; if(!v) continue; const nome=esc(nomeLocal(k));

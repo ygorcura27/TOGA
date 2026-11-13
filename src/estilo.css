@@ -578,3 +578,29 @@ select,.field input{border-radius:6px}
   .av-faixa{gap:8px}
 }
 @media (prefers-reduced-motion:reduce){.av-carta{transition:none}.av-carta:hover{transform:none}}
+
+/* ===== Direção A · mapas e Jornal ===== */
+/* Sua rede: vocações em lista e o que a rede soma em selos */
+.rede-voc{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rede-voc li{display:grid;gap:1px;padding-left:10px;border-left:2px solid var(--gold)}
+.rede-voc b{font-family:var(--f-display);font-size:16px;line-height:1.2}
+.rede-voc small{font-size:12px;color:var(--muted);line-height:1.4}
+.rede-ef .tag{font-size:11.5px;padding:3px 9px;border-radius:999px}
+/* painel do lugar: vocação com mais presença */
+.voc{padding:10px 12px;border-radius:10px}
+.voc b{font-family:var(--f-display);font-size:17px}
+/* Gazeta: manchete maior, capitular na abertura e filete duplo entre as colunas */
+.jn-manchete h2{font-size:clamp(30px,4.6vw,50px);letter-spacing:-.005em}
+.jn-manchete p::first-letter{font-family:var(--f-display);font-size:3.1em;font-weight:700;float:left;line-height:.82;padding:4px 8px 0 0;color:var(--brass)}
+.jn-col h3{border-top:3px double var(--ink);padding-top:8px}
+.jn-cab h1{text-shadow:0 1px 0 color-mix(in srgb,var(--ink) 18%,transparent)}
+.jn-nota b{font-size:19px}
+@media (max-width:640px){.jn-manchete p::first-letter{font-size:2.6em}}
+.jn-tab th+th,.jn-tab td+td{padding-left:12px;white-space:nowrap}
+/* celular: abas numa linha só, com rolagem lateral dentro da própria barra */
+@media (max-width:640px){
+  .top .tabs{flex-wrap:nowrap;overflow-x:auto;width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .top .tabs::-webkit-scrollbar{display:none}
+  .top .tabs .tab{flex:none;white-space:nowrap}
+  .top .tabs>.label{flex:none}
+}

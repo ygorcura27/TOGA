@@ -584,6 +584,32 @@ select,.field input{border-radius:6px}
   .av-faixa{gap:8px}
 }
 @media (prefers-reduced-motion:reduce){.av-carta{transition:none}.av-carta:hover{transform:none}}
+
+/* ===== Direção A · mapas e Jornal ===== */
+/* Sua rede: vocações em lista e o que a rede soma em selos */
+.rede-voc{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rede-voc li{display:grid;gap:1px;padding-left:10px;border-left:2px solid var(--gold)}
+.rede-voc b{font-family:var(--f-display);font-size:16px;line-height:1.2}
+.rede-voc small{font-size:12px;color:var(--muted);line-height:1.4}
+.rede-ef .tag{font-size:11.5px;padding:3px 9px;border-radius:999px}
+/* painel do lugar: vocação com mais presença */
+.voc{padding:10px 12px;border-radius:10px}
+.voc b{font-family:var(--f-display);font-size:17px}
+/* Gazeta: manchete maior, capitular na abertura e filete duplo entre as colunas */
+.jn-manchete h2{font-size:clamp(30px,4.6vw,50px);letter-spacing:-.005em}
+.jn-manchete p::first-letter{font-family:var(--f-display);font-size:3.1em;font-weight:700;float:left;line-height:.82;padding:4px 8px 0 0;color:var(--brass)}
+.jn-col h3{border-top:3px double var(--ink);padding-top:8px}
+.jn-cab h1{text-shadow:0 1px 0 color-mix(in srgb,var(--ink) 18%,transparent)}
+.jn-nota b{font-size:19px}
+@media (max-width:640px){.jn-manchete p::first-letter{font-size:2.6em}}
+.jn-tab th+th,.jn-tab td+td{padding-left:12px;white-space:nowrap}
+/* celular: abas numa linha só, com rolagem lateral dentro da própria barra */
+@media (max-width:640px){
+  .top .tabs{flex-wrap:nowrap;overflow-x:auto;width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .top .tabs::-webkit-scrollbar{display:none}
+  .top .tabs .tab{flex:none;white-space:nowrap}
+  .top .tabs>.label{flex:none}
+}
 </style>
 
 <div id="app"></div>
@@ -6033,11 +6059,11 @@ const vocHtml=(k,ativa)=>{ const v=VOCACOES[k]; if(!v) return '';
 // no painel "Sua rede": o que a rede está dando
 { const r0=painelRede; painelRede=function(){ const h=r0(); if(S.carreira!=='adv') return h; const A=vocacoesAtivas(); if(!A.length) return h;
     const areas=Object.keys(AREAS).map(a=>[a,vocArea(a),vocValor(a)]).filter(([,n,m])=>n||m>1);
-    const lin=`<dt>Vocações ativas</dt><dd>${A.map(([k,v])=>`${esc(v.t)} <small class="mut">(${esc(nomeLocal(k))})</small>`).join('<br>')}</dd>
-      ${areas.length?`<dt>Efeito na rede</dt><dd>${areas.map(([a,n,m])=>`${AREAS[a].nome}: ${n?'+'+n:''}${n&&m>1?' · ':''}${m>1?'causas ×'+m.toLocaleString('pt-BR',{maximumFractionDigits:2}):''}`).join('<br>')}</dd>`:''}
-      ${vocSoma('recSup')?`<dt>Tribunais superiores</dt><dd>+${vocSoma('recSup')} em recursos no STJ/STF</dd>`:''}
-      ${vocSoma('prest')?`<dt>Prestígio internacional</dt><dd>+${vocSoma('prest').toLocaleString('pt-BR',{maximumFractionDigits:1})} por mês</dd>`:''}`;
-    return h.replace('</dl><button class="btn brass wide" data-act="fimSemana">',lin+'</dl><button class="btn brass wide" data-act="fimSemana">'); }; }
+    const efeitos=[...areas.map(([a,n,m])=>`${AREAS[a].nome} ${[n?'+'+n:'',m>1?'causas ×'+m.toLocaleString('pt-BR',{maximumFractionDigits:2}):''].filter(Boolean).join(' · ')}`),
+      vocSoma('recSup')?`STJ/STF +${vocSoma('recSup')}`:'',vocSoma('exterior')?`Exterior +${vocSoma('exterior')}`:'',vocSoma('prest')?`Prestígio +${vocSoma('prest').toLocaleString('pt-BR',{maximumFractionDigits:1})}/mês`:''].filter(Boolean);
+    const bloco=`<span class="label">Vocações ativas</span><ul class="rede-voc">${A.map(([k,v])=>`<li><b>${esc(v.t)}</b><small>${esc(nomeLocal(k))} · ${descVocacao(v)}</small></li>`).join('')}</ul>
+      ${efeitos.length?`<span class="label">O que a rede soma</span><div class="chips rede-ef">${efeitos.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}`;
+    return h.replace('</dl><button class="btn brass wide" data-act="fimSemana">','</dl>'+bloco+'<button class="btn brass wide" data-act="fimSemana">'); }; }
 // no cartão de cada filial (aba Estrutura e equipe)
 { const p0=painelFiliais; painelFiliais=function(){ let h=p0(); if(!h) return h;
     for(const k of S.filiais){ const v=VOCACOES[k]; if(!v) continue; const nome=esc(nomeLocal(k));
@@ -6578,6 +6604,10 @@ function navEstrutura(){ if(view!=='estrutura'||app.querySelector('.sec-nav')) r
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-sec-ir]'); if(!b) return; const el=app.querySelector(`[data-sec="${b.dataset.secIr}"]`); if(!el) return;
   const red=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches; el.scrollIntoView({behavior:red?'auto':'smooth',block:'start'}); });
 { const r1=render; render=function(){ r1(); try{ navEstrutura(); }catch(e){ console.warn('nav estrutura',e); } }; }
+// celular: a barra de abas rola sozinha até a aba ativa (sem mexer na rolagem da página)
+function centrarAba(){ const tabs=app.querySelector('.top .tabs'), t=tabs&&tabs.querySelector('.tab.on'); if(!t||tabs.scrollWidth<=tabs.clientWidth) return;
+  tabs.scrollLeft=Math.max(0,t.offsetLeft-tabs.offsetLeft-(tabs.clientWidth-t.offsetWidth)/2); }
+{ const r2=render; render=function(){ r2(); try{ centrarAba(); }catch(e){} }; }
 // ===================== BOOT =====================
 function start(data){ S=(data&&data.S)||carregar(); if(S&&S.fim) S=null;
   if(S){ S.carreira=S.carreira||'adv'; S.genero=S.genero||'f'; if(S.vida&&S.vida.carro===undefined) S.vida.carro=0;

@@ -33,3 +33,7 @@ function navEstrutura(){ if(view!=='estrutura'||app.querySelector('.sec-nav')) r
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-sec-ir]'); if(!b) return; const el=app.querySelector(`[data-sec="${b.dataset.secIr}"]`); if(!el) return;
   const red=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches; el.scrollIntoView({behavior:red?'auto':'smooth',block:'start'}); });
 { const r1=render; render=function(){ r1(); try{ navEstrutura(); }catch(e){ console.warn('nav estrutura',e); } }; }
+// celular: a barra de abas rola sozinha até a aba ativa (sem mexer na rolagem da página)
+function centrarAba(){ const tabs=app.querySelector('.top .tabs'), t=tabs&&tabs.querySelector('.tab.on'); if(!t||tabs.scrollWidth<=tabs.clientWidth) return;
+  tabs.scrollLeft=Math.max(0,t.offsetLeft-tabs.offsetLeft-(tabs.clientWidth-t.offsetWidth)/2); }
+{ const r2=render; render=function(){ r2(); try{ centrarAba(); }catch(e){} }; }
