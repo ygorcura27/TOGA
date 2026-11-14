@@ -6,8 +6,19 @@ function generoDe(nome){ const n=String(nome).replace(/^(Dra?\.|Servidora?|Promo
   if(/^Dra\.|^Juíza|^Ministra|^Desembargadora|^Promotora|^Defensora/.test(nome)) return 'f'; if(/^Dr\.|^Juiz |^Ministro|^Desembargador |^Promotor |^Defensor /.test(nome)) return 'm';
   return FEM_NOMES.has(p)||/a$/.test(p)?'f':'m'; }
 const PELE=['#F3D4B6','#E2B48D','#C58C60','#9B6440','#6C4329'], CABELO=['#1D1A17','#3A281D','#6A482C','#A9773E','#CFC6BA'], FUNDO=['#3A6FB8','#7A55BF','#3F9466','#B9597A','#B08A2E','#2A9D8F'];
-function retrato(nome,o={}){ const h=hashNome(nome), g=o.g||generoDe(nome), sz=o.size||40, pele=PELE[h%5], cab=CABELO[(h>>3)%5], fundo=FUNDO[(h>>6)%6];
-  const estilo=(h>>9)%3, oculos=((h>>12)%4)===0, roupa=o.toga?'#111318':['#23262E','#2E3B55','#4A3A2E','#2F2F35'][(h>>14)%4];
+// mistura duas cores hex (t de 0 a 1), para o cabelo grisalho
+function misturaCor(a,b,t){ const n=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)), A=n(a), B=n(b); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join(''); }
+// idade conhecida de quem aparece no retrato: você, seu par e seus filhos; os outros não envelhecem
+function idadeRetrato(nome){ try{ if(!S||!S.vida) return 0; if(nome===S.nome) return idade(); const V=S.vida;
+    if(V.parceiro&&V.parceiro.nome===nome) return Math.max(22,idade()-1); const f=(V.filhos||[]).find(x=>x.nome===nome); return f?idadeFilho(f):0; }catch(e){ return 0; } }
+function retrato(nome,o={}){ const h=hashNome(nome), g=o.g||generoDe(nome), sz=o.size||40, pele=PELE[h%5], fundo=FUNDO[(h>>>6)%6];
+  const id=o.idade!==undefined?o.idade:idadeRetrato(nome), cab0=CABELO[(h>>>3)%5], cab=id>=68?'#E6E2DB':id>=56?misturaCor(cab0,'#C9C4BB',.7):id>=45?misturaCor(cab0,'#B5AFA6',.35):cab0;
+  const sombra=misturaCor(pele,'#3A241A',.45);
+  const sobr=`<path d="M24.5 27.2c1.8-1.2 4-1.2 5.6-.2M33.9 27c1.6-1 3.8-1 5.6.2" stroke="${id>=56?cab:cab0}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  const rugas=id>=50?`<g stroke="${sombra}" stroke-width=".8" fill="none" stroke-linecap="round" opacity="${id>=65?.7:.45}"><path d="M27 22.5c3.2-.9 6.8-.9 10 0"/><path d="M25.2 35.5c.4 1.6 1.2 2.8 2.3 3.6M38.8 35.5c-.4 1.6-1.2 2.8-2.3 3.6"/>${id>=65?'<path d="M28 20c2.6-.6 5.4-.6 8 0"/><path d="M25.4 33.2c1 .6 2.4.7 3.5.2M35.1 33.4c1.1.5 2.5.4 3.5-.2"/>':''}</g>`:'';
+  const bigode=g==='m'&&((h>>>16)%5===0)&&((h>>>9)%3)!==2?`<path d="M27.6 35.6c1.4-1 2.9-1.2 4.4-.4 1.5-.8 3-.6 4.4.4-1.4.9-2.9 1-4.4.3-1.5.7-3 .6-4.4-.3z" fill="${cab}"/>`:'';
+  const brincos=g==='f'&&((h>>>16)%3===0)?'<circle cx="20.4" cy="35" r="1.3" fill="#C9A24A"/><circle cx="43.6" cy="35" r="1.3" fill="#C9A24A"/>':'';
+  const estilo=(h>>>9)%3, oculos=((h>>>12)%4)===0, roupa=o.toga?'#111318':['#23262E','#2E3B55','#4A3A2E','#2F2F35'][(h>>>14)%4];
   let cabelo;
   if(g==='f') cabelo=[`<path d="M18 30c0-11 6-17 14-17s14 6 14 17v16h-5V31c-3-4-6-6-9-6s-6 2-9 6v15h-5z" fill="${cab}"/>`,
     `<path d="M18 31c0-11 6-18 14-18s14 7 14 18c0 5-1 9-3 11l-1-12c-3-3-6-5-10-5s-7 2-10 5l-1 12c-2-2-3-6-3-11z" fill="${cab}"/>`,
@@ -20,7 +31,7 @@ function retrato(nome,o={}){ const h=hashNome(nome), g=o.g||generoDe(nome), sz=o
     <clipPath id="rc${h}"><circle cx="32" cy="32" r="32"/></clipPath><g clip-path="url(#rc${h})">
     <path d="M10 64c2-10 10-16 22-16s20 6 22 16z" fill="${roupa}"/>${gola}<rect x="28" y="40" width="8" height="9" rx="3" fill="${pele}"/>
     <ellipse cx="32" cy="31" rx="12" ry="14" fill="${pele}"/>${cabelo}
-    <circle cx="27.5" cy="31" r="1.3" fill="#1D1A17"/><circle cx="36.5" cy="31" r="1.3" fill="#1D1A17"/><path d="M29 38c2 1.4 4 1.4 6 0" stroke="#6E3B2E" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    ${sobr}${rugas}${brincos}<circle cx="27.5" cy="31" r="1.3" fill="#1D1A17"/><circle cx="36.5" cy="31" r="1.3" fill="#1D1A17"/><path d="M31.4 32.5c-.5 1.3-.5 2.2.6 2.7" stroke="${sombra}" stroke-width=".9" fill="none" stroke-linecap="round" opacity=".6"/>${bigode}<path d="M29 38c2 1.4 4 1.4 6 0" stroke="#6E3B2E" stroke-width="1.3" fill="none" stroke-linecap="round"/>
     ${oculos?'<g fill="none" stroke="#1D1A17" stroke-width="1.2"><circle cx="27.5" cy="31" r="3.4"/><circle cx="36.5" cy="31" r="3.4"/><path d="M30.9 31h2.2"/></g>':''}</g></svg>`; }
 // ícone por área do Direito, no título de cada pasta
 const ICO_AREA={penal:'<circle cx="8" cy="14" r="4"/><circle cx="16" cy="14" r="4"/><path d="M10 10l1.5-4h1L14 10"/>',

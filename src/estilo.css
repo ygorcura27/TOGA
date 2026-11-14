@@ -604,3 +604,15 @@ select,.field input{border-radius:6px}
   .top .tabs .tab{flex:none;white-space:nowrap}
   .top .tabs>.label{flex:none}
 }
+
+/* ===== Direção A · avisos e detalhes finais ===== */
+/* no máximo dois avisos por vez; no celular ficam compactos, na base da tela */
+#toasts .toast:nth-last-child(n+3){display:none}
+@media (max-width:640px){
+  #toasts{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom,0px));max-width:none}
+  .toast{width:auto;max-width:none;padding:8px 12px}
+  .toast b{font-size:14px} .toast small{display:none}
+}
+/* troca de tela com entrada suave dos painéis */
+#app>.grid,#app>.panel,#app>.mapgrid{animation:surge .22s ease-out both}
+@media (prefers-reduced-motion:reduce){#app>.grid,#app>.panel,#app>.mapgrid{animation:none}}
